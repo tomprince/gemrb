@@ -33,8 +33,7 @@ public:
 	TISImporter(void);
 	~TISImporter(void);
 	bool Open(DataStream* stream, bool autoFree = true);
-	Tile* GetTile(unsigned short* indexes, int count,
-		unsigned short* secondary = NULL);
+private:
 	Sprite2D* GetTile(int index);
 public:
 	void release(void)

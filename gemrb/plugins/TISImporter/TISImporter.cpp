@@ -65,27 +65,6 @@ bool TISImporter::Open(DataStream* stream, bool autoFree)
 	return true;
 }
 
-Tile* TISImporter::GetTile(unsigned short* indexes, int count,
-	unsigned short* secondary)
-{
-	Animation* ani = new Animation( count );
-	ani->x = ani->y = 0;
-	//pause key stops animation
-	ani->gameAnimation = true;
-	for (int i = 0; i < count; i++) {
-		ani->AddFrame( GetTile( indexes[i] ), i );
-	}
-	if (secondary) {
-		Animation* sec = new Animation( count );
-		sec->x = sec->y = 0;
-		for (int i = 0; i < count; i++) {
-			sec->AddFrame( GetTile( secondary[i] ), i );
-		}
-		return new Tile( ani, sec );
-	}
-	return new Tile( ani );
-}
-
 Sprite2D* TISImporter::GetTile(int index)
 {
 	RevColor RevCol[256];

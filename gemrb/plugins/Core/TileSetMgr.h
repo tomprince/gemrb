@@ -25,13 +25,29 @@
 #include "DataStream.h"
 #include "Tile.h"
 
+/**
+ * Base clase for tile set plugins
+ */
 class GEM_EXPORT TileSetMgr : public Plugin {
 public:
 	TileSetMgr(void);
 	virtual ~TileSetMgr(void);
 	virtual bool Open(DataStream* stream, bool autoFree = true) = 0;
-	virtual Tile* GetTile(unsigned short* indexes, int count,
-		unsigned short* secondary = NULL) = 0;
+	/**
+	 * Returns a @ref Tile from the paramaters
+	 *
+	 * This function can't be overridden and is implemented
+	 * in terms of the private virtual function.
+	 */
+	Tile* GetTile(unsigned short* indexes, int count,
+		unsigned short* secondary = NULL);
+private:
+	/**
+	 * Returns a sprite representing a tile.
+	 *
+	 * @param[in] index Index of the tile to return.
+	 */
+	virtual Sprite2D* GetTile(int index) = 0;
 };
 
 #endif

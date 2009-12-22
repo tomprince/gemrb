@@ -28,3 +28,24 @@ TileSetMgr::TileSetMgr(void)
 TileSetMgr::~TileSetMgr(void)
 {
 }
+
+Tile* TileSetMgr::GetTile(unsigned short* indexes, int count,
+	unsigned short* secondary)
+{
+	Animation* ani = new Animation( count );
+	ani->x = ani->y = 0;
+	//pause key stops animation
+	ani->gameAnimation = true;
+	for (int i = 0; i < count; i++) {
+		ani->AddFrame( GetTile( indexes[i] ), i );
+	}
+	if (secondary) {
+		Animation* sec = new Animation( count );
+		sec->x = sec->y = 0;
+		for (int i = 0; i < count; i++) {
+			sec->AddFrame( GetTile( secondary[i] ), i );
+		}
+		return new Tile( ani, sec );
+	}
+	return new Tile( ani );
+}
