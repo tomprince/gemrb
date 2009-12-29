@@ -36,6 +36,7 @@ OpenAL 0.0.7 or above, (not required if you don't want sound)
 Python 2.2 or above, with shared libs (binaries are compiled with 2.5!)
 ZLib 1.2
 Png 1.2 (optional)
+libjpeg (optional)
 
 If you compile from source, you will need the development packages!
 

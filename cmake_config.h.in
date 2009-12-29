@@ -10,3 +10,4 @@
 #endif
 #cmakedefine HAVE_FORBIDDEN_OBJECT_TO_FUNCTION_CAST 1
 #cmakedefine HAS_VORBIS_SUPPORT 1
+#cmakedefine HAS_JPEG_SUPPORT 1

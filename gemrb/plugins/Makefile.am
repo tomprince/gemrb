@@ -13,6 +13,7 @@ SUBDIRS = \
 	BMPImporter \
 	BMPWriter \
 	PNGImporter \
+	JPEGImporter \
 	CHUImporter \
 	CREImporter \
 	DLGImporter \

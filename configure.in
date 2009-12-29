@@ -171,6 +171,13 @@ AC_CHECK_LIB(vorbisfile, ov_info,
 	AC_DEFINE( HAS_VORBIS_SUPPORT, 1, [Handling of .ogg soundfiles])
 	LIBS="$LIBS -lvorbis -lvorbisfile",, -lvorbis )
 
+AC_CHECK_HEADER([jpeglib.h],
+	[AC_CHECK_LIB(jpeg, jpeg_start_decompress,
+	     [AC_DEFINE( HAS_JPEG_SUPPORT, 1, [Handling of jpeg compressed .tiz files])
+	     jpeg_ok=yes],[jpeg_ok=no])],
+	[jpeg_ok=no])
+AM_CONDITIONAL([JPEG], [test x$jpeg_ok = xyes])
+
 dnl FIXME: check for libpng properly, using libpng(12)-config
 AC_CHECK_HEADER(png.h,,AC_MSG_ERROR([*** libpng not found!]))
 AC_CHECK_LIB(png,png_create_read_struct,,AC_MSG_ERROR([*** libpng not found!]))
@@ -252,6 +259,7 @@ gemrb/plugins/GUIScript/Makefile
 gemrb/plugins/IDSImporter/Makefile 
 gemrb/plugins/INIImporter/Makefile 
 gemrb/plugins/ITMImporter/Makefile 
+gemrb/plugins/JPEGImporter/Makefile
 gemrb/plugins/KEYImporter/Makefile 
 gemrb/plugins/DirectoryImporter/Makefile
 gemrb/plugins/MOSImporter/Makefile 
