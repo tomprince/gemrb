@@ -83,8 +83,12 @@ Sprite2D* TISImporter::GetTile(int index)
 	return spr;
 }
 
+#include "TIZImporter.h"
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x19F91578, "TIS File Importer")
-PLUGIN_IE_RESOURCE(&TileSetMgr::ID, TISImporter, ".tis", (ieWord)IE_TIS_CLASS_ID)
+PLUGIN_IE_RESOURCE(TISImporter, ".tis", (ieWord)IE_TIS_CLASS_ID)
+#ifdef HAS_JPEG_SUPPORT
+PLUGIN_RESOURCE(TIZImporter, ".tiz")
+#endif
 END_PLUGIN()

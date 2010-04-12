@@ -1,3 +1,6 @@
 plugin_LTLIBRARIES = TISImporter.la
 TISImporter_la_LDFLAGS = -module -avoid-version -shared
 TISImporter_la_SOURCES = TISImporter.cpp TISImporter.h TISTile.h TISTile.cpp
+if JPEG
+TISImporter_la_SOURCES += TIZImporter.cpp TIZImporter.h
+endif
