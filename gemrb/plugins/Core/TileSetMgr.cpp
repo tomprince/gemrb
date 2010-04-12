@@ -21,6 +21,8 @@
 #include "win32def.h"
 #include "TileSetMgr.h"
 
+const TypeID TileSetMgr::ID = {};
+
 TileSetMgr::TileSetMgr(void)
 {
 }

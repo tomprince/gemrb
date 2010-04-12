@@ -25,8 +25,6 @@
 
 class TISImporter : public TileSetMgr {
 private:
-	DataStream* str;
-	bool autoFree;
 	ieDword headerShift;
 	ieDword TilesCount, TilesSectionLen, TileSize;
 public:

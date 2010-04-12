@@ -99,14 +99,17 @@ int WEDImporter::AddOverlay(TileMap *tm, Overlay *overlays, bool rain)
 	if (rain) {
 		strncat(res,"R",8);
 		//no rain tileset available, rolling back
-		if (!gamedata->Exists(res,IE_TIS_CLASS_ID)) {
+		if (!gamedata->Exists(res, &TileSetMgr::ID)) {
 			memcpy(res, overlays->TilesetResRef,sizeof(ieResRef));
 		}
 	}
 	TileOverlay *over = new TileOverlay( overlays->Width, overlays->Height );
-	DataStream* tisfile = gamedata->GetResource(res, IE_TIS_CLASS_ID);
-	TileSetMgr* tis = ( TileSetMgr* ) core->GetInterface( IE_TIS_CLASS_ID );
-	tis->Open( tisfile );
+	TileSetMgr* tis = ( TileSetMgr* ) gamedata->GetResource( res, &TileSetMgr::ID );
+	if (!tis) {
+		printf( "[WEDImporter]: No Tile Set Available.\n" );
+		core->FreeInterface( tis );
+		abort(); // FIXME
+	}
 	for (int y = 0; y < overlays->Height; y++) {
 		for (int x = 0; x < overlays->Width; x++) {
 			str->Seek( overlays->TilemapOffset +

@@ -22,17 +22,17 @@
 #define TILESETMGR_H
 
 #include "Plugin.h"
-#include "DataStream.h"
+#include "Resource.h"
 #include "Tile.h"
 
 /**
  * Base clase for tile set plugins
  */
-class GEM_EXPORT TileSetMgr : public Plugin {
+class GEM_EXPORT TileSetMgr : public Resource {
 public:
+	const static TypeID ID;
 	TileSetMgr(void);
 	virtual ~TileSetMgr(void);
-	virtual bool Open(DataStream* stream, bool autoFree = true) = 0;
 	/**
 	 * Returns a @ref Tile from the paramaters
 	 *

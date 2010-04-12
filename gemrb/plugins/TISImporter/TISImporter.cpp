@@ -23,30 +23,21 @@
 #include "RGBAColor.h"
 #include "Interface.h"
 #include "Video.h"
+#include "TISTile.h"
 
 TISImporter::TISImporter(void)
 {
-	str = NULL;
-	autoFree = false;
 }
 
 TISImporter::~TISImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
 }
 
 bool TISImporter::Open(DataStream* stream, bool autoFree)
 {
-	if (stream == NULL) {
+	if (!Resource::Open(stream, autoFree))
 		return false;
-	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
-	str = stream;
-	this->autoFree = autoFree;
+
 	char Signature[8];
 	str->Read( Signature, 8 );
 	headerShift = 0;
@@ -95,5 +86,5 @@ Sprite2D* TISImporter::GetTile(int index)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x19F91578, "TIS File Importer")
-PLUGIN_CLASS(IE_TIS_CLASS_ID, TISImporter)
+PLUGIN_IE_RESOURCE(&TileSetMgr::ID, TISImporter, ".tis", (ieWord)IE_TIS_CLASS_ID)
 END_PLUGIN()
