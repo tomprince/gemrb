@@ -29,6 +29,7 @@ public:
 	~ZLibManager(void);
 	// ZLib Decompression Routine
 	int Decompress(FILE* dest, DataStream* source);
+	int Decompress(char *dest, unsigned long destlen, char *src, unsigned long srclen);
 	// ZLib Compression
 	int Compress(DataStream* dest, DataStream* source);
 public:

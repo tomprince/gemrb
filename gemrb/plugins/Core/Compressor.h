@@ -33,6 +33,7 @@ public:
 	virtual int Init(void);
 	/** decompresses a datastream (memory or file) to a FILE * stream */
 	virtual int Decompress(FILE* dest, DataStream* source) = 0;
+	virtual int Decompress(char *dest, unsigned long destlen, char *src, unsigned long srclen) = 0;
 	/** compresses a datastream (memory or file) to another DataStream */
 	virtual int Compress(DataStream *dest, DataStream* source) = 0;
 };

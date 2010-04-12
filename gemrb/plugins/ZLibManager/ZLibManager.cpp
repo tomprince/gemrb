@@ -87,6 +87,15 @@ int ZLibManager::Decompress(FILE* dest, DataStream* source)
 	}
 }
 
+int ZLibManager::Decompress(char *dest, unsigned long destlen, char *src, unsigned long srclen)
+{
+	unsigned long actuallen = destlen;
+	int result = uncompress((unsigned char*)dest,&actuallen,(unsigned char*)src,srclen);
+	if (result != Z_OK || actuallen != destlen)
+		return GEM_ERROR;
+	return GEM_OK;
+}
+
 int ZLibManager::Compress(DataStream* dest, DataStream* source)
 {
 	unsigned char bufferin[INPUTSIZE], bufferout[OUTPUTSIZE];
