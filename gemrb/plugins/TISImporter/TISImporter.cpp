@@ -68,7 +68,6 @@ bool TISImporter::Open(DataStream* stream, bool autoFree)
 Sprite2D* TISImporter::GetTile(int index)
 {
 	RevColor RevCol[256];
-	Color Palette[256];
 	void* pixels = malloc( 4096 );
 	unsigned long pos = index *(1024+4096) + headerShift;
 	if(str->Size()<pos+1024+4096) {
@@ -84,34 +83,12 @@ Sprite2D* TISImporter::GetTile(int index)
 		}
 	
 		// original PS:T AR0609 and AR0612 report far more tiles than are actually present :(
-		memset(pixels, 0, 4096);
-		memset(Palette, 0, 256 * sizeof(Color));
-		Palette[0].g = 200;
-		Sprite2D* spr = core->GetVideoDriver()->CreateSprite8( 64, 64, 8, pixels, Palette, false, 0 );
-		spr->XPos = spr->YPos = 0;
-		return spr;
+		return EmptySprite();
 	}
 	str->Seek( ( index * ( 1024 + 4096 ) + headerShift ), GEM_STREAM_START );
 	str->Read( &RevCol, 1024 );
-	int transindex = 0;
-	bool transparent = false;
-	for (int i = 0; i < 256; i++) {
-		Palette[i].r = RevCol[i].r;
-		Palette[i].g = RevCol[i].g;
-		Palette[i].b = RevCol[i].b;
-		Palette[i].a = RevCol[i].a;
-		if (Palette[i].g==255 && !Palette[i].r && !Palette[i].b) {
-			if (transparent) {
-				printMessage( "TISImporter", "Tile has two green (transparent) palette entries\n", LIGHT_RED );
-			} else {
-				transparent = true;
-				transindex = i;
-			}
-		}
-	}
 	str->Read( pixels, 4096 );
-	Sprite2D* spr = core->GetVideoDriver()->CreateSprite8( 64, 64, 8, pixels, Palette, transparent, transindex );
-	spr->XPos = spr->YPos = 0;
+	Sprite2D* spr = TileToSprite( RevCol, pixels );
 	return spr;
 }
 
