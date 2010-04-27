@@ -74,7 +74,11 @@ bool ResourceManager::Exists(const char *ResRef, const TypeID *type, bool silent
 {
 	if (ResRef[0] == '\0')
 		return false;
-	// TODO: check various caches
+
+	if (caches[type].Lookup(ResRef)) {
+		return true;
+	}
+
 	const std::vector<ResourceDesc> &types = PluginMgr::Get()->GetResourceDesc(type);
 	for (size_t j = 0; j < types.size(); j++) {
 		for (size_t i = 0; i < searchPath.size(); i++) {
@@ -116,10 +120,15 @@ DataStream* ResourceManager::GetResource(const char* ResRef, SClass_ID type, boo
 	return NULL;
 }
 
-Resource* ResourceManager::GetResource(const char* ResRef, const TypeID *type, bool silent) const
+Resource* ResourceManager::GetResource(const char* ResRef, const TypeID *type, bool silent)
 {
 	if (ResRef[0] == '\0')
 		return false;
+
+	if (Resource *res = caches[type].Lookup(ResRef)) {
+		return res;
+	}
+
 	if (!silent) {
 		printMessage( "ResourceManager", "Searching for ", WHITE );
 		printf( "%.8s... ", ResRef );
@@ -135,6 +144,7 @@ Resource* ResourceManager::GetResource(const char* ResRef, const TypeID *type, b
 						printf( "%s%s...", ResRef, types[j].GetExt() );
 						printStatus( searchPath[i]->GetDescription(), GREEN );
 					}
+					caches[type].Add(ResRef, res);
 					return res;
 				}
 			}

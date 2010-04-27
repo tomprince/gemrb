@@ -22,9 +22,11 @@
 #define RESOURCEMANGER_H
 
 #include <vector>
+#include <map>
 #include "exports.h"
 #include "SClassID.h"
 #include "Holder.h"
+#include "LRUCache2.h"
 
 class DataStream;
 class Resource;
@@ -53,10 +55,11 @@ public:
 	/** Returns stream associated to given resource */
 	DataStream* GetResource(const char* resname, SClass_ID type, bool silent = false) const;
 	/** Returns Resource object associated to given resource */
-	Resource* GetResource(const char* resname, const TypeID *type, bool silent = false) const;
+	Resource* GetResource(const char* resname, const TypeID *type, bool silent = false);
 
 private:
 	std::vector<Holder<ResourceSource> > searchPath;
+	std::map<const TypeID*, LRUCache2> caches;
 };
 
 #endif
