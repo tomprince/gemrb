@@ -86,8 +86,11 @@ bool MOSImporter::Open(DataStream* stream)
 	if (strncmp( Signature, "MOS V1  ", 8 ) != 0) {
 		return false;
 	}
-	str->ReadWord( &Width );
-	str->ReadWord( &Height );
+	ieWord w, h;
+	str->ReadWord( &w );
+	Width = w;
+	str->ReadWord( &h );
+	Height = h;
 	str->ReadWord( &Cols );
 	str->ReadWord( &Rows );
 	str->ReadDword( &BlockSize );

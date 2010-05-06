@@ -53,15 +53,17 @@ public:
 	 */
 	virtual void GetPalette(int colors, Color* pal);
 	/** Returns the width of the image */
-	virtual int GetWidth() = 0;
+	size_t GetWidth();
 	/** Returns the height of the image */
-	virtual int GetHeight() = 0;
+	size_t GetHeight();
 	/**
 	 * Returns a \ref ImageFactory for the current image.
 	 *
 	 * @param[in] ResRef name of image represented by factory.
 	 */
 	ImageFactory* GetImageFactory(const char* ResRef);
+protected:
+	size_t Width, Height;
 };
 
 #endif

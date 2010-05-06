@@ -34,6 +34,15 @@ ImageMgr::~ImageMgr(void)
 {
 }
 
+size_t ImageMgr::GetWidth()
+{
+	return Width;
+}
+
+size_t ImageMgr::GetHeight()
+{
+	return Height;
+}
 Bitmap* ImageMgr::GetBitmap()
 {
 	unsigned int height = GetHeight();

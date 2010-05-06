@@ -77,8 +77,11 @@ bool BMPImporter::Open(DataStream* stream)
 		printMessage( "BMPImporter","OS/2 Bitmap, not supported.\n", LIGHT_RED);
 		return false;
 	}
-	str->ReadDword( &Width );
-	str->ReadDword( &Height );
+	ieDword w, h;
+	str->ReadDword( &w );
+	Width = w;
+	str->ReadDword( &h );
+	Height = h;
 	str->ReadWord( &Planes );
 	str->ReadWord( &BitCount );
 	str->ReadDword( &Compression );
