@@ -51,7 +51,7 @@ public:
 	 *
 	 * This does nothing if there is no palette.
 	 */
-	virtual void GetPalette(int colors, Color* pal);
+	void GetPalette(size_t colors, Color* pal);
 	/** Returns the width of the image */
 	size_t GetWidth();
 	/** Returns the height of the image */
@@ -64,6 +64,7 @@ public:
 	ImageFactory* GetImageFactory(const char* ResRef);
 protected:
 	size_t Width, Height;
+	Color *Palette;
 };
 
 #endif

@@ -85,11 +85,17 @@ Image* ImageMgr::GetImage()
 	return data;
 }
 
-void ImageMgr::GetPalette(int /*colors*/, Color* /*pal*/)
+void ImageMgr::GetPalette(size_t colors, Color* pal)
 {
-	printMessage("ImageMgr", "Can't get non-existant palette from ", WHITE);
-	printf("%s... ", str->filename);
-	printStatus("ERROR", LIGHT_RED);
+	if (Palette) {
+		if (colors > 256)
+			colors = 256;
+		memcpy(pal, Palette, sizeof(Color) * colors);
+	} else {
+		printMessage("ImageMgr", "Can't get non-existant palette from ", WHITE);
+		printf("%s... ", str->filename);
+		printStatus("ERROR", LIGHT_RED);
+	}
 }
 
 ImageFactory* ImageMgr::GetImageFactory(const char* ResRef)

@@ -145,6 +145,8 @@ bool PNGImporter::Open(DataStream* stream)
 
 	hasPalette = (color_type == PNG_COLOR_TYPE_PALETTE);
 
+	ReadPalette();
+
 	return true;
 }
 
@@ -175,11 +177,9 @@ Sprite2D* PNGImporter::GetSprite2D()
 	png_destroy_read_struct(&inf->png_ptr, &inf->info_ptr, &inf->end_info);
 
 	if (hasPalette) {
-		Color* pal = 0;
-		GetPalette(256, pal);
 		// TODO: colorkey
 		spr = core->GetVideoDriver()->CreateSprite8(Width, Height, 8,
-													buffer, pal, false, 0);
+				buffer, Palette, false, 0);
 	} else {
 		spr = core->GetVideoDriver()->CreateSprite(Width, Height, 32,
 												   red_mask, green_mask,
@@ -190,21 +190,19 @@ Sprite2D* PNGImporter::GetSprite2D()
 	return spr;
 }
 
-void PNGImporter::GetPalette(int colors, Color* pal)
+void PNGImporter::ReadPalette()
 {
-	if (!hasPalette) {
-		ImageMgr::GetPalette(colors, pal);
-		return;
-	}
-
-	png_color* palette;
-	int num_palette;
-	png_get_PLTE(inf->png_ptr, inf->info_ptr, &palette, &num_palette);
-	for (int i = 0; i < colors; i++) {
-		pal[i].r = palette[i%num_palette].red;
-		pal[i].g = palette[i%num_palette].green;
-		pal[i].b = palette[i%num_palette].blue;
-		pal[i].a = 0xff;
+	if (hasPalette) {
+		Palette = new Color[256];
+		png_color* palette;
+		int num_palette;
+		png_get_PLTE(inf->png_ptr, inf->info_ptr, &palette, &num_palette);
+		for (int i = 0; i < 256; i++) {
+			Palette[i].r = palette[i%num_palette].red;
+			Palette[i].g = palette[i%num_palette].green;
+			Palette[i].b = palette[i%num_palette].blue;
+			Palette[i].a = 0xff;
+		}
 	}
 }
 

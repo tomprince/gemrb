@@ -105,13 +105,15 @@ bool BMPImporter::Open(DataStream* stream)
 			NumColors = 256;
 		else
 			NumColors = 16;
-		Palette = ( Color * ) malloc( 4 * NumColors );
+		Palette = new Color[256];
 		for (unsigned int i = 0; i < NumColors; i++) {
 			str->Read( &Palette[i].b, 1 );
 			str->Read( &Palette[i].g, 1 );
 			str->Read( &Palette[i].r, 1 );
 			str->Read( &Palette[i].a, 1 );
 		}
+		for (unsigned int j = NumColors; j < 256; ++j)
+			Palette[j] = Palette[j%NumColors];
 	}
 	str->Seek( DataOffset, GEM_STREAM_START );
 	//no idea if we have to swap this or not
@@ -243,21 +245,6 @@ Sprite2D* BMPImporter::GetSprite2D()
 			p, Palette, true, 0 );
 	}
 	return spr;
-}
-
-void BMPImporter::GetPalette(int colors, Color* pal)
-{
-	if (BitCount > 8) {
-		ImageMgr::GetPalette(colors, pal);
-		return;
-	}
-
-	for (int i = 0; i < colors; i++) {
-		pal[i].r = Palette[i%NumColors].r;
-		pal[i].g = Palette[i%NumColors].g;
-		pal[i].b = Palette[i%NumColors].b;
-		pal[i].a = 0xff;
-	}
 }
 
 Bitmap* BMPImporter::GetBitmap()

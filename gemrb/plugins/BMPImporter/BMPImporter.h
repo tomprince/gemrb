@@ -31,7 +31,6 @@ private:
 
 	//COLORTABLE
 	ieDword NumColors;
-	Color* Palette;
 
 	//RASTERDATA
 	void* pixels;
@@ -44,7 +43,6 @@ public:
 	bool Open(DataStream* stream);
 	Sprite2D* GetSprite2D();
 	virtual Bitmap* GetBitmap();
-	void GetPalette(int colors, Color* pal);
 private:
 	void Read8To8(void *rpixels);
 	void Read4To8(void *rpixels);
