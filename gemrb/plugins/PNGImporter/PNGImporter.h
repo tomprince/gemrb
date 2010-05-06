@@ -23,17 +23,21 @@
 
 #include "ImageMgr.h"
 
+// CHECKME: how should we include png.h ? (And how should we check for it?)
+#include <png.h>
+
 struct PNGInternal;
 
 class PNGImporter : public ImageMgr {
 private:
-	PNGInternal* inf;
+	png_structp png_ptr;
+	png_infop info_ptr;
+	png_infop end_info;
 
 	bool hasPalette;
 public:
 	PNGImporter(void);
 	~PNGImporter(void);
-	void Close();
 	bool Open(DataStream* stream);
 	Sprite2D* GetSprite2D();
 	void ReadPalette();
