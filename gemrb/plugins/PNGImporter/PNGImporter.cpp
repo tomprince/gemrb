@@ -163,6 +163,27 @@ void PNGImporter::ReadPalette()
 			Palette[i].b = palette[i%num_palette].blue;
 			Palette[i].a = 0xff;
 		}
+
+		if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+			png_bytep trans_alpha;
+			int num_trans;
+			png_get_tRNS(png_ptr, info_ptr, &trans_alpha,
+					&num_trans, NULL);
+			for (int i = 0; i < 256; i++) {
+				if (i%num_palette < num_trans)
+					Palette[i].a = trans_alpha[i%num_palette];
+			}
+		}
+	} else {
+		if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+			png_color_16p trans_color;
+			png_get_tRNS(png_ptr, info_ptr, NULL, NULL, &trans_color);
+			HasColorKey = true;
+			ColorKey.r = trans_color->red;
+			ColorKey.g = trans_color->green;
+			ColorKey.b = trans_color->blue;
+			ColorKey.a = 0xff;
+		}
 	}
 }
 
