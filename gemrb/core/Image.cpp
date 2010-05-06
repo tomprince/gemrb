@@ -25,6 +25,11 @@ Image::Image(unsigned int w, unsigned int h)
 {
 }
 
+Image::Image(unsigned int w, unsigned int h, Color *data)
+	: height(h), width(w), data(data)
+{
+}
+
 Image::~Image()
 {
 	delete[] data;
