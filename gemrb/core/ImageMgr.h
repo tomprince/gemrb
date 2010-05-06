@@ -40,9 +40,9 @@ public:
 	ImageMgr(void);
 	virtual ~ImageMgr(void);
 	/** Returns a \ref Sprite2D containing the image. */
-	virtual Sprite2D* GetSprite2D() = 0;
-	virtual Image* GetImage();
-	virtual Bitmap* GetBitmap();
+	Sprite2D* GetSprite2D();
+	Image* GetImage();
+	Bitmap* GetBitmap();
 	/**
 	 * Returns image palette.
 	 *
@@ -64,7 +64,15 @@ public:
 	ImageFactory* GetImageFactory(const char* ResRef);
 protected:
 	size_t Width, Height;
+
+	bool HasColorKey;
+
+	Color *pixels;
+	Color ColorKey;
+
+	unsigned char *data;
 	Color *Palette;
+	unsigned char ColorKeyIndex;
 };
 
 #endif

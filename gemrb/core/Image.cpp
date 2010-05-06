@@ -37,6 +37,7 @@ Image::~Image()
 
 Sprite2D* Image::GetSprite2D()
 {
+	// FIXME: copy paste
 	union {
 		Color color;
 		ieDword Mask;

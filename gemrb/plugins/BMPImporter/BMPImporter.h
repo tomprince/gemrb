@@ -32,19 +32,13 @@ private:
 	//COLORTABLE
 	ieDword NumColors;
 
-	//RASTERDATA
-	void* pixels;
-
 	//OTHER
 	unsigned int PaddedRowLength;
 public:
 	BMPImporter(void);
 	~BMPImporter(void);
 	bool Open(DataStream* stream);
-	Sprite2D* GetSprite2D();
-	virtual Bitmap* GetBitmap();
 private:
-	void Read8To8(void *rpixels);
 	void Read4To8(void *rpixels);
 public:
 	void release(void)

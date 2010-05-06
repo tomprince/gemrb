@@ -35,12 +35,13 @@ private:
 	png_infop end_info;
 
 	bool hasPalette;
+
+	bool ReadData(unsigned char *data);
+	void ReadPalette();
 public:
 	PNGImporter(void);
 	~PNGImporter(void);
 	bool Open(DataStream* stream);
-	Sprite2D* GetSprite2D();
-	void ReadPalette();
 
 public:
 	void release(void)

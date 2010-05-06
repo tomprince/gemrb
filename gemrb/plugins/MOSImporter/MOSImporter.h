@@ -31,7 +31,6 @@ public:
 	MOSImporter(void);
 	~MOSImporter(void);
 	bool Open(DataStream* stream);
-	Sprite2D* GetSprite2D();
 public:
 	void release(void)
 	{

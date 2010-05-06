@@ -33,11 +33,6 @@ static void DataStream_png_read_data(png_structp png_ptr,
 	str->Read(data, length);
 }
 
-static ieDword blue_mask = 0x00ff0000;
-static ieDword green_mask = 0x0000ff00;
-static ieDword red_mask = 0x000000ff;
-static ieDword alpha_mask = 0xff000000;
-
 PNGImporter::PNGImporter(void)
 	: png_ptr(), info_ptr(), end_info()
 {
@@ -119,17 +114,22 @@ bool PNGImporter::Open(DataStream* stream)
 
 	hasPalette = (color_type == PNG_COLOR_TYPE_PALETTE);
 
+	void *buffer;
+	if (hasPalette)
+		buffer = data = new unsigned char[Width * Height];
+	else
+		buffer = pixels = new Color[Width * Height];
+
+	if (!ReadData((unsigned char*) buffer))
+		return false;
 	ReadPalette();
 
 	return true;
 }
 
-Sprite2D* PNGImporter::GetSprite2D()
+bool PNGImporter::ReadData(unsigned char *buffer)
 {
-	Sprite2D* spr = 0;
-	unsigned char* buffer = 0;
 	png_bytep* row_pointers = new png_bytep[Height];
-	buffer = (unsigned char *) malloc((hasPalette?1:4)*Width*Height);
 	for (unsigned int i = 0; i < Height; ++i)
 		row_pointers[i] = reinterpret_cast<png_bytep>(&buffer[(hasPalette?1:4)*i*Width]);
 
@@ -147,21 +147,7 @@ Sprite2D* PNGImporter::GetSprite2D()
 
 	// the end_info struct isn't used, but passing it anyway for now
 	png_read_end(png_ptr, end_info);
-
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-
-	if (hasPalette) {
-		// TODO: colorkey
-		spr = core->GetVideoDriver()->CreateSprite8(Width, Height, 8,
-				buffer, Palette, false, 0);
-	} else {
-		spr = core->GetVideoDriver()->CreateSprite(Width, Height, 32,
-												   red_mask, green_mask,
-												   blue_mask, alpha_mask,
-												   buffer, false, 0);
-	}
-
-	return spr;
+	return true;
 }
 
 void PNGImporter::ReadPalette()

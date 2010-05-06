@@ -26,25 +26,18 @@
 
 #define BMP_HEADER_SIZE  54
 
-static ieDword red_mask = 0x00ff0000;
-static ieDword green_mask = 0x0000ff00;
-static ieDword blue_mask = 0x000000ff;
-
 BMPImporter::BMPImporter(void)
 {
-	Palette = NULL;
-	pixels = NULL;
-	if (DataStream::IsEndianSwitch()) {
-		red_mask = 0x000000ff;
-		green_mask = 0x0000ff00;
-		blue_mask = 0x00ff0000;
-	}
+	HasColorKey = true;
+	ColorKey.r = 0;
+	ColorKey.g = 0xff;
+	ColorKey.b = 0;
+	ColorKey.a = 0;
+	ColorKeyIndex = 0;
 }
 
 BMPImporter::~BMPImporter(void)
 {
-	free( Palette );
-	free( pixels );
 }
 
 bool BMPImporter::Open(DataStream* stream)
@@ -112,8 +105,9 @@ bool BMPImporter::Open(DataStream* stream)
 			str->Read( &Palette[i].r, 1 );
 			str->Read( &Palette[i].a, 1 );
 		}
-		for (unsigned int j = NumColors; j < 256; ++j)
+		for (unsigned int j = NumColors; j < 256; ++j) {
 			Palette[j] = Palette[j%NumColors];
+		}
 	}
 	str->Seek( DataOffset, GEM_STREAM_START );
 	//no idea if we have to swap this or not
@@ -152,36 +146,40 @@ bool BMPImporter::Open(DataStream* stream)
 	void* rpixels = malloc( PaddedRowLength* Height );
 	str->Read( rpixels, PaddedRowLength * Height );
 	if (BitCount == 32) {
-		//convert to 24 bits on the fly
-		int size = Width * Height * 3;
-		pixels = malloc( size );
-		unsigned char * dest = ( unsigned char * ) pixels;
-		dest += size;
+		int size = Width * Height;
+		pixels = new Color[size];
+		pixels += size;
 		unsigned char * src = ( unsigned char * ) rpixels;
 		for (int i = Height; i; i--) {
-			dest -= ( Width * 3 );
+			pixels -= Width;
 			for (unsigned int j=0;j<Width;j++) {
-				dest[j*3]=src[j*4];
-				dest[j*3+1]=src[j*4+1];
-				dest[j*3+2]=src[j*4+2];
+				pixels[j].b = src[j*4];
+				pixels[j].g = src[j*4+1];
+				pixels[j].r = src[j*4+2];
+				pixels[j].a = src[j*4+3];
 			}
 			src += PaddedRowLength;
 		}
 		BitCount = 24;
+		HasColorKey = false;
 	} else if (BitCount == 24) {
-		int size = Width * Height * 3;
-		pixels = malloc( size );
-		unsigned char * dest = ( unsigned char * ) pixels;
-		dest += size;
+		int size = Width * Height;
+		pixels = new Color[size];
+		pixels += size;
 		unsigned char * src = ( unsigned char * ) rpixels;
 		for (int i = Height; i; i--) {
-			dest -= ( Width * 3 );
-			memcpy( dest, src, Width * 3 );
+			pixels -= Width;
+			for (unsigned int j=0;j<Width;j++) {
+				pixels[j].b = src[j*3];
+				pixels[j].g = src[j*3+1];
+				pixels[j].r = src[j*3+2];
+				pixels[j].a = 0;
+			}
 			src += PaddedRowLength;
 		}
 	} else if (BitCount == 8) {
-		pixels = malloc( Width * Height );
-		unsigned char * dest = ( unsigned char * ) pixels;
+		data = new unsigned char[Width * Height];
+		unsigned char * dest = ( unsigned char * ) data;
 		dest += Height * Width;
 		unsigned char * src = ( unsigned char * ) rpixels;
 		for (int i = Height; i; i--) {
@@ -196,24 +194,11 @@ bool BMPImporter::Open(DataStream* stream)
 	return true;
 }
 
-void BMPImporter::Read8To8(void *rpixels)
-{
-	pixels = malloc( Width * Height );
-	unsigned char * dest = ( unsigned char * ) pixels;
-	dest += Height * Width;
-	unsigned char * src = ( unsigned char * ) rpixels;
-	for (int i = Height; i; i--) {
-		dest -= Width;
-		memcpy( dest, src, Width );
-		src += PaddedRowLength;
-	}
-}
-
 void BMPImporter::Read4To8(void *rpixels)
 {
 	BitCount = 8;
-	pixels = malloc( Width * Height );
-	unsigned char * dest = ( unsigned char * ) pixels;
+	data = new unsigned char[Width * Height];
+	unsigned char * dest = ( unsigned char * ) data;
 	dest += Height * Width;
 	unsigned char * src = ( unsigned char * ) rpixels;
 	for (int i = Height; i; i--) {
@@ -227,52 +212,6 @@ void BMPImporter::Read4To8(void *rpixels)
 		}
 		src += PaddedRowLength;
 	}
-}
-
-Sprite2D* BMPImporter::GetSprite2D()
-{
-	Sprite2D* spr = NULL;
-	if (BitCount == 24) {
-		void* p = malloc( Width * Height * 3 );
-		memcpy( p, pixels, Width * Height * 3 );
-		spr = core->GetVideoDriver()->CreateSprite( Width, Height, 24,
-			red_mask, green_mask, blue_mask, 0x00000000, p,
-			true, green_mask );
-	} else if (BitCount == 8) {
-		void* p = malloc( Width* Height );
-		memcpy( p, pixels, Width * Height );
-		spr = core->GetVideoDriver()->CreateSprite8( Width, Height, NumColors==16?4:8,
-			p, Palette, true, 0 );
-	}
-	return spr;
-}
-
-Bitmap* BMPImporter::GetBitmap()
-{
-	Bitmap *data = new Bitmap(Width,Height);
-
-	unsigned char *p = ( unsigned char * ) pixels;
-	switch (BitCount) {
-	case 8:
-		for (unsigned int y = 0; y < Height; y++) {
-			for (unsigned int x = 0; x < Width; x++) {
-				data->SetAt(x,y,p[y*Width + x]);
-			}
-		}
-		break;
-	case 24:
-		printMessage("BMPImporter", "Don't know how to handle 24bit bitmap from ", WHITE);
-		printf( "%s...", str->filename );
-		printStatus( "ERROR", LIGHT_RED );
-		for (unsigned int y = 0; y < Height; y++) {
-			for (unsigned int x = 0; x < Width; x++) {
-				data->SetAt(x,y,p[3*(y*Width + x)]);
-			}
-		}
-		break;
-	}
-
-	return data;
 }
 
 #include "plugindef.h"

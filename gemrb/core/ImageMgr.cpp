@@ -27,11 +27,15 @@
 const TypeID ImageMgr::ID = { "ImageMgr" };
 
 ImageMgr::ImageMgr(void)
+	: HasColorKey(false), pixels(), data(), Palette()
 {
 }
 
 ImageMgr::~ImageMgr(void)
 {
+	delete[] data;
+	delete[] Palette;
+	delete[] pixels;
 }
 
 size_t ImageMgr::GetWidth()
@@ -43,46 +47,70 @@ size_t ImageMgr::GetHeight()
 {
 	return Height;
 }
+
+Sprite2D* ImageMgr::GetSprite2D()
+{
+	if (Palette) {
+		void *p = malloc(Width * Height);
+		memcpy(p, data, Width * Height);
+		return core->GetVideoDriver()->CreateSprite8( Width, Height, 8,
+				p, Palette, HasColorKey, ColorKeyIndex);
+	} else {
+		// FIXME: copy paste
+		union {
+			Color color;
+			ieDword Mask;
+		} r = {{ 0xFF, 0x00, 0x00, 0x00 }},
+		      g = {{ 0x00, 0xFF, 0x00, 0x00 }},
+		      b = {{ 0x00, 0x00, 0xFF, 0x00 }},
+		      a = {{ 0x00, 0x00, 0x00, 0xFF }},
+		      cK = { ColorKey };
+		void *p = malloc(sizeof(Color) * Height*Width);
+		memcpy(p, pixels, sizeof(Color)*Height*Width);
+		return core->GetVideoDriver()->CreateSprite(Width, Height, 32,
+				r.Mask, g.Mask, b.Mask, !HasColorKey ? a.Mask : 0, p, HasColorKey, cK.Mask);
+	}
+}
+
 Bitmap* ImageMgr::GetBitmap()
 {
-	unsigned int height = GetHeight();
-	unsigned int width = GetWidth();
-	Bitmap *data = new Bitmap(width, height);
+	if (Palette) {
+		Bitmap *bitmap = new Bitmap(Width, Height, data);
+		data = NULL;
+		return bitmap;
+	} else {
+		printMessage("ImageMgr", "Don't know how to handle 24bit bitmap from ", WHITE);
+		printf( "%s...", str->filename );
+		printStatus( "ERROR", LIGHT_RED );
 
-	printMessage("ImageMgr", "Don't know how to handle 24bit bitmap from ", WHITE);
-	printf( "%s...", str->filename );
-	printStatus( "ERROR", LIGHT_RED );
+		Bitmap *bitmap = new Bitmap(Width, Height);
 
-	Sprite2D *spr = GetSprite2D();
-
-	for (unsigned int y = 0; y < height; y++) {
-		for (unsigned int x = 0; x < width; x++) {
-			data->SetAt(x,y, spr->GetPixel(x,y).r);
+		for (unsigned int y = 0; y < Height; y++) {
+			for (unsigned int x = 0; x < Width; x++) {
+				bitmap->SetAt(x,y, pixels[y*Width+x].r);
+			}
 		}
+		return bitmap;
 	}
-
-	core->GetVideoDriver()->FreeSprite(spr);
-
-	return data;
 }
 
 Image* ImageMgr::GetImage()
 {
-	unsigned int height = GetHeight();
-	unsigned int width = GetWidth();
-	Image *data = new Image(width, height);
+	if (!Palette) {
+		Image *image = new Image(Width, Height, pixels);
+		pixels = NULL;
+		return image;
+	} else {
+		Image *image = new Image(Width, Height);
 
-	Sprite2D *spr = GetSprite2D();
-
-	for (unsigned int y = 0; y < height; y++) {
-		for (unsigned int x = 0; x < width; x++) {
-			data->SetPixel(x,y, spr->GetPixel(x,y));
+		for (unsigned int y = 0; y < Height; y++) {
+			for (unsigned int x = 0; x < Width; x++) {
+				image->SetPixel(x,y, Palette[data[y*Width + x]]);
+			}
 		}
+
+		return image;
 	}
-
-	core->GetVideoDriver()->FreeSprite(spr);
-
-	return data;
 }
 
 void ImageMgr::GetPalette(size_t colors, Color* pal)
