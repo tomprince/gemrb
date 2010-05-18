@@ -1350,9 +1350,6 @@ int Interface::Init()
 		PathJoin( path, core->GamePath, core->GameSoundsPath, NULL);
 		gamedata->AddSource(path, "Sounds", PLUGIN_RESOURCE_DIRECTORY);
 
-		PathJoin( path, core->GamePath, core->GameScriptsPath, NULL);
-		gamedata->AddSource(path, "Scripts", PLUGIN_RESOURCE_DIRECTORY);
-
 		PathJoin( path, core->GamePath, core->GamePortraitsPath, NULL);
 		gamedata->AddSource(path, "Portraits", PLUGIN_RESOURCE_DIRECTORY);
 

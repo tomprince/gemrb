@@ -1460,8 +1460,6 @@ Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
 {
 	char line[10];
 
-	SClass_ID type = AIScript ? IE_BS_CLASS_ID : IE_BCS_CLASS_ID;
-
 	Script *newScript = (Script *) BcsCache.GetResource(ResRef);
 	if ( newScript ) {
 		if (InDebug&ID_REFERENCE) {
@@ -1470,7 +1468,18 @@ Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
 		return newScript;
 	}
 
-	DataStream* stream = gamedata->GetResource( ResRef, type );
+	// Move out of this function.
+	ResourceManager manager;
+	char path[_MAX_PATH];
+	PathJoin( path, core->GamePath, core->GameScriptsPath, NULL);
+	manager.AddSource(path, "Scripts", PLUGIN_RESOURCE_DIRECTORY);
+
+	DataStream* stream;
+	if (AIScript)
+		stream = manager.GetResource( ResRef, IE_BS_CLASS_ID );
+	else
+		stream = gamedata->GetResource( ResRef, IE_BCS_CLASS_ID );
+
 	if (!stream) {
 		return NULL;
 	}
