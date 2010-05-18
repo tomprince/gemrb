@@ -273,8 +273,7 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 
 DataStream* KEYImporter::GetResource(const char* resname, SClass_ID type)
 {
-	//the word masking is a hack for synonyms, currently used for bcs==bs
-	return GetStream(resname, type&0xFFFF);
+	return GetStream(resname, type);
 }
 
 DataStream* KEYImporter::GetResource(const char* resname, const ResourceDesc &type)
