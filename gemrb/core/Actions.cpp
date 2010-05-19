@@ -803,6 +803,14 @@ void GameScript::ChangeAIScript(Scriptable* Sender, Action* parameters)
 	Sender->SetScript( parameters->string0Parameter, parameters->int0Parameter, false );
 }
 
+void GameScript::ChangeCurrentScript(Scriptable* Sender, Action* parameters)
+{
+	if (Sender->Type!=ST_ACTOR && scriptlevel) {
+		return;
+	}
+	Sender->SetScript( parameters->string0Parameter, scriptlevel, false );
+}
+
 void GameScript::ForceAIScript(Scriptable* Sender, Action* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objects[1] );
