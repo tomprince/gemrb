@@ -32,7 +32,7 @@ BMPImporter::BMPImporter(void)
 	ColorKey.r = 0;
 	ColorKey.g = 0xff;
 	ColorKey.b = 0;
-	ColorKey.a = 0;
+	ColorKey.a = 0xff;
 	ColorKeyIndex = 0;
 }
 
@@ -104,6 +104,7 @@ bool BMPImporter::Open(DataStream* stream)
 			str->Read( &Palette[i].g, 1 );
 			str->Read( &Palette[i].r, 1 );
 			str->Read( &Palette[i].a, 1 );
+			Palette[i].a = 0xff;
 		}
 		for (unsigned int j = NumColors; j < 256; ++j) {
 			Palette[j] = Palette[j%NumColors];

@@ -33,7 +33,7 @@ MOSImporter::MOSImporter(void)
 	ColorKey.r = 0;
 	ColorKey.g = 0xff;
 	ColorKey.b = 0;
-	ColorKey.a = 0;
+	ColorKey.a = 0xff;
 }
 
 MOSImporter::~MOSImporter(void)
@@ -122,7 +122,7 @@ bool MOSImporter::Open(DataStream* stream)
 				( x * 64 );
 			for (int h = 0; h < bh; h++) {
 				for (int w = 0; w < bw; w++) {
-					startpixel[w].a = 0;
+					startpixel[w].a = 0xFF;
 					startpixel[w].b = RevCol[*bp].b;
 					startpixel[w].g = RevCol[*bp].g;
 					startpixel[w].r = RevCol[*bp].r;
