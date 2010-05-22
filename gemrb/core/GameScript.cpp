@@ -1382,6 +1382,163 @@ Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
 	return newScript;
 }
 
+/* this may return more than a boolean, in case of Or(x) */
+int EvaluateTrigger(Scriptable* Sender, Trigger* trigger)
+{
+	if (!trigger) {
+		printMessage( "GameScript","Trigger evaluation fails due to NULL trigger.\n",LIGHT_RED );
+		return 0;
+	}
+	TriggerFunction func = triggers[trigger->triggerID];
+	const char *tmpstr=triggersTable->GetValue(trigger->triggerID);
+	if (!tmpstr) {
+		tmpstr=triggersTable->GetValue(trigger->triggerID|0x4000);
+	}
+	if (!func) {
+		triggers[trigger->triggerID] = GameScript::False;
+		printMessage("GameScript"," ",YELLOW);
+		printf("Unhandled trigger code: 0x%04x %s\n",
+			trigger->triggerID, tmpstr );
+		return 0;
+	}
+	if (InDebug&ID_TRIGGERS) {
+		printMessage("GameScript"," ",YELLOW);
+		printf( "Executing trigger code: 0x%04x %s\n",
+				trigger->triggerID, tmpstr );
+	}
+	int ret = func( Sender, trigger );
+	if (trigger->flags & NEGATE_TRIGGER) {
+		return !ret;
+	}
+	return ret;
+}
+
+static bool EvaluateCondition(Scriptable* Sender, Condition* condition)
+{
+	int ORcount = 0;
+	unsigned int result = 0;
+	bool subresult = true;
+
+	for (int i = 0; i < condition->triggersCount; i++) {
+		Trigger* tR = condition->triggers[i];
+		//do not evaluate triggers in an Or() block if one of them
+		//was already True()
+		if (!ORcount || !subresult) {
+			result = EvaluateTrigger( Sender, tR );
+		}
+		if (result > 1) {
+			//we started an Or() block
+			if (ORcount) {
+				printMessage( "GameScript","Unfinished OR block encountered!\n",YELLOW );
+			}
+			ORcount = result;
+			subresult = false;
+			continue;
+		}
+		if (ORcount) {
+			subresult |= ( result != 0 );
+			if (--ORcount) {
+				continue;
+			}
+			result = subresult;
+		}
+		if (!result) {
+			return 0;
+		}
+	}
+	if (ORcount) {
+		printMessage( "GameScript","Unfinished OR block encountered!\n",YELLOW );
+	}
+	return 1;
+}
+
+//continue is effective only as the last action in the block
+int ExecuteResponse(Scriptable* Sender, Response* rE)
+{
+	int ret = 0; // continue or not
+	for (int i = 0; i < rE->actionsCount; i++) {
+		Action* aC = rE->actions[i];
+		switch (actionflags[aC->actionID] & AF_MASK) {
+			case AF_INSTANT:
+				GameScript::ExecuteAction( Sender, aC );
+				ret = 0;
+				break;
+			case AF_NONE:
+				if (Sender->GetInternalFlag()&IF_CUTSCENEID) {
+					Scriptable *cs = Sender->GetCutsceneID();
+					if (cs) {
+						// maybe this belongs somewhere else, but it certainly
+						// happens at the start of the cutscene (note that the
+						// queue is NOT cleared, so you can still have a pending
+						// action block your cutscene!)
+						cs->ReleaseCurrentAction();
+
+						cs->AddAction( aC );
+					} else {
+						//this can happen if a script refers to a wrong cutsceneid
+						if (InDebug&ID_CUTSCENE) {
+							printMessage("GameScript","Did not find cutscene object, action ignored!\n",YELLOW);
+						}
+					}
+				} else {
+					//this shouldn't happen, i think
+					if (Sender->GetCutsceneID()) {
+						printf("Stuck with cutscene ID!\n");
+						abort();
+					}
+					//ogres in dltc need this
+					Sender->AddAction( aC );
+					//this was a mistake, nothing
+					//requires it, so use the code above
+					//AddAction( Sender, aC );
+				}
+				ret = 0;
+				break;
+			case AF_CONTINUE:
+			case AF_MASK:
+				ret = 1;
+				break;
+		}
+	}
+	return ret;
+}
+
+int ExecuteResponseSet(Scriptable* Sender, ResponseSet* rS)
+{
+	int i;
+
+	switch(rS->responsesCount) {
+		case 0:
+			return 0;
+		case 1:
+			return ExecuteResponse( Sender, rS->responses[0] );
+	}
+	/*default*/
+	int randWeight;
+	int maxWeight = 0;
+
+	for (i = 0; i < rS->responsesCount; i++) {
+		maxWeight+=rS->responses[i]->weight;
+	}
+	if (maxWeight) {
+		randWeight = rand() % maxWeight;
+	}
+	else {
+		randWeight = 0;
+	}
+
+	for (i = 0; i < rS->responsesCount; i++) {
+		Response* rE = rS->responses[i];
+		if (rE->weight > randWeight) {
+			return ExecuteResponse( Sender, rE );
+			/* this break is only symbolic */
+			break;
+		}
+		randWeight-=rE->weight;
+	}
+	return 0;
+}
+
 
 /*
  * if you pass non-NULL parameters, continuing is set to whether we Continue()ed
@@ -2588,163 +2745,6 @@ int GameScript::EvaluateString(Scriptable* Sender, char* String)
 		return ret;
 	}
 	return 0;
-}
-
-bool GameScript::EvaluateCondition(Scriptable* Sender, Condition* condition)
-{
-	int ORcount = 0;
-	unsigned int result = 0;
-	bool subresult = true;
-
-	for (int i = 0; i < condition->triggersCount; i++) {
-		Trigger* tR = condition->triggers[i];
-		//do not evaluate triggers in an Or() block if one of them
-		//was already True()
-		if (!ORcount || !subresult) {
-			result = EvaluateTrigger( Sender, tR );
-		}
-		if (result > 1) {
-			//we started an Or() block
-			if (ORcount) {
-				printMessage( "GameScript","Unfinished OR block encountered!\n",YELLOW );
-			}
-			ORcount = result;
-			subresult = false;
-			continue;
-		}
-		if (ORcount) {
-			subresult |= ( result != 0 );
-			if (--ORcount) {
-				continue;
-			}
-			result = subresult;
-		}
-		if (!result) {
-			return 0;
-		}
-	}
-	if (ORcount) {
-		printMessage( "GameScript","Unfinished OR block encountered!\n",YELLOW );
-	}
-	return 1;
-}
-
-/* this may return more than a boolean, in case of Or(x) */
-int GameScript::EvaluateTrigger(Scriptable* Sender, Trigger* trigger)
-{
-	if (!trigger) {
-		printMessage( "GameScript","Trigger evaluation fails due to NULL trigger.\n",LIGHT_RED );
-		return 0;
-	}
-	TriggerFunction func = triggers[trigger->triggerID];
-	const char *tmpstr=triggersTable->GetValue(trigger->triggerID);
-	if (!tmpstr) {
-		tmpstr=triggersTable->GetValue(trigger->triggerID|0x4000);
-	}
-	if (!func) {
-		triggers[trigger->triggerID] = False;
-		printMessage("GameScript"," ",YELLOW);
-		printf("Unhandled trigger code: 0x%04x %s\n",
-			trigger->triggerID, tmpstr );
-		return 0;
-	}
-	if (InDebug&ID_TRIGGERS) {
-		printMessage("GameScript"," ",YELLOW);
-		printf( "Executing trigger code: 0x%04x %s\n",
-				trigger->triggerID, tmpstr );
-	}
-	int ret = func( Sender, trigger );
-	if (trigger->flags & NEGATE_TRIGGER) {
-		return !ret;
-	}
-	return ret;
-}
-
-int GameScript::ExecuteResponseSet(Scriptable* Sender, ResponseSet* rS)
-{
-	int i;
-
-	switch(rS->responsesCount) {
-		case 0:
-			return 0;
-		case 1:
-			return ExecuteResponse( Sender, rS->responses[0] );
-	}
-	/*default*/
-	int randWeight;
-	int maxWeight = 0;
-
-	for (i = 0; i < rS->responsesCount; i++) {
-		maxWeight+=rS->responses[i]->weight;
-	}
-	if (maxWeight) {
-		randWeight = rand() % maxWeight;
-	}
-	else {
-		randWeight = 0;
-	}
-
-	for (i = 0; i < rS->responsesCount; i++) {
-		Response* rE = rS->responses[i];
-		if (rE->weight > randWeight) {
-			return ExecuteResponse( Sender, rE );
-			/* this break is only symbolic */
-			break;
-		}
-		randWeight-=rE->weight;
-	}
-	return 0;
-}
-
-//continue is effective only as the last action in the block
-int GameScript::ExecuteResponse(Scriptable* Sender, Response* rE)
-{
-	int ret = 0; // continue or not
-	for (int i = 0; i < rE->actionsCount; i++) {
-		Action* aC = rE->actions[i];
-		switch (actionflags[aC->actionID] & AF_MASK) {
-			case AF_INSTANT:
-				ExecuteAction( Sender, aC );
-				ret = 0;
-				break;
-			case AF_NONE:
-				if (Sender->GetInternalFlag()&IF_CUTSCENEID) {
-					Scriptable *cs = Sender->GetCutsceneID();
-					if (cs) {
-						// maybe this belongs somewhere else, but it certainly
-						// happens at the start of the cutscene (note that the
-						// queue is NOT cleared, so you can still have a pending
-						// action block your cutscene!)
-						cs->ReleaseCurrentAction();
-
-						cs->AddAction( aC );
-					} else {
-						//this can happen if a script refers to a wrong cutsceneid
-						if (InDebug&ID_CUTSCENE) {
-							printMessage("GameScript","Did not find cutscene object, action ignored!\n",YELLOW);
-						}
-					}
-				} else {
-					//this shouldn't happen, i think
-					if (Sender->GetCutsceneID()) {
-						printf("Stuck with cutscene ID!\n");
-						abort();
-					}
-					//ogres in dltc need this
-					Sender->AddAction( aC );
-					//this was a mistake, nothing
-					//requires it, so use the code above
-					//AddAction( Sender, aC );
-				}
-				ret = 0;
-				break;
-			case AF_CONTINUE:
-			case AF_MASK:
-				ret = 1;
-				break;
-		}
-	}
-	return ret;
 }
 
 void PrintAction(int actionID)

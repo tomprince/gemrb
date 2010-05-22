@@ -186,10 +186,6 @@ public:
 	void EvaluateAllBlocks();
 private: //Internal Functions
 	Script* CacheScript(ieResRef ResRef, bool AIScript);
-	bool EvaluateCondition(Scriptable* Sender, Condition* condition);
-	static int EvaluateTrigger(Scriptable* Sender, Trigger* trigger);
-	int ExecuteResponseSet(Scriptable* Sender, ResponseSet* rS);
-	int ExecuteResponse(Scriptable* Sender, Response* rE);
 private: //Internal variables
 	Scriptable* const MySelf;
 private: //Script Internal Variables
