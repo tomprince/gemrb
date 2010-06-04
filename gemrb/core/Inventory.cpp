@@ -588,7 +588,12 @@ int Inventory::RemoveItem(const char *resref, unsigned int flags, CREItem **res_
 		if (resref[0] && strnicmp(item->ItemResRef, resref, 8) ) {
 			continue;
 		}
-		*res_item=RemoveItem( (unsigned int) slot, 0);
+		item=RemoveItem( (unsigned int) slot, 0);
+		if (res_item) {
+			*res_item = item;
+		} else {
+			delete item;
+		}
 		return (int) slot;
 	}
 	*res_item = NULL;

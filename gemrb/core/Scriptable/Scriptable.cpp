@@ -1634,12 +1634,7 @@ bool Highlightable::TryUnlock(Actor *actor, bool removekey) {
 	}
 
 	if (removekey) {
-		CREItem *item = NULL;
-		haskey->inventory.RemoveItem(Key,0,&item);
-		//the item should always be existing!!!
-		if (item) {
-			delete item;
-		}
+		haskey->inventory.RemoveItem(Key,0);
 	}
 
 	return true;

@@ -236,8 +236,12 @@ public:
 	/** Returns CREItem in specified slot. 
 	 * If count !=0 it splits the item and returns only requested amount */
 	CREItem* RemoveItem(unsigned int slot, unsigned int count = 0);
-	/** returns slot of removed item, you can delete the removed item */
-	int RemoveItem(const char* resref, unsigned int flags, CREItem **res_item);
+	/**
+	 * Returns slot of removed item, you can delete the removed item
+	 *
+	 * @param res_item[ouy] Removed item. If this is NULL, the item is deleted.
+	 **/
+	int RemoveItem(const char* resref, unsigned int flags, CREItem **res_item = NULL);
 
 	/** adds CREItem to the inventory. If slot == -1, finds
 	** first eligible slot, eventually splitting the item to
