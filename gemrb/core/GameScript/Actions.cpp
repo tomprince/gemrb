@@ -4290,9 +4290,8 @@ void GameScript::CreateItem(Scriptable *Sender, Action* parameters)
 			return;
 	}
 
-	CREItem *item = new CREItem();
-	if (!CreateItemCore(item, parameters->string0Parameter, parameters->int0Parameter, parameters->int1Parameter, parameters->int2Parameter)) {
-		delete item;
+	CREItem *item = CreateItemCore(parameters->string0Parameter, parameters->int0Parameter, parameters->int1Parameter, parameters->int2Parameter);
+	if (!item) {
 		return;
 	}
 	if (tar->Type==ST_CONTAINER) {
@@ -4324,11 +4323,12 @@ void GameScript::CreateItemNumGlobal(Scriptable *Sender, Action* parameters)
 			return;
 	}
 	int value = CheckVariable( Sender, parameters->string0Parameter );
-	CREItem *item = new CREItem();
-	if (!CreateItemCore(item, parameters->string1Parameter, value, 0, 0)) {
-		delete item;
+
+	CREItem *item = CreateItemCore(parameters->string1Parameter, value, 0, 0);
+	if (!item) {
 		return;
 	}
+
 	if (Sender->Type==ST_CONTAINER) {
 		myinv->AddItem(item);
 	} else {
@@ -4352,9 +4352,9 @@ void GameScript::TakeItemReplace(Scriptable *Sender, Action* parameters)
 
 	Actor *scr = (Actor *) tar;
 	int slot = scr->inventory.RemoveItem(parameters->string1Parameter, IE_INV_ITEM_UNDROPPABLE);
-	CREItem *item = new CREItem();
-	if (!CreateItemCore(item, parameters->string0Parameter, -1, 0, 0)) {
-		delete item;
+
+	CREItem *item = CreateItemCore( parameters->string0Parameter, -1, 0, 0);
+	if (!item) {
 		return;
 	}
 	if (ASI_SUCCESS != scr->inventory.AddSlotItem(item,slot)) {
@@ -4663,9 +4663,9 @@ void GameScript::PickPockets(Scriptable *Sender, Action* parameters)
 			Sender->ReleaseCurrentAction();
 			return;
 		}
-		CREItem *item = new CREItem();
-		if (!CreateItemCore(item, core->GoldResRef, money, 0, 0)) {
-			abort();
+		CREItem *item = CreateItemCore(core->GoldResRef, money, 0, 0);
+		if (!item) {
+			error("GameScript", "Counldn't create gold '%s'.", core->GoldResRef);
 		}
 		if ( ASI_SUCCESS == snd->inventory.AddSlotItem(item, SLOT_ONLYINVENTORY)) {
 			scr->SetBase(IE_GOLD,scr->GetBase(IE_GOLD)-money);
