@@ -53,27 +53,3 @@ class metaIDWrapper(type):
       if key != 'methods':
         newdict[key] = classdict[key]
     return type.__new__(cls, classname, bases, newdict)
-
-
-# metaControl has two extra arguments: WinID and ID
-def make_caller_lambda_Control(M):
-  return lambda self, *args: M(self.WinID, self.ID, *args)
-class metaControl(type):
-  def __new__(cls, classname, bases, classdict):
-    def __init__(self, WinID, ID):
-      self.WinID = WinID
-      self.ID = ID
-    newdict = { '__slots__':['WinID', 'ID'], '__init__':__init__, }
-    if len(bases) == 1:
-      def __subinit__(self, WinID, ID):
-        bases[0].__init__(self, WinID, ID)
-      newdict['__init__'] = __subinit__
-      newdict['__slots__'] = []
-    methods = classdict['methods']
-    for key in methods:
-      newdict[key] = make_caller_lambda_Control(methods[key])
-    for key in classdict:
-      if key != 'methods':
-        newdict[key] = classdict[key]
-    return type.__new__(cls, classname, bases, newdict)
-

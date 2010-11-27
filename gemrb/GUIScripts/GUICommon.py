@@ -905,4 +905,4 @@ def ceildiv (n, d):
 		return (n+d-1)/d
 
 GameWindow = GUIClasses.GWindow(0)
-GameControl = GUIClasses.GControl(0,0)
+GameControl = GUIClasses.GControl((0,0))
