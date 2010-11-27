@@ -49,7 +49,16 @@ class metaIDWrapper(type):
     methods = classdict['methods']
     for key in methods: 
       newdict[key] = make_caller_lambda_ID(methods[key])
+    try:
+      properties = classdict['properties']
+      for key in properties:
+	try:
+	  newdict[key] = property(*map(make_caller_lambda_ID, properties[key]))
+	except TypeError:
+	  newdict[key] = property(make_caller_lambda_ID(properties[key]))
+    except KeyError:
+      pass
     for key in classdict:
-      if key != 'methods':
+      if key not in ('methods', 'propeties'):
         newdict[key] = classdict[key]
     return type.__new__(cls, classname, bases, newdict)

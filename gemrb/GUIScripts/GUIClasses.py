@@ -177,6 +177,12 @@ class GWorldMap(GControl):
     'SetTextColor': _GemRB.WorldMap_SetTextColor
   }
 
+class _Portraits:
+  def __init__(self, ID):
+    self.ID = ID
+  def __getitem__(self, index):
+    return _GemRB.SaveGame_GetPortrait(self.ID, index)
+
 class GSaveGame:
   __metaclass__ = metaIDWrapper
   methods = {
@@ -186,6 +192,14 @@ class GSaveGame:
     'GetPortrait': _GemRB.SaveGame_GetPortrait,
     'GetPreview': _GemRB.SaveGame_GetPreview,
     'GetSaveID': _GemRB.SaveGame_GetSaveID,
+  }
+  properties = {
+    'date': _GemRB.SaveGame_GetDate,
+    'game_date': _GemRB.SaveGame_GetGameDate,
+    'name': _GemRB.SaveGame_GetName,
+    'portrait': _Portraits,
+    'preview': _GemRB.SaveGame_GetPreview,
+    'save_ID': _GemRB.SaveGame_GetSaveID,
   }
 
 class GSprite2D:
