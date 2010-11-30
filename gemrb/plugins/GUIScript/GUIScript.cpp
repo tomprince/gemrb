@@ -156,6 +156,9 @@ inline PyObject* RuntimeError(const char* msg)
 {
 	printMessage( "GUIScript", "Runtime Error:\n", LIGHT_RED );
 	PyErr_SetString( PyExc_RuntimeError, msg );
+	while (isspace(*(msg++)));
+	if (!*msg)
+		return NULL;
 	if (QuitOnError) {
 		core->Quit();
 	}
@@ -6422,15 +6425,6 @@ static PyObject* GemRB_UpdateAmbientsVolume(PyObject * /*self*/, PyObject* /*arg
 	return Py_None;
 }
 
-PyDoc_STRVAR( GemRB_GetCurrentArea__doc,
-"GetCurrentArea()=>resref\n\n"
-"Returns current area's ResRef." );
-
-static PyObject* GemRB_GetCurrentArea(PyObject * /*self*/, PyObject* /*args*/)
-{
-	return PyString_FromString( core->GetGame()->CurrentArea );
-}
-
 PyDoc_STRVAR( GemRB_MoveToArea__doc,
 "MoveToArea(resref)\n\n"
 "Moves the selected characters to the area." );
@@ -9684,6 +9678,9 @@ static PyObject* GemRB_SetTickHook(PyObject* /*self*/, PyObject* args)
 	return Py_None;
 }
 
+#include "Actor.inc"
+#include "Area.inc"
+
 static PyMethodDef GemRBMethods[] = {
 	METHOD(ActOnPC, METH_VARARGS),
 	METHOD(AddNewArea, METH_VARARGS),
@@ -9726,6 +9723,7 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GameSetReputation, METH_VARARGS),
 	METHOD(GameGetFirstSelectedActor, METH_NOARGS),
 	METHOD(GameGetFirstSelectedPC, METH_NOARGS),
+	METHOD(GameGetExpansion, METH_NOARGS),
 	METHOD(GameGetFormation, METH_VARARGS),
 	METHOD(GameGetPartyGold, METH_NOARGS),
 	METHOD(GameGetSelectedPCSingle, METH_VARARGS),
@@ -9735,13 +9733,13 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GameSelectPC, METH_VARARGS),
 	METHOD(GameSelectPCSingle, METH_VARARGS),
 	METHOD(GameSetExpansion, METH_VARARGS),
-	METHOD(GameGetExpansion, METH_NOARGS),
 	METHOD(GameSetFormation, METH_VARARGS),
 	METHOD(GameSetPartyGold, METH_VARARGS),
 	METHOD(GameSetPartySize, METH_VARARGS),
 	METHOD(GameSetProtagonistMode, METH_VARARGS),
 	METHOD(GameSetScreenFlags, METH_VARARGS),
 	METHOD(GetAbilityBonus, METH_VARARGS),
+	METHOD(GetAreas, METH_NOARGS),
 	METHOD(GetCombatDetails, METH_VARARGS),
 	METHOD(GetContainer, METH_VARARGS),
 	METHOD(GetContainerItem, METH_VARARGS),
@@ -9766,32 +9764,34 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GetMemorizedSpell, METH_VARARGS),
 	METHOD(GetMemorizedSpellsCount, METH_VARARGS),
 	METHOD(GetMessageWindowSize, METH_NOARGS),
-	METHOD(GetPartySize, METH_NOARGS),
+	METHOD(GetNPCs, METH_NOARGS),
 	METHOD(GetPCStats, METH_VARARGS),
+	METHOD(GetPCs, METH_NOARGS),
+	METHOD(GetPartySize, METH_NOARGS),
 	METHOD(GetPlayerName, METH_VARARGS),
 	METHOD(GetPlayerPortrait, METH_VARARGS),
-	METHOD(GetPlayerStat, METH_VARARGS),
-	METHOD(GetPlayerStates, METH_VARARGS),
 	METHOD(GetPlayerScript, METH_VARARGS),
 	METHOD(GetPlayerSound, METH_VARARGS),
+	METHOD(GetPlayerStat, METH_VARARGS),
+	METHOD(GetPlayerStates, METH_VARARGS),
 	METHOD(GetPlayerString, METH_VARARGS),
+	METHOD(GetRumour, METH_VARARGS),
 	METHOD(GetSaveGames, METH_VARARGS),
-	METHOD(GetSelectedSize, METH_NOARGS),
 	METHOD(GetSelectedActors, METH_NOARGS),
-	METHOD(GetString, METH_VARARGS),
+	METHOD(GetSelectedSize, METH_NOARGS),
+	METHOD(GetSlotItem, METH_VARARGS),
+	METHOD(GetSlotType, METH_VARARGS),
+	METHOD(GetSlots, METH_VARARGS),
+	METHOD(GetSpell, METH_VARARGS),
 	METHOD(GetSpellCastOn, METH_VARARGS),
+	METHOD(GetStore, METH_VARARGS),
+	METHOD(GetStoreCure, METH_VARARGS),
+	METHOD(GetStoreDrink, METH_VARARGS),
+	METHOD(GetStoreItem, METH_VARARGS),
+	METHOD(GetString, METH_VARARGS),
+	METHOD(GetSystemVariable, METH_VARARGS),
 	METHOD(GetToken, METH_VARARGS),
 	METHOD(GetVar, METH_VARARGS),
-	METHOD(GetSlotType, METH_VARARGS),
-	METHOD(GetStore, METH_VARARGS),
-	METHOD(GetStoreDrink, METH_VARARGS),
-	METHOD(GetStoreCure, METH_VARARGS),
-	METHOD(GetStoreItem, METH_VARARGS),
-	METHOD(GetSpell, METH_VARARGS),
-	METHOD(GetSlotItem, METH_VARARGS),
-	METHOD(GetSlots, METH_VARARGS),
-	METHOD(GetSystemVariable, METH_VARARGS),
-	METHOD(GetRumour, METH_VARARGS),
 	METHOD(HardEndPL, METH_NOARGS),
 	METHOD(HasResource, METH_VARARGS),
 	METHOD(HasSpecialItem, METH_VARARGS),
@@ -9869,6 +9869,11 @@ static PyMethodDef GemRBMethods[] = {
 };
 
 static PyMethodDef GemRBInternalMethods[] = {
+	METHOD(Actor_get_name, METH_VARARGS),
+	METHOD(Actor_get_scriptname, METH_VARARGS),
+	METHOD(Actor_get_stat, METH_VARARGS),
+	METHOD(Area_get_name, METH_VARARGS),
+	METHOD(Area_get_actors, METH_VARARGS),
 	METHOD(Button_CreateLabelOnButton, METH_VARARGS),
 	METHOD(Button_EnableBorder, METH_VARARGS),
 	METHOD(Button_SetActionIcon, METH_VARARGS),

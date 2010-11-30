@@ -38,7 +38,6 @@ private:
 	PyObject *Function;
 };
 
-
 template <typename T>
 class CObject : public Holder<T> {
 private:

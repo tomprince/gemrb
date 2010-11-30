@@ -183,7 +183,7 @@ class _Portraits:
   def __getitem__(self, index):
     return _GemRB.SaveGame_GetPortrait(self.ID, index)
 
-class GSaveGame:
+class GSaveGame(object):
   __metaclass__ = metaIDWrapper
   methods = {
     'GetDate': _GemRB.SaveGame_GetDate,
@@ -205,3 +205,31 @@ class GSaveGame:
 class GSprite2D:
   __metaclass__ = metaIDWrapper
   methods = {}
+
+class _Stats:
+  def __init__(self, ID):
+    self.ID = ID
+  def __getitem__(self, index):
+    return _GemRB.Actor_get_stat(self.ID, index)
+
+class GActor(object):
+  __metaclass__ = metaIDWrapper
+  methods = {}
+  properties = {
+    'name' : [ lambda ID: _GemRB.Actor_get_name(ID, -1) ],
+    'shortname' : [ lambda ID: _GemRB.Actor_get_name(ID, 0) ],
+    'longname' : [ lambda ID: _GemRB.Actor_get_name(ID, 1) ],
+    'scriptname' : [ _GemRB.Actor_get_scriptname ],
+    'GlobalID' : [ lambda ID: ID ],
+    'stats' : _Stats,
+  }
+  def __hash__(self):
+	  return self.ID
+
+class GArea(object):
+  __metaclass__ = metaIDWrapper
+  methods = {}
+  properties = {
+    'name' : [ _GemRB.Area_get_name ],
+    'actors' : [ _GemRB.Area_get_actors ],
+  }
