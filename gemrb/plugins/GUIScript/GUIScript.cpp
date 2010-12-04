@@ -9870,6 +9870,7 @@ static PyMethodDef GemRBMethods[] = {
 
 static PyMethodDef GemRBInternalMethods[] = {
 	METHOD(Actor_get_name, METH_VARARGS),
+	METHOD(Actor_get_map, METH_VARARGS),
 	METHOD(Actor_get_scriptname, METH_VARARGS),
 	METHOD(Actor_get_stat, METH_VARARGS),
 	METHOD(Area_get_name, METH_VARARGS),

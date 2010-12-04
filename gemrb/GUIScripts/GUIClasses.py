@@ -221,6 +221,7 @@ class GActor(object):
     'longname' : [ lambda ID: _GemRB.Actor_get_name(ID, 1) ],
     'scriptname' : [ _GemRB.Actor_get_scriptname ],
     'GlobalID' : [ lambda ID: ID ],
+    'map' : [ _GemRB.Actor_get_map ],
     'stats' : _Stats,
   }
   def __hash__(self):
@@ -232,4 +233,5 @@ class GArea(object):
   properties = {
     'name' : [ _GemRB.Area_get_name ],
     'actors' : [ _GemRB.Area_get_actors ],
+    'GlobalID' : [ lambda ID: ID ],
   }

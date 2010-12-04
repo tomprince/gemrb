@@ -11,7 +11,7 @@ static PyObject* GemRB_GetAreas(PyObject*, PyObject* /*args*/)
 	size_t size = game->GetLoadedMapCount();
 	PyObject *list = PyList_New(size);
 	for (size_t i = 0; i < size; ++i) {
-		PyList_SetItem(list, i, gs->ConstructObject("Area", i));
+		PyList_SetItem(list, i, gs->ConstructObject("Area", game->GetMap(i)->GetGlobalID()));
 	}
 
 	return list;
@@ -30,7 +30,7 @@ static PyObject* GemRB_GetCurrentArea(PyObject*, PyObject* /*args*/)
 	int area = game->FindMap(game->CurrentArea);
 	if (area == -1)
 		return RuntimeError("No current area!");
-	return gs->ConstructObject("Area", area);
+	return gs->ConstructObject("Area", game->GetMap(area)->GetGlobalID());
 }
 
 PyDoc_STRVAR(GemRB_Area_get_name__doc,
@@ -49,7 +49,7 @@ static PyObject* GemRB_Area_get_name(PyObject*, PyObject* args)
 		return RuntimeError( "No game loaded!" );
 	}
 
-	Map *area = game->GetMap(AreaID);
+	Map *area = game->GetMapByGlobalID(AreaID);
 	return PyString_FromString(area->GetScriptName());
 }
 
@@ -69,7 +69,7 @@ static PyObject* GemRB_Area_get_actors(PyObject*, PyObject* args)
 		return RuntimeError( "No game loaded!" );
 	}
 
-	Map *area = game->GetMap(AreaID);
+	Map *area = game->GetMapByGlobalID(AreaID);
 
 	size_t size = area->GetActorCount(true);
 	PyObject *list = PyList_New(size);

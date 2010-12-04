@@ -36,27 +36,40 @@ static PyObject* GemRB_GetNPCs(PyObject*, PyObject* /*args*/)
 	return list;
 }
 
+static int get_actor(PyObject* obj, Actor** ptr)
+{
+	int GlobalID = PyInt_AsLong(obj);
+	if (GlobalID == -1 && PyErr_Occurred()) {
+		return false;
+	}
+	
+	Game *game = core->GetGame();
+	if (!game) {
+		return (bool)RuntimeError( "No game loaded!" );
+	}
+
+	Actor *actor = game->GetActorByGlobalID(GlobalID);
+	if (!actor) {
+		return (bool)RuntimeError("No such actor!");
+	}
+	*ptr = actor;
+	return true;
+}
+
+
 PyDoc_STRVAR(GemRB_Actor_get_name__doc,
 "Get actors name.\n\n"
 "arg => -1 for name, 0 for shortname, 1 for longname");
 
 static PyObject* GemRB_Actor_get_name(PyObject*, PyObject* args)
 {
-	int GlobalID, Which;
+	Actor *actor;
+	int Which;
 
-	if (!PyArg_ParseTuple(args, "ii", &GlobalID, &Which)) {
+	if (!PyArg_ParseTuple(args, "O&i", get_actor, &actor, &Which)) {
 		return AttributeError(GemRB_Actor_get_name__doc);
 	}
 
-	Game *game = core->GetGame();
-	if (!game) {
-		return RuntimeError( "No game loaded!" );
-	}
-
-	Actor *actor = game->GetActorByGlobalID(GlobalID);
-	if (!actor) {
-		return RuntimeError("No such actor!");
-	}
 	return PyString_FromString(actor->GetName(Which));
 }
 
@@ -65,21 +78,12 @@ PyDoc_STRVAR(GemRB_Actor_get_scriptname__doc,
 
 static PyObject* GemRB_Actor_get_scriptname(PyObject*, PyObject* args)
 {
-	int GlobalID;
+	Actor *actor;
 
-	if (!PyArg_ParseTuple(args, "i", &GlobalID)) {
+	if (!PyArg_ParseTuple(args, "O&", get_actor, &actor)) {
 		return AttributeError(GemRB_Actor_get_scriptname__doc);
 	}
 
-	Game *game = core->GetGame();
-	if (!game) {
-		return RuntimeError( "No game loaded!" );
-	}
-
-	Actor *actor = game->GetActorByGlobalID(GlobalID);
-	if (!actor) {
-		return RuntimeError("No such actor!");
-	}
 	return PyString_FromString(actor->GetScriptName());
 }
 
@@ -88,21 +92,31 @@ PyDoc_STRVAR(GemRB_Actor_get_stat__doc,
 
 static PyObject* GemRB_Actor_get_stat(PyObject*, PyObject* args)
 {
-	int GlobalID, Stat;
+	Actor *actor;
+	int Stat;
 
-	if (!PyArg_ParseTuple(args, "ii", &GlobalID, &Stat)) {
+	if (!PyArg_ParseTuple(args, "O&i", get_actor, &actor, &Stat)) {
 		return AttributeError(GemRB_Actor_get_stat__doc);
 	}
 
-	Game *game = core->GetGame();
-	if (!game) {
-		return RuntimeError( "No game loaded!" );
-	}
-
-	Actor *actor = game->GetActorByGlobalID(GlobalID);
-	if (!actor) {
-		return RuntimeError("No such actor!");
-	}
 	return PyInt_FromLong(actor->GetStat(Stat));
 }
 
+PyDoc_STRVAR(GemRB_Actor_get_map__doc,
+"Get actors maps.");
+
+static PyObject* GemRB_Actor_get_map(PyObject*, PyObject* args)
+{
+	Actor *actor;
+
+	if (!PyArg_ParseTuple(args, "O&", get_actor, &actor)) {
+		return AttributeError(GemRB_Actor_get_map__doc);
+	}
+
+	Map *map = actor->GetCurrentArea();
+	if (!map) {
+		Py_RETURN_NONE;
+	}
+
+	return gs->ConstructObject("Area", map->GetGlobalID());
+}
