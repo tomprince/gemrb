@@ -1616,7 +1616,7 @@ GameScript::~GameScript(void)
 		}
 		if (!res) {
 			//printf("Freeing script %s because its refcount has reached 0.\n", Name);
-			script->Release();
+			delete script;
 		}
 		script = NULL;
 	}
@@ -2020,7 +2020,7 @@ int GameScript::EvaluateString(Scriptable* Sender, char* String)
 	Trigger* tri = GenerateTrigger( String );
 	if (tri) {
 		int ret = tri->Evaluate(Sender);
-		tri->Release();
+		delete tri;
 		return ret;
 	}
 	return 0;
@@ -2338,7 +2338,7 @@ bool Object::ReadyToDie()
 		}
 	}
 	//commit suicide
-	Release();
+	delete this;
 	return true;
 }
 

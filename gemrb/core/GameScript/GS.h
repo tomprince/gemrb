@@ -95,15 +95,6 @@ struct targettype {
 typedef std::list<targettype> targetlist;
 
 class GEM_EXPORT Targets {
-public:
-	Targets()
-	{
-	}
-
-	~Targets()
-	{
-		Clear();
-	}
 private:
 	targetlist objects;
 public:
@@ -126,25 +117,17 @@ public:
 		memset( objectFields, 0, MAX_OBJECT_FIELDS * sizeof( int ) );
 		memset( objectFilters, 0, MAX_NESTING * sizeof( int ) );
 		memset( objectRect, 0, 4 * sizeof( int ) );
-
-		canary = (unsigned long) 0xdeadbeef;
-	}
-	~Object()
-	{
 	}
 public:
 	int objectFields[MAX_OBJECT_FIELDS];
 	int objectFilters[MAX_NESTING];
 	int objectRect[4];
 	char objectName[65];
-private:
-	volatile unsigned long canary;
 public:
 	void Dump()
 	{
 		int i;
 
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
 		if(objectName[0]) {
 			printf("Object: %s\n",objectName);
 			return;
@@ -161,12 +144,6 @@ public:
 		printf("\n");
 	}
 
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 	bool ReadyToDie();
 };
 
@@ -181,14 +158,10 @@ public:
 		int0Parameter = 0;
 		int1Parameter = 0;
 		pointParameter.null();
-		canary = (unsigned long) 0xdeadbeef;
 	}
 	~Trigger()
 	{
-		if (objectParameter) {
-			objectParameter->Release();
-			objectParameter = NULL;
-		}
+		delete objectParameter;
 	}
 	int Evaluate(Scriptable* Sender);
 public:
@@ -201,12 +174,9 @@ public:
 	char string0Parameter[65];
 	char string1Parameter[65];
 	Object* objectParameter;
-private:
-	volatile unsigned long canary;
 public:
 	void Dump()
 	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
 		printf ("Trigger: %d\n", triggerID);
 		printf ("Int parameters: %d %d %d\n", int0Parameter, int1Parameter, int2Parameter);
 		printf ("Point: [%d.%d]\n", pointParameter.x, pointParameter.y);
@@ -219,42 +189,19 @@ public:
 		}
 		printf("\n");
 	}
-
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 class GEM_EXPORT Condition {
 public:
-	Condition()
-	{
-		canary = (unsigned long) 0xdeadbeef;
-	}
 	~Condition()
 	{
 		for (size_t c = 0; c < triggers.size(); ++c) {
-			if (triggers[c]) {
-				triggers[c]->Release();
-				triggers[c] = NULL;
-			}
+			delete triggers[c];
 		}
 	}
 	bool Evaluate(Scriptable* Sender);
 public:
 	std::vector<Trigger*> triggers;
-private:
-	volatile unsigned long canary;
-public:
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 class GEM_EXPORT Action {
@@ -277,15 +224,11 @@ public:
 		} else {
 			RefCount = 1; //one reference hold by the script
 		}
-		canary = (unsigned long) 0xdeadbeef;
 	}
 	~Action()
 	{
 		for (int c = 0; c < 3; c++) {
-			if (objects[c]) {
-				objects[c]->Release();
-				objects[c] = NULL;
-			}
+			delete objects[c];
 		}
 	}
 public:
@@ -299,7 +242,6 @@ public:
 	char string1Parameter[65];
 private:
 	int RefCount;
-	volatile unsigned long canary;
 public:
 	int GetRef() {
 		return RefCount;
@@ -308,7 +250,6 @@ public:
 	{
 		int i;
 
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
 		printf("Int0: %d, Int1: %d, Int2: %d\n",int0Parameter, int1Parameter, int2Parameter);
 		printf("String0: %s, String1: %s\n", string0Parameter?string0Parameter:"<NULL>", string1Parameter?string1Parameter:"<NULL>");
 		for (i=0;i<3;i++) {
@@ -325,7 +266,6 @@ public:
 
 	void Release()
 	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
 		if (!RefCount) {
 			printf( "WARNING!!! Double Freeing in %s: Line %d\n", __FILE__,
 				__LINE__ );
@@ -333,13 +273,11 @@ public:
 		}
 		RefCount--;
 		if (!RefCount) {
-			canary = 0xdddddddd;
 			delete this;
 		}
 	}
 	void IncRef()
 	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
 		RefCount++;
 		if (RefCount >= 65536) {
 			printf( "Refcount increased to: %d in action %d\n", RefCount,
@@ -354,7 +292,6 @@ public:
 	Response()
 	{
 		weight = 0;
-		canary = (unsigned long) 0xdeadbeef;
 	}
 	~Response()
 	{
@@ -364,7 +301,6 @@ public:
 					printf("Residue action %d with refcount %d\n", actions[c]->actionID, actions[c]->GetRef());
 				}
 				actions[c]->Release();
-				actions[c] = NULL;
 			}
 		}
 	}
@@ -372,42 +308,22 @@ public:
 public:
 	unsigned char weight;
 	std::vector<Action*> actions;
-private:
-	volatile unsigned long canary;
-public:
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 class GEM_EXPORT ResponseSet {
 public:
 	ResponseSet()
 	{
-		canary = (unsigned long) 0xdeadbeef;
 	}
 	~ResponseSet()
 	{
 		for (size_t b = 0; b < responses.size(); b++) {
-			responses[b]->Release();
-			responses[b] = NULL;
+			delete responses[b];
 		}
 	}
 	int Execute(Scriptable* Sender);
 public:
 	std::vector<Response*> responses;
-private:
-	volatile unsigned long canary;
-public:
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 class GEM_EXPORT ResponseBlock {
@@ -416,59 +332,27 @@ public:
 	{
 		condition = NULL;
 		responseSet = NULL;
-		canary = (unsigned long) 0xdeadbeef;
 	}
 	~ResponseBlock()
 	{
-		if (condition) {
-			condition->Release();
-			condition = NULL;
-		}
-		if (responseSet) {
-			responseSet->Release();
-			responseSet = NULL;
-		}
+		delete condition;
+		delete responseSet;
 	}
 public:
 	Condition* condition;
 	ResponseSet* responseSet;
-private:
-	volatile unsigned long canary;
-public:
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 class GEM_EXPORT Script {
 public:
-	Script()
-	{
-		canary = (unsigned long) 0xdeadbeef;
-	}
 	~Script()
 	{
 		for (unsigned int i = 0; i < responseBlocks.size(); i++) {
-			if (responseBlocks[i]) {
-				responseBlocks[i]->Release();
-				responseBlocks[i] = NULL;
-			}
+			delete responseBlocks[i];
 		}
 	}
 public:
 	std::vector<ResponseBlock*> responseBlocks;
-private:
-	volatile unsigned long canary;
-public:
-	void Release()
-	{
-		GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
-		canary = 0xdddddddd;
-		delete this;
-	}
 };
 
 typedef int (* TriggerFunction)(Scriptable*, Trigger*);

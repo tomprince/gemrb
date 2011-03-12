@@ -46,9 +46,8 @@ Store::~Store(void)
 	unsigned int i;
 
 	for (i = 0; i < items.size(); i++) {
-		if (items[i]->trigger)
-			items[i]->trigger->Release();
-		delete( items[i] );
+		delete items[i]->trigger;
+		delete items[i];
 	}
 	if(drinks)
 		free(drinks);
