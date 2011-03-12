@@ -22,7 +22,7 @@
 
 #include "win32def.h"
 
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 
 Dialog::Dialog(void)
 {

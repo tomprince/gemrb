@@ -26,7 +26,7 @@
 #include "Game.h"
 #include "GameData.h"
 #include "Video.h"
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 #include "GUI/GameControl.h"
 
 //translate section values (journal, solved, unsolved, user)

@@ -7999,7 +7999,7 @@ static PyObject* GemRB_LeaveParty(PyObject * /*self*/, PyObject* args)
 
 	if (initDialog) {
 		if (initDialog == 2)
-		GameScript::SetLeavePartyDialogFile(actor, NULL);
+		GS::SetLeavePartyDialogFile(actor, NULL);
 		if(actor->GetBase(IE_HITPOINTS) > 0) {
 			char Tmp[40];
 			actor->ClearPath();

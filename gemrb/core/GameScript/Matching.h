@@ -20,7 +20,7 @@
 #ifndef MATCHING_H
 #define MATCHING_H
 
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 
 #include "exports.h"
 

@@ -18,7 +18,7 @@
  *
  */
 
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 
 #include "GameScript/GSUtils.h"
 #include "GameScript/Matching.h"
@@ -36,59 +36,59 @@
 //in this implementation, Myself will drop the parameter array
 //i think all object filters could be expected to do so
 //they should remove unnecessary elements from the parameters
-Targets *GameScript::Myself(Scriptable* Sender, Targets* parameters, int ga_flags)
+Targets *GS::Myself(Scriptable* Sender, Targets* parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(Sender, 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::NearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::NearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 0);
 }
 
-Targets *GameScript::SecondNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::SecondNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 1);
 }
 
-Targets *GameScript::ThirdNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::ThirdNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 2);
 }
 
-Targets *GameScript::FourthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::FourthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 3);
 }
 
-Targets *GameScript::FifthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::FifthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 4);
 }
 
-Targets *GameScript::SixthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::SixthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 5);
 }
 
-Targets *GameScript::SeventhNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::SeventhNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 6);
 }
 
-Targets *GameScript::EighthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::EighthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 7);
 }
 
-Targets *GameScript::NinthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::NinthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 8);
 }
 
-Targets *GameScript::TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *GS::TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 9);
 }
@@ -97,7 +97,7 @@ Targets *GameScript::TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameter
 //in iwd2 this is the Gabber!!!
 //but also, if there is no gabber, it is the first PC
 //probably it is simply the nearest exportable character...
-Targets *GameScript::Protagonist(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::Protagonist(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	//this sucks but IWD2 is like that...
@@ -124,7 +124,7 @@ Targets *GameScript::Protagonist(Scriptable* Sender, Targets *parameters, int ga
 }
 
 //last talker
-Targets *GameScript::Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	GameControl* gc = core->GetGameControl();
@@ -134,7 +134,7 @@ Targets *GameScript::Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_
 	return parameters;
 }
 
-Targets *GameScript::LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	if (Sender->LastTriggerObject) {
@@ -144,7 +144,7 @@ Targets *GameScript::LastTrigger(Scriptable *Sender, Targets *parameters, int ga
 	return parameters;
 }
 
-Targets *GameScript::LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -163,7 +163,7 @@ Targets *GameScript::LastMarkedObject(Scriptable *Sender, Targets *parameters, i
 }
 
 //actions should always use LastMarkedObject, because LastSeen could be deleted
-Targets *GameScript::LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -181,7 +181,7 @@ Targets *GameScript::LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_
 	return parameters;
 }
 
-Targets *GameScript::LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -199,7 +199,7 @@ Targets *GameScript::LastHelp(Scriptable *Sender, Targets *parameters, int ga_fl
 	return parameters;
 }
 
-Targets *GameScript::LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -219,7 +219,7 @@ Targets *GameScript::LastHeardBy(Scriptable *Sender, Targets *parameters, int ga
 
 //i was told that Group means the same specifics, so this is just an
 //object selector for everyone with the same specifics as the current object
-Targets *GameScript::GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -243,7 +243,7 @@ Targets *GameScript::GroupOf(Scriptable *Sender, Targets *parameters, int ga_fla
 }
 
 /*this one is tough, but done */
-Targets *GameScript::ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -266,7 +266,7 @@ Targets *GameScript::ProtectorOf(Scriptable *Sender, Targets *parameters, int ga
 	return parameters;
 }
 
-Targets *GameScript::ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -284,7 +284,7 @@ Targets *GameScript::ProtectedBy(Scriptable *Sender, Targets *parameters, int ga
 	return parameters;
 }
 
-Targets *GameScript::LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -304,18 +304,18 @@ Targets *GameScript::LastCommandedBy(Scriptable *Sender, Targets *parameters, in
 
 // this is essentially a LastTargetedBy(0) - or MySelf
 // but IWD2 defines it
-Targets *GameScript::MyTarget(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::MyTarget(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	return GetMyTarget(Sender, NULL, parameters, ga_flags);
 }
 
-Targets *GameScript::LastTargetedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastTargetedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	return GetMyTarget(Sender, actor, parameters, ga_flags);
 }
 
-Targets *GameScript::LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -333,7 +333,7 @@ Targets *GameScript::LastAttackerOf(Scriptable *Sender, Targets *parameters, int
 	return parameters;
 }
 
-Targets *GameScript::LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -351,7 +351,7 @@ Targets *GameScript::LastHitter(Scriptable *Sender, Targets *parameters, int ga_
 	return parameters;
 }
 
-Targets *GameScript::LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -369,7 +369,7 @@ Targets *GameScript::LeaderOf(Scriptable *Sender, Targets *parameters, int ga_fl
 	return parameters;
 }
 
-Targets *GameScript::LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -387,7 +387,7 @@ Targets *GameScript::LastTalkedToBy(Scriptable *Sender, Targets *parameters, int
 	return parameters;
 }
 
-Targets *GameScript::LastSummonerOf(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::LastSummonerOf(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -405,119 +405,119 @@ Targets *GameScript::LastSummonerOf(Scriptable* Sender, Targets *parameters, int
 	return parameters;
 }
 
-Targets *GameScript::Player1(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player1(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(0,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player1Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player1Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(1), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player2(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player2(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(1,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player2Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player2Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(2), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player3(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player3(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(2,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player3Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player3Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(3), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player4(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player4(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(3,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player4Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player4Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(4), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player5(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player5(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(4,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player5Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player5Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(5), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player6(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player6(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(5,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player6Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player6Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(6), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player7(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player7(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(6,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player7Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player7Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(7), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player8(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player8(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(7,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::Player8Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Player8Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(8), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GameScript::BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -543,7 +543,7 @@ Targets *GameScript::BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_
 }
 
 /*no idea why this object exists since the gender could be filtered easier*/
-Targets *GameScript::StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -570,7 +570,7 @@ Targets *GameScript::StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters
 	return parameters;
 }
 
-Targets *GameScript::StrongestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::StrongestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -594,7 +594,7 @@ Targets *GameScript::StrongestOf(Scriptable* /*Sender*/, Targets *parameters, in
 	return parameters;
 }
 
-Targets *GameScript::WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -618,7 +618,7 @@ Targets *GameScript::WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int 
 	return parameters;
 }
 
-Targets *GameScript::WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -642,7 +642,7 @@ Targets *GameScript::WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga
 	return parameters;
 }
 
-Targets *GameScript::MostDamagedOf(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::MostDamagedOf(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	//Original engines restrict this to the PCs...
 	/*targetlist::iterator m;
@@ -684,7 +684,7 @@ Targets *GameScript::MostDamagedOf(Scriptable* Sender, Targets *parameters, int 
 	parameters->AddTarget(scr, 0, ga_flags);
 	return parameters;
 }
-Targets *GameScript::LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -708,7 +708,7 @@ Targets *GameScript::LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters,
 	return parameters;
 }
 
-Targets *GameScript::Farthest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Farthest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	const targettype *t = parameters->GetLastTarget(ST_ACTOR);
 	parameters->Clear();
@@ -718,168 +718,168 @@ Targets *GameScript::Farthest(Scriptable* /*Sender*/, Targets *parameters, int g
 	return parameters;
 }
 
-Targets *GameScript::FarthestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::FarthestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, -1, ga_flags);
 }
 
-Targets *GameScript::NearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::NearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 0, ga_flags);
 }
 
-Targets *GameScript::SecondNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SecondNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 1, ga_flags);
 }
 
-Targets *GameScript::ThirdNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::ThirdNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 2, ga_flags);
 }
 
-Targets *GameScript::FourthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::FourthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 3, ga_flags);
 }
 
-Targets *GameScript::FifthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::FifthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 4, ga_flags);
 }
 
-Targets *GameScript::SixthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SixthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 5, ga_flags);
 }
 
-Targets *GameScript::SeventhNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SeventhNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 6, ga_flags);
 }
 
-Targets *GameScript::EighthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::EighthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 7, ga_flags);
 }
 
-Targets *GameScript::NinthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::NinthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 8, ga_flags);
 }
 
-Targets *GameScript::TenthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::TenthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 9, ga_flags);
 }
 
-Targets *GameScript::NearestEnemySummoned(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NearestEnemySummoned(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return ClosestEnemySummoned(Sender, parameters, ga_flags);
 }
 
-Targets *GameScript::NearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 0, ga_flags);
 }
 
-Targets *GameScript::SecondNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SecondNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 1, ga_flags);
 }
 
-Targets *GameScript::ThirdNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::ThirdNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 2, ga_flags);
 }
 
-Targets *GameScript::FourthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::FourthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 3, ga_flags);
 }
 
-Targets *GameScript::FifthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::FifthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 4, ga_flags);
 }
 
-Targets *GameScript::SixthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SixthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 5, ga_flags);
 }
 
-Targets *GameScript::SeventhNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SeventhNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 6, ga_flags);
 }
 
-Targets *GameScript::EighthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::EighthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 7, ga_flags);
 }
 
-Targets *GameScript::NinthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NinthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 8, ga_flags);
 }
 
-Targets *GameScript::TenthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::TenthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 9, ga_flags);
 }
 
-Targets *GameScript::NearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 0, ga_flags);
 }
 
-Targets *GameScript::SecondNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SecondNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 1, ga_flags);
 }
 
-Targets *GameScript::ThirdNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::ThirdNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 2, ga_flags);
 }
 
-Targets *GameScript::FourthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::FourthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 3, ga_flags);
 }
 
-Targets *GameScript::FifthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::FifthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 4, ga_flags);
 }
 
-Targets *GameScript::SixthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SixthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 5, ga_flags);
 }
 
-Targets *GameScript::SeventhNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::SeventhNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 6, ga_flags);
 }
 
-Targets *GameScript::EighthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::EighthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 7, ga_flags);
 }
 
-Targets *GameScript::NinthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NinthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 8, ga_flags);
 }
 
-Targets *GameScript::TenthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::TenthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 9, ga_flags);
 }
 
 /* returns only living PC's? if not, alter getpartysize/getpc flag*/
-Targets *GameScript::NearestPC(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *GS::NearestPC(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	Map *map = Sender->GetCurrentArea();
@@ -909,57 +909,57 @@ Targets *GameScript::NearestPC(Scriptable* Sender, Targets *parameters, int ga_f
 	return parameters;
 }
 
-Targets *GameScript::Nearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::Nearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 0, ga_flags);
 }
 
-Targets *GameScript::SecondNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SecondNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 1, ga_flags);
 }
 
-Targets *GameScript::ThirdNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::ThirdNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 2, ga_flags);
 }
 
-Targets *GameScript::FourthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::FourthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 3, ga_flags);
 }
 
-Targets *GameScript::FifthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::FifthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 4, ga_flags);
 }
 
-Targets *GameScript::SixthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SixthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 5, ga_flags);
 }
 
-Targets *GameScript::SeventhNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::SeventhNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 6, ga_flags);
 }
 
-Targets *GameScript::EighthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::EighthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 7, ga_flags);
 }
 
-Targets *GameScript::NinthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::NinthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 8, ga_flags);
 }
 
-Targets *GameScript::TenthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *GS::TenthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 9, ga_flags);
 }
 
-Targets *GameScript::SelectedCharacter(Scriptable* Sender, Targets* parameters, int ga_flags)
+Targets *GS::SelectedCharacter(Scriptable* Sender, Targets* parameters, int ga_flags)
 {
 	Map *cm = Sender->GetCurrentArea();
 	parameters->Clear();
@@ -976,7 +976,7 @@ Targets *GameScript::SelectedCharacter(Scriptable* Sender, Targets* parameters, 
 	return parameters;
 }
 
-Targets *GameScript::Nothing(Scriptable* /*Sender*/, Targets* parameters, int /*ga_flags*/)
+Targets *GS::Nothing(Scriptable* /*Sender*/, Targets* parameters, int /*ga_flags*/)
 {
 	parameters->Clear();
 	return parameters;
@@ -986,7 +986,7 @@ Targets *GameScript::Nothing(Scriptable* /*Sender*/, Targets* parameters, int /*
 // IDS Functions
 //-------------------------------------------------------------
 
-int GameScript::ID_Alignment(Actor *actor, int parameter)
+int GS::ID_Alignment(Actor *actor, int parameter)
 {
 	int value = actor->GetStat( IE_ALIGNMENT );
 	int a = parameter&15;
@@ -1004,7 +1004,7 @@ int GameScript::ID_Alignment(Actor *actor, int parameter)
 	return 1;
 }
 
-int GameScript::ID_Allegiance(Actor *actor, int parameter)
+int GS::ID_Allegiance(Actor *actor, int parameter)
 {
 	int value = actor->GetStat( IE_EA );
 	switch (parameter) {
@@ -1083,7 +1083,7 @@ inline bool idclass(Actor *actor, int parameter, bool iwd2) {
 	return value > 0;
 }
 
-int GameScript::ID_Class(Actor *actor, int parameter)
+int GS::ID_Class(Actor *actor, int parameter)
 {
 	if (core->HasFeature(GF_3ED_RULES)) {
 		//iwd2 has different values, see also the note for AVClass
@@ -1094,7 +1094,7 @@ int GameScript::ID_Class(Actor *actor, int parameter)
 
 // IE_CLASS holds only one class, not a bitmask like with iwd2 kits. The ids values
 // are friendly to binary comparison, so we just need to build such a class value
-int GameScript::ID_ClassMask(Actor *actor, int parameter)
+int GS::ID_ClassMask(Actor *actor, int parameter)
 {
 	// maybe we're lucky...
 	int value = actor->GetStat(IE_CLASS);
@@ -1110,48 +1110,48 @@ int GameScript::ID_ClassMask(Actor *actor, int parameter)
 // this is only present in iwd2
 // the function is identical to ID_Class, but uses the class20 IDS,
 // iwd2's class.ids is different than the rest, while class20 is identical (remnant)
-int GameScript::ID_AVClass(Actor *actor, int parameter)
+int GS::ID_AVClass(Actor *actor, int parameter)
 {
 	return idclass(actor, parameter, 0);
 }
 
-int GameScript::ID_Race(Actor *actor, int parameter)
+int GS::ID_Race(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_RACE);
 	return parameter==value;
 }
 
-int GameScript::ID_Subrace(Actor *actor, int parameter)
+int GS::ID_Subrace(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_SUBRACE);
 	return parameter==value;
 }
 
-int GameScript::ID_Faction(Actor *actor, int parameter)
+int GS::ID_Faction(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_FACTION);
 	return parameter==value;
 }
 
-int GameScript::ID_Team(Actor *actor, int parameter)
+int GS::ID_Team(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_TEAM);
 	return parameter==value;
 }
 
-int GameScript::ID_Gender(Actor *actor, int parameter)
+int GS::ID_Gender(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_SEX);
 	return parameter==value;
 }
 
-int GameScript::ID_General(Actor *actor, int parameter)
+int GS::ID_General(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_GENERAL);
 	return parameter==value;
 }
 
-int GameScript::ID_Specific(Actor *actor, int parameter)
+int GS::ID_Specific(Actor *actor, int parameter)
 {
 	int value = actor->GetStat(IE_SPECIFIC);
 	return parameter==value;

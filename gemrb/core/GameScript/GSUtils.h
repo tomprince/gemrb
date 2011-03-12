@@ -20,7 +20,7 @@
 #ifndef GSUTILS_H
 #define GSUTILS_H
 
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 
 #include "defsounds.h"
 #include "exports.h"

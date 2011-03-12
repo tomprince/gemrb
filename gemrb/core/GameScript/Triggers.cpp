@@ -36,13 +36,13 @@
 //-------------------------------------------------------------
 // Trigger Functions
 //-------------------------------------------------------------
-int GameScript::BreakingPoint(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::BreakingPoint(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	int value=GetHappiness(Sender, core->GetGame()->Reputation );
 	return value < -300;
 }
 
-int GameScript::Reaction(Scriptable* Sender, Trigger* parameters)
+int GS::Reaction(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -53,7 +53,7 @@ int GameScript::Reaction(Scriptable* Sender, Trigger* parameters)
 	return value == parameters->int0Parameter;
 }
 
-int GameScript::ReactionGT(Scriptable* Sender, Trigger* parameters)
+int GS::ReactionGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -64,7 +64,7 @@ int GameScript::ReactionGT(Scriptable* Sender, Trigger* parameters)
 	return value > parameters->int0Parameter;
 }
 
-int GameScript::ReactionLT(Scriptable* Sender, Trigger* parameters)
+int GS::ReactionLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -75,40 +75,40 @@ int GameScript::ReactionLT(Scriptable* Sender, Trigger* parameters)
 	return value < parameters->int0Parameter;
 }
 
-int GameScript::Happiness(Scriptable* Sender, Trigger* parameters)
+int GS::Happiness(Scriptable* Sender, Trigger* parameters)
 {
 	int value=GetHappiness(Sender, core->GetGame()->Reputation );
 	return value == parameters->int0Parameter;
 }
 
-int GameScript::HappinessGT(Scriptable* Sender, Trigger* parameters)
+int GS::HappinessGT(Scriptable* Sender, Trigger* parameters)
 {
 	int value=GetHappiness(Sender, core->GetGame()->Reputation );
 	return value > parameters->int0Parameter;
 }
 
-int GameScript::HappinessLT(Scriptable* Sender, Trigger* parameters)
+int GS::HappinessLT(Scriptable* Sender, Trigger* parameters)
 {
 	int value=GetHappiness(Sender, core->GetGame()->Reputation );
 	return value < parameters->int0Parameter;
 }
 
-int GameScript::Reputation(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::Reputation(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->Reputation/10 == (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::ReputationGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::ReputationGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->Reputation/10 > (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::ReputationLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::ReputationLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->Reputation/10 < (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::Alignment(Scriptable* Sender, Trigger* parameters)
+int GS::Alignment(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -118,7 +118,7 @@ int GameScript::Alignment(Scriptable* Sender, Trigger* parameters)
 	return ID_Alignment( actor, parameters->int0Parameter);
 }
 
-int GameScript::Allegiance(Scriptable* Sender, Trigger* parameters)
+int GS::Allegiance(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -129,7 +129,7 @@ int GameScript::Allegiance(Scriptable* Sender, Trigger* parameters)
 }
 
 //should return *_ALL stuff
-int GameScript::Class(Scriptable* Sender, Trigger* parameters)
+int GS::Class(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -139,7 +139,7 @@ int GameScript::Class(Scriptable* Sender, Trigger* parameters)
 	return ID_Class( actor, parameters->int0Parameter);
 }
 
-int GameScript::ClassEx(Scriptable* Sender, Trigger* parameters)
+int GS::ClassEx(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -149,7 +149,7 @@ int GameScript::ClassEx(Scriptable* Sender, Trigger* parameters)
 	return ID_AVClass( actor, parameters->int0Parameter);
 }
 
-int GameScript::Faction(Scriptable* Sender, Trigger* parameters)
+int GS::Faction(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -159,7 +159,7 @@ int GameScript::Faction(Scriptable* Sender, Trigger* parameters)
 	return ID_Faction( actor, parameters->int0Parameter);
 }
 
-int GameScript::Team(Scriptable* Sender, Trigger* parameters)
+int GS::Team(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -169,7 +169,7 @@ int GameScript::Team(Scriptable* Sender, Trigger* parameters)
 	return ID_Team( actor, parameters->int0Parameter);
 }
 
-int GameScript::SubRace(Scriptable* Sender, Trigger* parameters)
+int GS::SubRace(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type != ST_ACTOR) {
@@ -190,7 +190,7 @@ int GameScript::SubRace(Scriptable* Sender, Trigger* parameters)
 
 //if object parameter is given (gemrb) it is used
 //otherwise it works on the current object (iwd2)
-int GameScript::IsTeamBitOn(Scriptable* Sender, Trigger* parameters)
+int GS::IsTeamBitOn(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = Sender;
 	if (parameters->objectParameter) {
@@ -206,7 +206,7 @@ int GameScript::IsTeamBitOn(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::NearbyDialog(Scriptable* Sender, Trigger* parameters)
+int GS::NearbyDialog(Scriptable* Sender, Trigger* parameters)
 {
 	Actor *target = Sender->GetCurrentArea()->GetActorByDialog(parameters->string0Parameter);
 	if ( !target ) {
@@ -216,7 +216,7 @@ int GameScript::NearbyDialog(Scriptable* Sender, Trigger* parameters)
 }
 
 //atm this checks for InParty and See, it is unsure what is required
-int GameScript::IsValidForPartyDialog(Scriptable* Sender, Trigger* parameters)
+int GS::IsValidForPartyDialog(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -248,7 +248,7 @@ int GameScript::IsValidForPartyDialog(Scriptable* Sender, Trigger* parameters)
 	return Sender->CanSee(  target, false, GA_NO_DEAD );
 }
 
-int GameScript::InParty(Scriptable* Sender, Trigger* parameters)
+int GS::InParty(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr;
 
@@ -271,7 +271,7 @@ int GameScript::InParty(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::InPartyAllowDead(Scriptable* Sender, Trigger* parameters)
+int GS::InPartyAllowDead(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr;
 
@@ -286,13 +286,13 @@ int GameScript::InPartyAllowDead(Scriptable* Sender, Trigger* parameters)
 	return core->GetGame()->InParty( ( Actor * ) scr ) >= 0 ? 1 : 0;
 }
 
-int GameScript::InPartySlot(Scriptable* Sender, Trigger* parameters)
+int GS::InPartySlot(Scriptable* Sender, Trigger* parameters)
 {
 	Actor *actor = core->GetGame()->GetPC(parameters->int0Parameter, false);
 	return MatchActor(Sender, actor->GetGlobalID(), parameters->objectParameter);
 }
 
-int GameScript::Exists(Scriptable* Sender, Trigger* parameters)
+int GS::Exists(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -301,7 +301,7 @@ int GameScript::Exists(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::IsAClown(Scriptable* Sender, Trigger* parameters)
+int GS::IsAClown(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type!=ST_ACTOR) {
@@ -310,7 +310,7 @@ int GameScript::IsAClown(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::IsGabber(Scriptable* Sender, Trigger* parameters)
+int GS::IsGabber(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type!=ST_ACTOR) {
@@ -321,7 +321,7 @@ int GameScript::IsGabber(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsActive(Scriptable* Sender, Trigger* parameters)
+int GS::IsActive(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -333,7 +333,7 @@ int GameScript::IsActive(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::InTrap(Scriptable* Sender, Trigger* parameters)
+int GS::InTrap(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -348,7 +348,7 @@ int GameScript::InTrap(Scriptable* Sender, Trigger* parameters)
 /* checks if targeted actor is in the specified region
    GemRB allows different regions, referenced by int0Parameter
    The polygons are stored in island<nn>.2da files */
-int GameScript::OnIsland(Scriptable* Sender, Trigger* parameters)
+int GS::OnIsland(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -361,7 +361,7 @@ int GameScript::OnIsland(Scriptable* Sender, Trigger* parameters)
 	return p->PointIn(scr->Pos);
 }
 
-int GameScript::School(Scriptable* Sender, Trigger* parameters)
+int GS::School(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type!=ST_ACTOR) {
@@ -377,7 +377,7 @@ int GameScript::School(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Kit(Scriptable* Sender, Trigger* parameters)
+int GS::Kit(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type!=ST_ACTOR) {
@@ -400,7 +400,7 @@ int GameScript::Kit(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::General(Scriptable* Sender, Trigger* parameters)
+int GS::General(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -416,7 +416,7 @@ int GameScript::General(Scriptable* Sender, Trigger* parameters)
 	return ID_General(actor, parameters->int0Parameter);
 }
 
-int GameScript::Specifics(Scriptable* Sender, Trigger* parameters)
+int GS::Specifics(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -432,7 +432,7 @@ int GameScript::Specifics(Scriptable* Sender, Trigger* parameters)
 	return ID_Specific(actor, parameters->int0Parameter);
 }
 
-int GameScript::BitCheck(Scriptable* Sender, Trigger* parameters)
+int GS::BitCheck(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -443,7 +443,7 @@ int GameScript::BitCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::BitCheckExact(Scriptable* Sender, Trigger* parameters)
+int GS::BitCheckExact(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -457,7 +457,7 @@ int GameScript::BitCheckExact(Scriptable* Sender, Trigger* parameters)
 
 //BM_OR would make sense only if this trigger changes the value of the variable
 //should I do that???
-int GameScript::BitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::BitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -469,7 +469,7 @@ int GameScript::BitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalOrGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalOrGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -484,7 +484,7 @@ int GameScript::GlobalOrGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -496,7 +496,7 @@ int GameScript::GlobalAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalBAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalBAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -510,7 +510,7 @@ int GameScript::GlobalBAndGlobal_Trigger(Scriptable* Sender, Trigger* parameters
 	return 0;
 }
 
-int GameScript::GlobalBAndGlobalExact(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalBAndGlobalExact(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -524,7 +524,7 @@ int GameScript::GlobalBAndGlobalExact(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalBitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalBitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -541,14 +541,14 @@ int GameScript::GlobalBitGlobal_Trigger(Scriptable* Sender, Trigger* parameters)
 
 //no what exactly this trigger would do, defined in iwd2, but never used
 //i just assume it sets a global in the trigger block
-int GameScript::TriggerSetGlobal(Scriptable* Sender, Trigger* parameters)
+int GS::TriggerSetGlobal(Scriptable* Sender, Trigger* parameters)
 {
 	SetVariable( Sender, parameters->string0Parameter, parameters->int0Parameter );
 	return 1;
 }
 
 //would this function also alter the variable?
-int GameScript::Xor(Scriptable* Sender, Trigger* parameters)
+int GS::Xor(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -561,7 +561,7 @@ int GameScript::Xor(Scriptable* Sender, Trigger* parameters)
 
 //TODO:
 //no sprite is dead for iwd, they use KILL_<name>_CNT
-int GameScript::NumDead(Scriptable* Sender, Trigger* parameters)
+int GS::NumDead(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value;
 
@@ -575,7 +575,7 @@ int GameScript::NumDead(Scriptable* Sender, Trigger* parameters)
 	return ( value == (ieDword) parameters->int0Parameter );
 }
 
-int GameScript::NumDeadGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumDeadGT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value;
 
@@ -589,7 +589,7 @@ int GameScript::NumDeadGT(Scriptable* Sender, Trigger* parameters)
 	return ( value > (ieDword) parameters->int0Parameter );
 }
 
-int GameScript::NumDeadLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumDeadLT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value;
 
@@ -604,13 +604,13 @@ int GameScript::NumDeadLT(Scriptable* Sender, Trigger* parameters)
 	return ( value < (ieDword) parameters->int0Parameter );
 }
 
-int GameScript::G_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::G_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	ieDwordSigned value = CheckVariable(Sender, parameters->string0Parameter, "GLOBAL" );
 	return ( value == parameters->int0Parameter );
 }
 
-int GameScript::Global(Scriptable* Sender, Trigger* parameters)
+int GS::Global(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -621,13 +621,13 @@ int GameScript::Global(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GLT_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GLT_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	ieDwordSigned value = CheckVariable(Sender, parameters->string0Parameter,"GLOBAL" );
 	return ( value < parameters->int0Parameter );
 }
 
-int GameScript::GlobalLT(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalLT(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -638,13 +638,13 @@ int GameScript::GlobalLT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GGT_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::GGT_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	ieDwordSigned value = CheckVariable(Sender, parameters->string0Parameter, "GLOBAL" );
 	return ( value > parameters->int0Parameter );
 }
 
-int GameScript::GlobalGT(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalGT(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -655,7 +655,7 @@ int GameScript::GlobalGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalLTGlobal(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalLTGlobal(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -669,7 +669,7 @@ int GameScript::GlobalLTGlobal(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalGTGlobal(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalGTGlobal(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -683,49 +683,49 @@ int GameScript::GlobalGTGlobal(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalsEqual(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalsEqual(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "GLOBAL" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "GLOBAL" );
 	return ( value1 == value2 );
 }
 
-int GameScript::GlobalsGT(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalsGT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "GLOBAL" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "GLOBAL" );
 	return ( value1 > value2 );
 }
 
-int GameScript::GlobalsLT(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalsLT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "GLOBAL" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "GLOBAL" );
 	return ( value1 < value2 );
 }
 
-int GameScript::LocalsEqual(Scriptable* Sender, Trigger* parameters)
+int GS::LocalsEqual(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "LOCALS" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "LOCALS" );
 	return ( value1 == value2 );
 }
 
-int GameScript::LocalsGT(Scriptable* Sender, Trigger* parameters)
+int GS::LocalsGT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "LOCALS" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "LOCALS" );
 	return ( value1 > value2 );
 }
 
-int GameScript::LocalsLT(Scriptable* Sender, Trigger* parameters)
+int GS::LocalsLT(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value1 = CheckVariable(Sender, parameters->string0Parameter, "LOCALS" );
 	ieDword value2 = CheckVariable(Sender, parameters->string1Parameter, "LOCALS" );
 	return ( value1 < value2 );
 }
 
-int GameScript::RealGlobalTimerExact(Scriptable* Sender, Trigger* parameters)
+int GS::RealGlobalTimerExact(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -737,7 +737,7 @@ int GameScript::RealGlobalTimerExact(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::RealGlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
+int GS::RealGlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -748,7 +748,7 @@ int GameScript::RealGlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::RealGlobalTimerNotExpired(Scriptable* Sender, Trigger* parameters)
+int GS::RealGlobalTimerNotExpired(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -759,7 +759,7 @@ int GameScript::RealGlobalTimerNotExpired(Scriptable* Sender, Trigger* parameter
 	return 0;
 }
 
-int GameScript::GlobalTimerExact(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalTimerExact(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -770,7 +770,7 @@ int GameScript::GlobalTimerExact(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::GlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -782,7 +782,7 @@ int GameScript::GlobalTimerExpired(Scriptable* Sender, Trigger* parameters)
 }
 
 //globaltimernotexpired returns false if the timer doesn't exist
-int GameScript::GlobalTimerNotExpired(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalTimerNotExpired(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -795,7 +795,7 @@ int GameScript::GlobalTimerNotExpired(Scriptable* Sender, Trigger* parameters)
 
 //globaltimerstarted returns false if the timer doesn't exist
 //is it the same as globaltimernotexpired?
-int GameScript::GlobalTimerStarted(Scriptable* Sender, Trigger* parameters)
+int GS::GlobalTimerStarted(Scriptable* Sender, Trigger* parameters)
 {
 	bool valid=true;
 
@@ -806,7 +806,7 @@ int GameScript::GlobalTimerStarted(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::WasInDialog(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::WasInDialog(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->GetInternalFlag()&IF_WASINDIALOG) {
 		Sender->SetBitTrigger(BT_WASINDIALOG);
@@ -815,7 +815,7 @@ int GameScript::WasInDialog(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::OnCreation(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::OnCreation(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->GetInternalFlag()&IF_ONCREATION) {
 		Sender->SetBitTrigger(BT_ONCREATION);
@@ -824,7 +824,7 @@ int GameScript::OnCreation(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::NumItemsParty(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::NumItemsParty(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int cnt = 0;
 	Game *game=core->GetGame();
@@ -837,7 +837,7 @@ int GameScript::NumItemsParty(Scriptable* /*Sender*/, Trigger* parameters)
 	return cnt==parameters->int0Parameter;
 }
 
-int GameScript::NumItemsPartyGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::NumItemsPartyGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int cnt = 0;
 	Game *game=core->GetGame();
@@ -850,7 +850,7 @@ int GameScript::NumItemsPartyGT(Scriptable* /*Sender*/, Trigger* parameters)
 	return cnt>parameters->int0Parameter;
 }
 
-int GameScript::NumItemsPartyLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::NumItemsPartyLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int cnt = 0;
 	Game *game=core->GetGame();
@@ -863,7 +863,7 @@ int GameScript::NumItemsPartyLT(Scriptable* /*Sender*/, Trigger* parameters)
 	return cnt<parameters->int0Parameter;
 }
 
-int GameScript::NumItems(Scriptable* Sender, Trigger* parameters)
+int GS::NumItems(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -888,7 +888,7 @@ int GameScript::NumItems(Scriptable* Sender, Trigger* parameters)
 	return cnt==parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCnt(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCnt(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -899,7 +899,7 @@ int GameScript::TotalItemCnt(Scriptable* Sender, Trigger* parameters)
 	return cnt==parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCntExclude(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCntExclude(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -910,7 +910,7 @@ int GameScript::TotalItemCntExclude(Scriptable* Sender, Trigger* parameters)
 	return cnt==parameters->int0Parameter;
 }
 
-int GameScript::NumItemsGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumItemsGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -935,7 +935,7 @@ int GameScript::NumItemsGT(Scriptable* Sender, Trigger* parameters)
 	return cnt>parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCntGT(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCntGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -946,7 +946,7 @@ int GameScript::TotalItemCntGT(Scriptable* Sender, Trigger* parameters)
 	return cnt>parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCntExcludeGT(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCntExcludeGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -957,7 +957,7 @@ int GameScript::TotalItemCntExcludeGT(Scriptable* Sender, Trigger* parameters)
 	return cnt>parameters->int0Parameter;
 }
 
-int GameScript::NumItemsLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumItemsLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -982,7 +982,7 @@ int GameScript::NumItemsLT(Scriptable* Sender, Trigger* parameters)
 	return cnt<parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCntLT(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCntLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -993,7 +993,7 @@ int GameScript::TotalItemCntLT(Scriptable* Sender, Trigger* parameters)
 	return cnt<parameters->int0Parameter;
 }
 
-int GameScript::TotalItemCntExcludeLT(Scriptable* Sender, Trigger* parameters)
+int GS::TotalItemCntExcludeLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !tar || tar->Type!=ST_ACTOR) {
@@ -1005,7 +1005,7 @@ int GameScript::TotalItemCntExcludeLT(Scriptable* Sender, Trigger* parameters)
 }
 
 //the int0 parameter is an addition, normally it is 0
-int GameScript::Contains(Scriptable* Sender, Trigger* parameters)
+int GS::Contains(Scriptable* Sender, Trigger* parameters)
 {
 //actually this should be a container
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
@@ -1019,13 +1019,13 @@ int GameScript::Contains(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::StoreHasItem(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::StoreHasItem(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return StoreHasItemCore(parameters->string0Parameter, parameters->string1Parameter);
 }
 
 //the int0 parameter is an addition, normally it is 0
-int GameScript::HasItem(Scriptable* Sender, Trigger* parameters)
+int GS::HasItem(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !scr ) {
@@ -1049,7 +1049,7 @@ int GameScript::HasItem(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::ItemIsIdentified(Scriptable* Sender, Trigger* parameters)
+int GS::ItemIsIdentified(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !scr || scr->Type!=ST_ACTOR) {
@@ -1064,7 +1064,7 @@ int GameScript::ItemIsIdentified(Scriptable* Sender, Trigger* parameters)
 
 /** if the string is zero, then it will return true if there is any item in the slot (BG2)*/
 /** if the string is non-zero, it will return true, if the given item was in the slot (IWD2)*/
-int GameScript::HasItemSlot(Scriptable* Sender, Trigger* parameters)
+int GS::HasItemSlot(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !scr || scr->Type!=ST_ACTOR) {
@@ -1081,7 +1081,7 @@ int GameScript::HasItemSlot(Scriptable* Sender, Trigger* parameters)
 //this is a GemRB extension
 //HasItemTypeSlot(Object, SLOT, ItemType)
 //returns true if the item in SLOT is of ItemType
-int GameScript::HasItemTypeSlot(Scriptable* Sender, Trigger* parameters)
+int GS::HasItemTypeSlot(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !scr || scr->Type!=ST_ACTOR) {
@@ -1104,7 +1104,7 @@ int GameScript::HasItemTypeSlot(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HasItemEquipped(Scriptable * Sender, Trigger* parameters)
+int GS::HasItemEquipped(Scriptable * Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if ( !scr || scr->Type!=ST_ACTOR) {
@@ -1117,7 +1117,7 @@ int GameScript::HasItemEquipped(Scriptable * Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Acquired(Scriptable * Sender, Trigger* parameters)
+int GS::Acquired(Scriptable * Sender, Trigger* parameters)
 {
 	if ( Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1132,7 +1132,7 @@ int GameScript::Acquired(Scriptable * Sender, Trigger* parameters)
 /** this trigger accepts a numeric parameter, this number is the same as inventory flags
     like: 1 - identified, 2 - unstealable, 4 - stolen, 8 - undroppable, etc. */
 /** this is a GemRB extension */
-int GameScript::PartyHasItem(Scriptable * /*Sender*/, Trigger* parameters)
+int GS::PartyHasItem(Scriptable * /*Sender*/, Trigger* parameters)
 {
 	Game *game=core->GetGame();
 
@@ -1146,7 +1146,7 @@ int GameScript::PartyHasItem(Scriptable * /*Sender*/, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PartyHasItemIdentified(Scriptable * /*Sender*/, Trigger* parameters)
+int GS::PartyHasItemIdentified(Scriptable * /*Sender*/, Trigger* parameters)
 {
 	Game *game=core->GetGame();
 
@@ -1160,7 +1160,7 @@ int GameScript::PartyHasItemIdentified(Scriptable * /*Sender*/, Trigger* paramet
 	return 0;
 }
 
-int GameScript::InventoryFull( Scriptable* Sender, Trigger* parameters)
+int GS::InventoryFull( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -1173,7 +1173,7 @@ int GameScript::InventoryFull( Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HasInnateAbility(Scriptable *Sender, Trigger *parameters)
+int GS::HasInnateAbility(Scriptable *Sender, Trigger *parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -1186,7 +1186,7 @@ int GameScript::HasInnateAbility(Scriptable *Sender, Trigger *parameters)
 	return actor->spellbook.HaveSpell(parameters->int0Parameter, 0);
 }
 
-int GameScript::HaveSpell(Scriptable *Sender, Trigger *parameters)
+int GS::HaveSpell(Scriptable *Sender, Trigger *parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1198,7 +1198,7 @@ int GameScript::HaveSpell(Scriptable *Sender, Trigger *parameters)
 	return actor->spellbook.HaveSpell(parameters->int0Parameter, 0);
 }
 
-int GameScript::HaveAnySpells(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::HaveAnySpells(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1207,7 +1207,7 @@ int GameScript::HaveAnySpells(Scriptable* Sender, Trigger* /*parameters*/)
 	return actor->spellbook.HaveSpell("", 0);
 }
 
-int GameScript::HaveSpellParty(Scriptable* /*Sender*/, Trigger *parameters)
+int GS::HaveSpellParty(Scriptable* /*Sender*/, Trigger *parameters)
 {
 	Game *game=core->GetGame();
 
@@ -1231,7 +1231,7 @@ int GameScript::HaveSpellParty(Scriptable* /*Sender*/, Trigger *parameters)
 	return 0;
 }
 
-int GameScript::KnowSpell(Scriptable *Sender, Trigger *parameters)
+int GS::KnowSpell(Scriptable *Sender, Trigger *parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1243,7 +1243,7 @@ int GameScript::KnowSpell(Scriptable *Sender, Trigger *parameters)
 	return actor->spellbook.KnowSpell(parameters->int0Parameter);
 }
 
-int GameScript::True(Scriptable * /* Sender*/, Trigger * /*parameters*/)
+int GS::True(Scriptable * /* Sender*/, Trigger * /*parameters*/)
 {
 	return 1;
 }
@@ -1251,7 +1251,7 @@ int GameScript::True(Scriptable * /* Sender*/, Trigger * /*parameters*/)
 //in fact this could be used only on Sender, but we want to enhance these
 //triggers and actions to accept an object argument whenever possible.
 //0 defaults to Myself (Sender)
-int GameScript::NumTimesTalkedTo(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesTalkedTo(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1264,7 +1264,7 @@ int GameScript::NumTimesTalkedTo(Scriptable* Sender, Trigger* parameters)
 	return actor->TalkCount == (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesTalkedToGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesTalkedToGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1277,7 +1277,7 @@ int GameScript::NumTimesTalkedToGT(Scriptable* Sender, Trigger* parameters)
 	return actor->TalkCount > (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesTalkedToLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesTalkedToLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1290,7 +1290,7 @@ int GameScript::NumTimesTalkedToLT(Scriptable* Sender, Trigger* parameters)
 	return actor->TalkCount < (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesInteracted(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteracted(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1306,7 +1306,7 @@ int GameScript::NumTimesInteracted(Scriptable* Sender, Trigger* parameters)
 	return actor->PCStats->Interact[npcid] == (ieDword) parameters->int1Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesInteractedGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteractedGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1322,7 +1322,7 @@ int GameScript::NumTimesInteractedGT(Scriptable* Sender, Trigger* parameters)
 	return actor->PCStats->Interact[npcid] > (ieDword) parameters->int1Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesInteractedLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteractedLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1342,7 +1342,7 @@ int GameScript::NumTimesInteractedLT(Scriptable* Sender, Trigger* parameters)
 //interacting npc counts were restricted to 24
 //gemrb will increase a local variable in the interacting npc, with the scriptname of the
 //target npc
-int GameScript::NumTimesInteractedObject(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteractedObject(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -1359,7 +1359,7 @@ int GameScript::NumTimesInteractedObject(Scriptable* Sender, Trigger* parameters
 	return CheckVariable(Sender, tar->GetScriptName(), "LOCALS") == (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesInteractedObjectGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteractedObjectGT(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -1376,7 +1376,7 @@ int GameScript::NumTimesInteractedObjectGT(Scriptable* Sender, Trigger* paramete
 	return CheckVariable(Sender, tar->GetScriptName(), "LOCALS") > (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::NumTimesInteractedObjectLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumTimesInteractedObjectLT(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -1393,7 +1393,7 @@ int GameScript::NumTimesInteractedObjectLT(Scriptable* Sender, Trigger* paramete
 	return CheckVariable(Sender, tar->GetScriptName(), "LOCALS") < (ieDword) parameters->int0Parameter ? 1 : 0;
 }
 
-int GameScript::ObjectActionListEmpty(Scriptable* Sender, Trigger* parameters)
+int GS::ObjectActionListEmpty(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1407,7 +1407,7 @@ int GameScript::ObjectActionListEmpty(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::ActionListEmpty(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::ActionListEmpty(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	// added CurrentAction as part of blocking action fixes
 	if (Sender->GetCurrentAction() || Sender->GetNextAction()) {
@@ -1416,13 +1416,13 @@ int GameScript::ActionListEmpty(Scriptable* Sender, Trigger* /*parameters*/)
 	return 1;
 }
 
-int GameScript::False(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::False(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	return 0;
 }
 
 /* i guess this is a range of circle edges (instead of centers) */
-int GameScript::PersonalSpaceDistance(Scriptable* Sender, Trigger* parameters)
+int GS::PersonalSpaceDistance(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1437,7 +1437,7 @@ int GameScript::PersonalSpaceDistance(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Range(Scriptable* Sender, Trigger* parameters)
+int GS::Range(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1447,7 +1447,7 @@ int GameScript::Range(Scriptable* Sender, Trigger* parameters)
 	return DiffCore(distance, (parameters->int0Parameter+1)*(parameters->int0Parameter+1), parameters->int1Parameter);
 }
 
-int GameScript::InLine(Scriptable* Sender, Trigger* parameters)
+int GS::InLine(Scriptable* Sender, Trigger* parameters)
 {
 	Map *map = Sender->GetCurrentArea();
 	if (!map) {
@@ -1483,7 +1483,7 @@ int GameScript::InLine(Scriptable* Sender, Trigger* parameters)
 }
 
 //PST
-int GameScript::AtLocation( Scriptable* Sender, Trigger* parameters)
+int GS::AtLocation( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -1498,7 +1498,7 @@ int GameScript::AtLocation( Scriptable* Sender, Trigger* parameters)
 
 //in pst this is a point
 //in iwd2 this is not a point
-int GameScript::NearLocation(Scriptable* Sender, Trigger* parameters)
+int GS::NearLocation(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -1520,7 +1520,7 @@ int GameScript::NearLocation(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::NearSavedLocation(Scriptable* Sender, Trigger* parameters)
+int GS::NearSavedLocation(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1539,12 +1539,12 @@ int GameScript::NearSavedLocation(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Or(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::Or(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return parameters->int0Parameter;
 }
 
-int GameScript::TriggerTrigger(Scriptable* Sender, Trigger* parameters)
+int GS::TriggerTrigger(Scriptable* Sender, Trigger* parameters)
 {
 	if(Sender->TriggerID==(ieDword) parameters->int0Parameter) {
 		Sender->AddTrigger (&Sender->TriggerID);
@@ -1553,7 +1553,7 @@ int GameScript::TriggerTrigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::WalkedToTrigger(Scriptable* Sender, Trigger* parameters)
+int GS::WalkedToTrigger(Scriptable* Sender, Trigger* parameters)
 {
 	Actor *target = Sender->GetCurrentArea()->GetActorByGlobalID(Sender->LastTrigger);
 	if (!target) {
@@ -1575,7 +1575,7 @@ int GameScript::WalkedToTrigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Clicked(Scriptable* Sender, Trigger* parameters)
+int GS::Clicked(Scriptable* Sender, Trigger* parameters)
 {
 	//now objects suicide themselves if they are empty objects
 	//so checking an empty object is easier
@@ -1593,7 +1593,7 @@ int GameScript::Clicked(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Disarmed(Scriptable* Sender, Trigger* parameters)
+int GS::Disarmed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_DOOR: case ST_CONTAINER: case ST_PROXIMITY:
@@ -1616,7 +1616,7 @@ int GameScript::Disarmed(Scriptable* Sender, Trigger* parameters)
 }
 
 //stealing from a store failed, owner triggered
-int GameScript::StealFailed(Scriptable* Sender, Trigger* parameters)
+int GS::StealFailed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_ACTOR:
@@ -1640,7 +1640,7 @@ int GameScript::StealFailed(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PickpocketFailed(Scriptable* Sender, Trigger* parameters)
+int GS::PickpocketFailed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_ACTOR:
@@ -1662,7 +1662,7 @@ int GameScript::PickpocketFailed(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PickLockFailed(Scriptable* Sender, Trigger* parameters)
+int GS::PickLockFailed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_DOOR: case ST_CONTAINER:
@@ -1684,7 +1684,7 @@ int GameScript::PickLockFailed(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::OpenFailed(Scriptable* Sender, Trigger* parameters)
+int GS::OpenFailed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_DOOR: case ST_CONTAINER:
@@ -1707,7 +1707,7 @@ int GameScript::OpenFailed(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::DisarmFailed(Scriptable* Sender, Trigger* parameters)
+int GS::DisarmFailed(Scriptable* Sender, Trigger* parameters)
 {
 	switch(Sender->Type) {
 		case ST_DOOR: case ST_CONTAINER: case ST_PROXIMITY:
@@ -1730,7 +1730,7 @@ int GameScript::DisarmFailed(Scriptable* Sender, Trigger* parameters)
 }
 
 //opened for doors/containers (using lastEntered)
-int GameScript::Opened(Scriptable* Sender, Trigger* parameters)
+int GS::Opened(Scriptable* Sender, Trigger* parameters)
 {
 	Door *door;
 
@@ -1762,7 +1762,7 @@ int GameScript::Opened(Scriptable* Sender, Trigger* parameters)
 }
 
 //closed for doors (using lastTrigger)
-int GameScript::Closed(Scriptable* Sender, Trigger* parameters)
+int GS::Closed(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_DOOR) {
 		return 0;
@@ -1787,7 +1787,7 @@ int GameScript::Closed(Scriptable* Sender, Trigger* parameters)
 }
 
 //unlocked for doors/containers (using lastUnlocked)
-int GameScript::Unlocked(Scriptable* Sender, Trigger* parameters)
+int GS::Unlocked(Scriptable* Sender, Trigger* parameters)
 {
 	Door *door;
 
@@ -1818,7 +1818,7 @@ int GameScript::Unlocked(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Entered(Scriptable* Sender, Trigger* parameters)
+int GS::Entered(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_PROXIMITY) {
 		return 0;
@@ -1842,7 +1842,7 @@ int GameScript::Entered(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HarmlessEntered(Scriptable* Sender, Trigger* parameters)
+int GS::HarmlessEntered(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_PROXIMITY) {
 		return 0;
@@ -1861,7 +1861,7 @@ int GameScript::HarmlessEntered(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsOverMe(Scriptable* Sender, Trigger* parameters)
+int GS::IsOverMe(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_PROXIMITY) {
 		return 0;
@@ -1889,7 +1889,7 @@ int GameScript::IsOverMe(Scriptable* Sender, Trigger* parameters)
 //this function is different in every engines, if you use a string0parameter
 //then it will be considered as a variable check
 //you can also use an object parameter (like in iwd)
-int GameScript::Dead(Scriptable* Sender, Trigger* parameters)
+int GS::Dead(Scriptable* Sender, Trigger* parameters)
 {
 	if (parameters->string0Parameter[0]) {
 		ieDword value;
@@ -1920,7 +1920,7 @@ int GameScript::Dead(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CreatureHidden(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::CreatureHidden(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1939,7 +1939,7 @@ int GameScript::CreatureHidden(Scriptable* Sender, Trigger* /*parameters*/)
 	}
 	return 1;
 }
-int GameScript::BecameVisible(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::BecameVisible(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1953,7 +1953,7 @@ int GameScript::BecameVisible(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::Die(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::Die(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -1967,7 +1967,7 @@ int GameScript::Die(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::Died(Scriptable* Sender, Trigger* parameters)
+int GS::Died(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -1982,7 +1982,7 @@ int GameScript::Died(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PartyMemberDied(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::PartyMemberDied(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	Game *game = core->GetGame();
 	int i = game->PartyMemberDied();
@@ -1994,7 +1994,7 @@ int GameScript::PartyMemberDied(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 	return 1;
 }
 
-int GameScript::NamelessBitTheDust(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::NamelessBitTheDust(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	Actor* actor = core->GetGame()->GetPC(0, false);
 	if (actor->GetInternalFlag()&IF_JUSTDIED) {
@@ -2005,7 +2005,7 @@ int GameScript::NamelessBitTheDust(Scriptable* /*Sender*/, Trigger* /*parameters
 	return 0;
 }
 
-int GameScript::Race(Scriptable* Sender, Trigger* parameters)
+int GS::Race(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2018,7 +2018,7 @@ int GameScript::Race(Scriptable* Sender, Trigger* parameters)
 	return ID_Race(actor, parameters->int0Parameter);
 }
 
-int GameScript::Gender(Scriptable* Sender, Trigger* parameters)
+int GS::Gender(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2031,7 +2031,7 @@ int GameScript::Gender(Scriptable* Sender, Trigger* parameters)
 	return ID_Gender(actor, parameters->int0Parameter);
 }
 
-int GameScript::HP(Scriptable* Sender, Trigger* parameters)
+int GS::HP(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2047,7 +2047,7 @@ int GameScript::HP(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPGT(Scriptable* Sender, Trigger* parameters)
+int GS::HPGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2063,7 +2063,7 @@ int GameScript::HPGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPLT(Scriptable* Sender, Trigger* parameters)
+int GS::HPLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2081,7 +2081,7 @@ int GameScript::HPLT(Scriptable* Sender, Trigger* parameters)
 
 //these triggers work on the current damage (not the last damage)
 /* they are identical to HPLost
-int GameScript::DamageTaken(Scriptable* Sender, Trigger* parameters)
+int GS::DamageTaken(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -2094,7 +2094,7 @@ int GameScript::DamageTaken(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::DamageTakenGT(Scriptable* Sender, Trigger* parameters)
+int GS::DamageTakenGT(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -2107,7 +2107,7 @@ int GameScript::DamageTakenGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::DamageTakenLT(Scriptable* Sender, Trigger* parameters)
+int GS::DamageTakenLT(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -2121,7 +2121,7 @@ int GameScript::DamageTakenLT(Scriptable* Sender, Trigger* parameters)
 }
 */
 
-int GameScript::HPLost(Scriptable* Sender, Trigger* parameters)
+int GS::HPLost(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2138,7 +2138,7 @@ int GameScript::HPLost(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPLostGT(Scriptable* Sender, Trigger* parameters)
+int GS::HPLostGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2155,7 +2155,7 @@ int GameScript::HPLostGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPLostLT(Scriptable* Sender, Trigger* parameters)
+int GS::HPLostLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2172,7 +2172,7 @@ int GameScript::HPLostLT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPPercent(Scriptable* Sender, Trigger* parameters)
+int GS::HPPercent(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2184,7 +2184,7 @@ int GameScript::HPPercent(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPPercentGT(Scriptable* Sender, Trigger* parameters)
+int GS::HPPercentGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2196,7 +2196,7 @@ int GameScript::HPPercentGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HPPercentLT(Scriptable* Sender, Trigger* parameters)
+int GS::HPPercentLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2208,7 +2208,7 @@ int GameScript::HPPercentLT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::XP(Scriptable* Sender, Trigger* parameters)
+int GS::XP(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2224,7 +2224,7 @@ int GameScript::XP(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::XPGT(Scriptable* Sender, Trigger* parameters)
+int GS::XPGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2240,7 +2240,7 @@ int GameScript::XPGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::XPLT(Scriptable* Sender, Trigger* parameters)
+int GS::XPLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr) {
@@ -2256,7 +2256,7 @@ int GameScript::XPLT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CheckSkill(Scriptable* Sender, Trigger* parameters)
+int GS::CheckSkill(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* target = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!target) {
@@ -2273,7 +2273,7 @@ int GameScript::CheckSkill(Scriptable* Sender, Trigger* parameters)
 	}
 	return 0;
 }
-int GameScript::CheckStat(Scriptable* Sender, Trigger* parameters)
+int GS::CheckStat(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* target = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!target) {
@@ -2289,7 +2289,7 @@ int GameScript::CheckStat(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CheckSkillGT(Scriptable* Sender, Trigger* parameters)
+int GS::CheckSkillGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2304,7 +2304,7 @@ int GameScript::CheckSkillGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CheckStatGT(Scriptable* Sender, Trigger* parameters)
+int GS::CheckStatGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2317,7 +2317,7 @@ int GameScript::CheckStatGT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CheckSkillLT(Scriptable* Sender, Trigger* parameters)
+int GS::CheckSkillLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2332,7 +2332,7 @@ int GameScript::CheckSkillLT(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CheckStatLT(Scriptable* Sender, Trigger* parameters)
+int GS::CheckStatLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2347,7 +2347,7 @@ int GameScript::CheckStatLT(Scriptable* Sender, Trigger* parameters)
 
 /* i believe this trigger is the same as 'MarkObject' action
  except that if it cannot set the marked object, it returns false */
-int GameScript::SetLastMarkedObject(Scriptable* Sender, Trigger* parameters)
+int GS::SetLastMarkedObject(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2362,7 +2362,7 @@ int GameScript::SetLastMarkedObject(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::IsSpellTargetValid(Scriptable* Sender, Trigger* parameters)
+int GS::IsSpellTargetValid(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2400,7 +2400,7 @@ int GameScript::IsSpellTargetValid(Scriptable* Sender, Trigger* parameters)
 
 //This trigger seems to always return true for actors...
 //Always manages to set spell to 0, otherwise it sets if there was nothing set earlier
-int GameScript::SetMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::SetMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2420,7 +2420,7 @@ int GameScript::SetMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::ForceMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::ForceMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2430,7 +2430,7 @@ int GameScript::ForceMarkedSpell_Trigger(Scriptable* Sender, Trigger* parameters
 	return 1;
 }
 
-int GameScript::IsMarkedSpell(Scriptable* Sender, Trigger* parameters)
+int GS::IsMarkedSpell(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2440,7 +2440,7 @@ int GameScript::IsMarkedSpell(Scriptable* Sender, Trigger* parameters)
 }
 
 
-int GameScript::See(Scriptable* Sender, Trigger* parameters)
+int GS::See(Scriptable* Sender, Trigger* parameters)
 {
 	int see = SeeCore(Sender, parameters, 0);
 	//don't mark LastSeen for clear!!!
@@ -2453,7 +2453,7 @@ int GameScript::See(Scriptable* Sender, Trigger* parameters)
 	return see;
 }
 
-int GameScript::Detect(Scriptable* Sender, Trigger* parameters)
+int GS::Detect(Scriptable* Sender, Trigger* parameters)
 {
 	parameters->int0Parameter=1; //seedead/invis
 	int see = SeeCore(Sender, parameters, 0);
@@ -2463,7 +2463,7 @@ int GameScript::Detect(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::LOS(Scriptable* Sender, Trigger* parameters)
+int GS::LOS(Scriptable* Sender, Trigger* parameters)
 {
 	int see=SeeCore(Sender, parameters, 1);
 	if (!see) {
@@ -2472,13 +2472,13 @@ int GameScript::LOS(Scriptable* Sender, Trigger* parameters)
 	return Range(Sender, parameters); //same as range
 }
 
-int GameScript::NumCreatures(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreatures(Scriptable* Sender, Trigger* parameters)
 {
 	int value = GetObjectCount(Sender, parameters->objectParameter);
 	return value == parameters->int0Parameter;
 }
 
-int GameScript::NumCreaturesAtMyLevel(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreaturesAtMyLevel(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2494,13 +2494,13 @@ int GameScript::NumCreaturesAtMyLevel(Scriptable* Sender, Trigger* parameters)
 	return value == level;
 }
 
-int GameScript::NumCreaturesLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreaturesLT(Scriptable* Sender, Trigger* parameters)
 {
 	int value = GetObjectCount(Sender, parameters->objectParameter);
 	return value < parameters->int0Parameter;
 }
 
-int GameScript::NumCreaturesLTMyLevel(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreaturesLTMyLevel(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2516,13 +2516,13 @@ int GameScript::NumCreaturesLTMyLevel(Scriptable* Sender, Trigger* parameters)
 	return value < level;
 }
 
-int GameScript::NumCreaturesGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreaturesGT(Scriptable* Sender, Trigger* parameters)
 {
 	int value = GetObjectCount(Sender, parameters->objectParameter);
 	return value > parameters->int0Parameter;
 }
 
-int GameScript::NumCreaturesGTMyLevel(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreaturesGTMyLevel(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -2538,7 +2538,7 @@ int GameScript::NumCreaturesGTMyLevel(Scriptable* Sender, Trigger* parameters)
 	return value > level;
 }
 
-int GameScript::NumCreatureVsParty(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreatureVsParty(Scriptable* Sender, Trigger* parameters)
 {
 	//creating object on the spot
 	if (!parameters->objectParameter) {
@@ -2549,7 +2549,7 @@ int GameScript::NumCreatureVsParty(Scriptable* Sender, Trigger* parameters)
 	return value == parameters->int0Parameter;
 }
 
-int GameScript::NumCreatureVsPartyGT(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreatureVsPartyGT(Scriptable* Sender, Trigger* parameters)
 {
 	if (!parameters->objectParameter) {
 		parameters->objectParameter = new Object();
@@ -2559,7 +2559,7 @@ int GameScript::NumCreatureVsPartyGT(Scriptable* Sender, Trigger* parameters)
 	return value > parameters->int0Parameter;
 }
 
-int GameScript::NumCreatureVsPartyLT(Scriptable* Sender, Trigger* parameters)
+int GS::NumCreatureVsPartyLT(Scriptable* Sender, Trigger* parameters)
 {
 	if (!parameters->objectParameter) {
 		parameters->objectParameter = new Object();
@@ -2569,7 +2569,7 @@ int GameScript::NumCreatureVsPartyLT(Scriptable* Sender, Trigger* parameters)
 	return value < parameters->int0Parameter;
 }
 
-int GameScript::Morale(Scriptable* Sender, Trigger* parameters)
+int GS::Morale(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2579,7 +2579,7 @@ int GameScript::Morale(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_MORALEBREAK) == parameters->int0Parameter;
 }
 
-int GameScript::MoraleGT(Scriptable* Sender, Trigger* parameters)
+int GS::MoraleGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2589,7 +2589,7 @@ int GameScript::MoraleGT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_MORALEBREAK) > parameters->int0Parameter;
 }
 
-int GameScript::MoraleLT(Scriptable* Sender, Trigger* parameters)
+int GS::MoraleLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2599,7 +2599,7 @@ int GameScript::MoraleLT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_MORALEBREAK) < parameters->int0Parameter;
 }
 
-int GameScript::CheckSpellState(Scriptable* Sender, Trigger* parameters)
+int GS::CheckSpellState(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2617,7 +2617,7 @@ int GameScript::CheckSpellState(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::StateCheck(Scriptable* Sender, Trigger* parameters)
+int GS::StateCheck(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2630,7 +2630,7 @@ int GameScript::StateCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::ExtendedStateCheck(Scriptable* Sender, Trigger* parameters)
+int GS::ExtendedStateCheck(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2643,7 +2643,7 @@ int GameScript::ExtendedStateCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::NotStateCheck(Scriptable* Sender, Trigger* parameters)
+int GS::NotStateCheck(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -2656,7 +2656,7 @@ int GameScript::NotStateCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::RandomNum(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::RandomNum(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	if (parameters->int0Parameter<0) {
 		return 0;
@@ -2667,7 +2667,7 @@ int GameScript::RandomNum(Scriptable* /*Sender*/, Trigger* parameters)
 	return parameters->int1Parameter-1 == RandomNumValue%parameters->int0Parameter;
 }
 
-int GameScript::RandomNumGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::RandomNumGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	if (parameters->int0Parameter<0) {
 		return 0;
@@ -2678,7 +2678,7 @@ int GameScript::RandomNumGT(Scriptable* /*Sender*/, Trigger* parameters)
 	return parameters->int1Parameter-1 < RandomNumValue%parameters->int0Parameter;
 }
 
-int GameScript::RandomNumLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::RandomNumLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	if (parameters->int0Parameter<0) {
 		return 0;
@@ -2689,7 +2689,7 @@ int GameScript::RandomNumLT(Scriptable* /*Sender*/, Trigger* parameters)
 	return parameters->int1Parameter-1 > RandomNumValue%parameters->int0Parameter;
 }
 
-int GameScript::OpenState(Scriptable* Sender, Trigger* parameters)
+int GS::OpenState(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2718,7 +2718,7 @@ int GameScript::OpenState(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsLocked(Scriptable * Sender, Trigger *parameters)
+int GS::IsLocked(Scriptable * Sender, Trigger *parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2745,7 +2745,7 @@ int GameScript::IsLocked(Scriptable * Sender, Trigger *parameters)
 	return 0;
 }
 
-int GameScript::Level(Scriptable* Sender, Trigger* parameters)
+int GS::Level(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2760,7 +2760,7 @@ int GameScript::Level(Scriptable* Sender, Trigger* parameters)
 }
 
 //this is just a hack, actually multiclass should be available
-int GameScript::ClassLevel(Scriptable* Sender, Trigger* parameters)
+int GS::ClassLevel(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2780,7 +2780,7 @@ int GameScript::ClassLevel(Scriptable* Sender, Trigger* parameters)
 // iwd2 and pst have different order of parameters:
 // ClassLevelGT(Protagonist,MAGE,89)
 // LevelInClass(Myself,10,CLERIC)
-int GameScript::LevelInClass(Scriptable* Sender, Trigger* parameters)
+int GS::LevelInClass(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2797,7 +2797,7 @@ int GameScript::LevelInClass(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) == (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::LevelGT(Scriptable* Sender, Trigger* parameters)
+int GS::LevelGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2811,7 +2811,7 @@ int GameScript::LevelGT(Scriptable* Sender, Trigger* parameters)
 }
 
 //this is just a hack, actually multiclass should be available
-int GameScript::ClassLevelGT(Scriptable* Sender, Trigger* parameters)
+int GS::ClassLevelGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2826,7 +2826,7 @@ int GameScript::ClassLevelGT(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) > (unsigned) parameters->int1Parameter;
 }
 
-int GameScript::LevelInClassGT(Scriptable* Sender, Trigger* parameters)
+int GS::LevelInClassGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2842,7 +2842,7 @@ int GameScript::LevelInClassGT(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) > (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::LevelLT(Scriptable* Sender, Trigger* parameters)
+int GS::LevelLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2855,7 +2855,7 @@ int GameScript::LevelLT(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) < (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::ClassLevelLT(Scriptable* Sender, Trigger* parameters)
+int GS::ClassLevelLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2870,7 +2870,7 @@ int GameScript::ClassLevelLT(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) < (unsigned) parameters->int1Parameter;
 }
 
-int GameScript::LevelInClassLT(Scriptable* Sender, Trigger* parameters)
+int GS::LevelInClassLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2886,7 +2886,7 @@ int GameScript::LevelInClassLT(Scriptable* Sender, Trigger* parameters)
 	return actor->GetStat(IE_LEVEL) < (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::UnselectableVariable(Scriptable* Sender, Trigger* parameters)
+int GS::UnselectableVariable(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2895,7 +2895,7 @@ int GameScript::UnselectableVariable(Scriptable* Sender, Trigger* parameters)
 	return tar->UnselectableTimer == (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::UnselectableVariableGT(Scriptable* Sender, Trigger* parameters)
+int GS::UnselectableVariableGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2904,7 +2904,7 @@ int GameScript::UnselectableVariableGT(Scriptable* Sender, Trigger* parameters)
 	return tar->UnselectableTimer > (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::UnselectableVariableLT(Scriptable* Sender, Trigger* parameters)
+int GS::UnselectableVariableLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -2913,7 +2913,7 @@ int GameScript::UnselectableVariableLT(Scriptable* Sender, Trigger* parameters)
 	return tar->UnselectableTimer < (unsigned) parameters->int0Parameter;
 }
 
-int GameScript::AreaCheck(Scriptable* Sender, Trigger* parameters)
+int GS::AreaCheck(Scriptable* Sender, Trigger* parameters)
 {
 	if (!strnicmp(Sender->GetCurrentArea()->GetScriptName(), parameters->string0Parameter, 8)) {
 		return 1;
@@ -2921,7 +2921,7 @@ int GameScript::AreaCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AreaCheckObject(Scriptable* Sender, Trigger* parameters)
+int GS::AreaCheckObject(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 
@@ -2935,7 +2935,7 @@ int GameScript::AreaCheckObject(Scriptable* Sender, Trigger* parameters)
 }
 
 //lame iwd2 uses a numeric area identifier, this reduces its usability
-int GameScript::CurrentAreaIs(Scriptable* Sender, Trigger* parameters)
+int GS::CurrentAreaIs(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 
@@ -2952,7 +2952,7 @@ int GameScript::CurrentAreaIs(Scriptable* Sender, Trigger* parameters)
 
 //lame bg2 uses a constant areaname prefix, this reduces its usability
 //but in the spirit of flexibility, gemrb extension allows arbitrary prefixes
-int GameScript::AreaStartsWith(Scriptable* Sender, Trigger* parameters)
+int GS::AreaStartsWith(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 
@@ -2972,7 +2972,7 @@ int GameScript::AreaStartsWith(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::EntirePartyOnMap(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::EntirePartyOnMap(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	Map *map = Sender->GetCurrentArea();
 	Game *game=core->GetGame();
@@ -2986,7 +2986,7 @@ int GameScript::EntirePartyOnMap(Scriptable* Sender, Trigger* /*parameters*/)
 	return 1;
 }
 
-int GameScript::AnyPCOnMap(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::AnyPCOnMap(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	Map *map = Sender->GetCurrentArea();
 	Game *game=core->GetGame();
@@ -3000,7 +3000,7 @@ int GameScript::AnyPCOnMap(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::InActiveArea(Scriptable* Sender, Trigger* parameters)
+int GS::InActiveArea(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3012,7 +3012,7 @@ int GameScript::InActiveArea(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::InMyArea(Scriptable* Sender, Trigger* parameters)
+int GS::InMyArea(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3024,13 +3024,13 @@ int GameScript::InMyArea(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AreaType(Scriptable* Sender, Trigger* parameters)
+int GS::AreaType(Scriptable* Sender, Trigger* parameters)
 {
 	Map *map=Sender->GetCurrentArea();
 	return (map->AreaType&parameters->int0Parameter)>0;
 }
 
-int GameScript::IsExtendedNight( Scriptable* Sender, Trigger* /*parameters*/)
+int GS::IsExtendedNight( Scriptable* Sender, Trigger* /*parameters*/)
 {
 	Map *map=Sender->GetCurrentArea();
 	if (map->AreaType&AT_EXTENDED_NIGHT) {
@@ -3039,13 +3039,13 @@ int GameScript::IsExtendedNight( Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::AreaFlag(Scriptable* Sender, Trigger* parameters)
+int GS::AreaFlag(Scriptable* Sender, Trigger* parameters)
 {
 	Map *map=Sender->GetCurrentArea();
 	return (map->AreaFlags&parameters->int0Parameter)>0;
 }
 
-int GameScript::AreaRestDisabled(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::AreaRestDisabled(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	Map *map=Sender->GetCurrentArea();
 	if (map->AreaFlags&2) {
@@ -3055,7 +3055,7 @@ int GameScript::AreaRestDisabled(Scriptable* Sender, Trigger* /*parameters*/)
 }
 
 //new optional parameter: size of actor (to reach target)
-int GameScript::TargetUnreachable(Scriptable* Sender, Trigger* parameters)
+int GS::TargetUnreachable(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -3078,67 +3078,67 @@ int GameScript::TargetUnreachable(Scriptable* Sender, Trigger* parameters)
 	return map->TargetUnreachable( Sender->Pos, tar->Pos, size);
 }
 
-int GameScript::PartyCountEQ(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountEQ(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(0)==parameters->int0Parameter;
 }
 
-int GameScript::PartyCountLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(0)<parameters->int0Parameter;
 }
 
-int GameScript::PartyCountGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(0)>parameters->int0Parameter;
 }
 
-int GameScript::PartyCountAliveEQ(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountAliveEQ(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(1)==parameters->int0Parameter;
 }
 
-int GameScript::PartyCountAliveLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountAliveLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(1)<parameters->int0Parameter;
 }
 
-int GameScript::PartyCountAliveGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyCountAliveGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartySize(1)>parameters->int0Parameter;
 }
 
-int GameScript::LevelParty(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::LevelParty(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartyLevel(1)==parameters->int0Parameter;
 }
 
-int GameScript::LevelPartyLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::LevelPartyLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartyLevel(1)<parameters->int0Parameter;
 }
 
-int GameScript::LevelPartyGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::LevelPartyGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->GetPartyLevel(1)>parameters->int0Parameter;
 }
 
-int GameScript::PartyGold(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyGold(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->PartyGold == (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::PartyGoldGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyGoldGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->PartyGold > (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::PartyGoldLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PartyGoldLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->PartyGold < (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::OwnsFloaterMessage(Scriptable* Sender, Trigger* parameters)
+int GS::OwnsFloaterMessage(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3147,12 +3147,12 @@ int GameScript::OwnsFloaterMessage(Scriptable* Sender, Trigger* parameters)
 	return tar->textDisplaying;
 }
 
-int GameScript::InCutSceneMode(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::InCutSceneMode(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	return core->InCutSceneMode();
 }
 
-int GameScript::Proficiency(Scriptable* Sender, Trigger* parameters)
+int GS::Proficiency(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>31) {
@@ -3169,7 +3169,7 @@ int GameScript::Proficiency(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_PROFICIENCYBASTARDSWORD+idx) == parameters->int1Parameter;
 }
 
-int GameScript::ProficiencyGT(Scriptable* Sender, Trigger* parameters)
+int GS::ProficiencyGT(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>31) {
@@ -3186,7 +3186,7 @@ int GameScript::ProficiencyGT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_PROFICIENCYBASTARDSWORD+idx) > parameters->int1Parameter;
 }
 
-int GameScript::ProficiencyLT(Scriptable* Sender, Trigger* parameters)
+int GS::ProficiencyLT(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>31) {
@@ -3205,7 +3205,7 @@ int GameScript::ProficiencyLT(Scriptable* Sender, Trigger* parameters)
 
 //this is a PST specific stat, shows how many free proficiency slots we got
 //we use an unused stat for it
-int GameScript::ExtraProficiency(Scriptable* Sender, Trigger* parameters)
+int GS::ExtraProficiency(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3218,7 +3218,7 @@ int GameScript::ExtraProficiency(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_FREESLOTS) == parameters->int0Parameter;
 }
 
-int GameScript::ExtraProficiencyGT(Scriptable* Sender, Trigger* parameters)
+int GS::ExtraProficiencyGT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3231,7 +3231,7 @@ int GameScript::ExtraProficiencyGT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_FREESLOTS) > parameters->int0Parameter;
 }
 
-int GameScript::ExtraProficiencyLT(Scriptable* Sender, Trigger* parameters)
+int GS::ExtraProficiencyLT(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3244,7 +3244,7 @@ int GameScript::ExtraProficiencyLT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_FREESLOTS) < parameters->int0Parameter;
 }
 
-int GameScript::Internal(Scriptable* Sender, Trigger* parameters)
+int GS::Internal(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>15) {
@@ -3261,7 +3261,7 @@ int GameScript::Internal(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_INTERNAL_0+idx) == parameters->int1Parameter;
 }
 
-int GameScript::InternalGT(Scriptable* Sender, Trigger* parameters)
+int GS::InternalGT(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>15) {
@@ -3278,7 +3278,7 @@ int GameScript::InternalGT(Scriptable* Sender, Trigger* parameters)
 	return (signed) actor->GetStat(IE_INTERNAL_0+idx) > parameters->int1Parameter;
 }
 
-int GameScript::InternalLT(Scriptable* Sender, Trigger* parameters)
+int GS::InternalLT(Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int idx = parameters->int0Parameter;
 	if (idx>15) {
@@ -3296,7 +3296,7 @@ int GameScript::InternalLT(Scriptable* Sender, Trigger* parameters)
 }
 
 //we check if target is currently in dialog or not
-int GameScript::NullDialog(Scriptable* Sender, Trigger* parameters)
+int GS::NullDialog(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3315,7 +3315,7 @@ int GameScript::NullDialog(Scriptable* Sender, Trigger* parameters)
 //this one checks scriptname (deathvar), i hope it is right
 //IsScriptName depends on this too
 //Name is another (similar function)
-int GameScript::CalledByName(Scriptable* Sender, Trigger* parameters)
+int GS::CalledByName(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3332,7 +3332,7 @@ int GameScript::CalledByName(Scriptable* Sender, Trigger* parameters)
 }
 
 //This is checking on the character's name as it was typed in
-int GameScript::CharName(Scriptable* Sender, Trigger* parameters)
+int GS::CharName(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!scr || scr->Type!=ST_ACTOR) {
@@ -3345,7 +3345,7 @@ int GameScript::CharName(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AnimationID(Scriptable* Sender, Trigger* parameters)
+int GS::AnimationID(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3361,7 +3361,7 @@ int GameScript::AnimationID(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AnimState(Scriptable* Sender, Trigger* parameters)
+int GS::AnimState(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar) {
@@ -3375,24 +3375,24 @@ int GameScript::AnimState(Scriptable* Sender, Trigger* parameters)
 }
 
 //this trigger uses hours
-int GameScript::Time(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::Time(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return (core->GetGame()->GameTime/AI_UPDATE_TIME)%7200/300 == (ieDword) parameters->int0Parameter;
 }
 
 //this trigger uses hours
-int GameScript::TimeGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::TimeGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return (core->GetGame()->GameTime/AI_UPDATE_TIME)%7200/300 > (ieDword) parameters->int0Parameter;
 }
 
 //this trigger uses hours
-int GameScript::TimeLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::TimeLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return (core->GetGame()->GameTime/AI_UPDATE_TIME)%7200/300 < (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::HotKey(Scriptable* Sender, Trigger* parameters)
+int GS::HotKey(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -3408,22 +3408,22 @@ int GameScript::HotKey(Scriptable* Sender, Trigger* parameters)
 	return ret;
 }
 
-int GameScript::CombatCounter(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CombatCounter(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->CombatCounter == (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::CombatCounterGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CombatCounterGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->CombatCounter > (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::CombatCounterLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CombatCounterLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	return core->GetGame()->CombatCounter < (ieDword) parameters->int0Parameter;
 }
 
-int GameScript::TrapTriggered(Scriptable* Sender, Trigger* parameters)
+int GS::TrapTriggered(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_TRIGGER) {
 		return 0;
@@ -3441,7 +3441,7 @@ int GameScript::TrapTriggered(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::InteractingWith(Scriptable* Sender, Trigger* parameters)
+int GS::InteractingWith(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3460,7 +3460,7 @@ int GameScript::InteractingWith(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::LastPersonTalkedTo(Scriptable* Sender, Trigger* parameters)
+int GS::LastPersonTalkedTo(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3476,7 +3476,7 @@ int GameScript::LastPersonTalkedTo(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsRotation(Scriptable* Sender, Trigger* parameters)
+int GS::IsRotation(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -3491,7 +3491,7 @@ int GameScript::IsRotation(Scriptable* Sender, Trigger* parameters)
 
 //GemRB currently stores the saved location in a local variable, but it is
 //actually stored in the .gam structure (only for PCs)
-int GameScript::IsFacingSavedRotation(Scriptable* Sender, Trigger* parameters)
+int GS::IsFacingSavedRotation(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3504,7 +3504,7 @@ int GameScript::IsFacingSavedRotation(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsFacingObject(Scriptable* Sender, Trigger* parameters)
+int GS::IsFacingObject(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type != ST_ACTOR) {
 		return 0;
@@ -3520,7 +3520,7 @@ int GameScript::IsFacingObject(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AttackedBy(Scriptable* Sender, Trigger* parameters)
+int GS::AttackedBy(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3550,7 +3550,7 @@ int GameScript::AttackedBy(Scriptable* Sender, Trigger* parameters)
 	return ret;
 }
 
-int GameScript::TookDamage(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::TookDamage(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3564,7 +3564,7 @@ int GameScript::TookDamage(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::HitBy(Scriptable* Sender, Trigger* parameters)
+int GS::HitBy(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3582,7 +3582,7 @@ int GameScript::HitBy(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Heard(Scriptable* Sender, Trigger* parameters)
+int GS::Heard(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3600,7 +3600,7 @@ int GameScript::Heard(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::LastMarkedObject_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::LastMarkedObject_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3614,7 +3614,7 @@ int GameScript::LastMarkedObject_Trigger(Scriptable* Sender, Trigger* parameters
 	return 0;
 }
 
-int GameScript::HelpEX(Scriptable* Sender, Trigger* parameters)
+int GS::HelpEX(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3648,7 +3648,7 @@ int GameScript::HelpEX(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Help_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::Help_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3661,7 +3661,7 @@ int GameScript::Help_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::ReceivedOrder(Scriptable* Sender, Trigger* parameters)
+int GS::ReceivedOrder(Scriptable* Sender, Trigger* parameters)
 {
 	if (MatchActor(Sender, Sender->LastOrderer, parameters->objectParameter) &&
 		parameters->int0Parameter==Sender->LastOrder) {
@@ -3671,7 +3671,7 @@ int GameScript::ReceivedOrder(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Joins(Scriptable* Sender, Trigger* parameters)
+int GS::Joins(Scriptable* Sender, Trigger* parameters)
 {
 	if(Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3688,7 +3688,7 @@ int GameScript::Joins(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Leaves(Scriptable* Sender, Trigger* parameters)
+int GS::Leaves(Scriptable* Sender, Trigger* parameters)
 {
 	if(Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3705,7 +3705,7 @@ int GameScript::Leaves(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::FallenPaladin(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::FallenPaladin(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3714,7 +3714,7 @@ int GameScript::FallenPaladin(Scriptable* Sender, Trigger* /*parameters*/)
 	return (act->GetStat(IE_MC_FLAGS) & MC_FALLEN_PALADIN)!=0;
 }
 
-int GameScript::FallenRanger(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::FallenRanger(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3723,7 +3723,7 @@ int GameScript::FallenRanger(Scriptable* Sender, Trigger* /*parameters*/)
 	return (act->GetStat(IE_MC_FLAGS) & MC_FALLEN_RANGER)!=0;
 }
 
-int GameScript::NightmareModeOn(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::NightmareModeOn(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	ieDword diff;
 
@@ -3734,7 +3734,7 @@ int GameScript::NightmareModeOn(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::Difficulty(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::Difficulty(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	ieDword diff;
 
@@ -3747,7 +3747,7 @@ int GameScript::Difficulty(Scriptable* /*Sender*/, Trigger* parameters)
 	return DiffCore(diff, (ieDword) parameters->int0Parameter, mode);
 }
 
-int GameScript::DifficultyGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::DifficultyGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	ieDword diff;
 
@@ -3755,7 +3755,7 @@ int GameScript::DifficultyGT(Scriptable* /*Sender*/, Trigger* parameters)
 	return diff>(ieDword) parameters->int0Parameter;
 }
 
-int GameScript::DifficultyLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::DifficultyLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	ieDword diff;
 
@@ -3763,7 +3763,7 @@ int GameScript::DifficultyLT(Scriptable* /*Sender*/, Trigger* parameters)
 	return diff<(ieDword) parameters->int0Parameter;
 }
 
-int GameScript::Vacant(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::Vacant(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_AREA) {
 		return 0;
@@ -3776,7 +3776,7 @@ int GameScript::Vacant(Scriptable* Sender, Trigger* /*parameters*/)
 }
 
 //this trigger always checks the right hand weapon?
-int GameScript::InWeaponRange(Scriptable* Sender, Trigger* parameters)
+int GS::InWeaponRange(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3807,7 +3807,7 @@ int GameScript::InWeaponRange(Scriptable* Sender, Trigger* parameters)
 //if the implementation should sign 'no ranged attack possible'
 //then change some return values
 //in bg2/iwd2 it doesn't accept an object (the object parameter is gemrb ext.)
-int GameScript::OutOfAmmo(Scriptable* Sender, Trigger* parameters)
+int GS::OutOfAmmo(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* scr = Sender;
 	if (parameters->objectParameter) {
@@ -3835,7 +3835,7 @@ int GameScript::OutOfAmmo(Scriptable* Sender, Trigger* parameters)
 //returns true if a weapon is equipped (with more than 0 range)
 //if a bow is equipped without projectile, it is useless!
 //please notice how similar is this to OutOfAmmo
-int GameScript::HaveUsableWeaponEquipped(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::HaveUsableWeaponEquipped(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -3856,7 +3856,7 @@ int GameScript::HaveUsableWeaponEquipped(Scriptable* Sender, Trigger* /*paramete
 	return 1;
 }
 
-int GameScript::HasWeaponEquipped(Scriptable* Sender, Trigger* parameters)
+int GS::HasWeaponEquipped(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3869,7 +3869,7 @@ int GameScript::HasWeaponEquipped(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::PCInStore( Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::PCInStore( Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	if (core->GetCurrentStore()) {
 		return 1;
@@ -3880,7 +3880,7 @@ int GameScript::PCInStore( Scriptable* /*Sender*/, Trigger* /*parameters*/)
 //this checks if the launch point is onscreen, a more elaborate check
 //would see if any piece of the Scriptable is onscreen, what is the original
 //behaviour?
-int GameScript::OnScreen( Scriptable* Sender, Trigger* /*parameters*/)
+int GS::OnScreen( Scriptable* Sender, Trigger* /*parameters*/)
 {
 	Region vp = core->GetVideoDriver()->GetViewport();
 	if (vp.PointInside(Sender->Pos) ) {
@@ -3889,7 +3889,7 @@ int GameScript::OnScreen( Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::IsPlayerNumber( Scriptable* Sender, Trigger* parameters)
+int GS::IsPlayerNumber( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3902,7 +3902,7 @@ int GameScript::IsPlayerNumber( Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PCCanSeePoint( Scriptable* /*Sender*/, Trigger* parameters)
+int GS::PCCanSeePoint( Scriptable* /*Sender*/, Trigger* parameters)
 {
 	Map* map = core->GetGame()->GetCurrentArea();
 	if (map->IsVisible(parameters->pointParameter, false) ) {
@@ -3912,7 +3912,7 @@ int GameScript::PCCanSeePoint( Scriptable* /*Sender*/, Trigger* parameters)
 }
 
 //i'm clueless about this trigger
-int GameScript::StuffGlobalRandom( Scriptable* Sender, Trigger* parameters)
+int GS::StuffGlobalRandom( Scriptable* Sender, Trigger* parameters)
 {
 	unsigned int max=parameters->int0Parameter+1;
 	ieDword Value;
@@ -3928,7 +3928,7 @@ int GameScript::StuffGlobalRandom( Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsCreatureAreaFlag( Scriptable* Sender, Trigger* parameters)
+int GS::IsCreatureAreaFlag( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3941,7 +3941,7 @@ int GameScript::IsCreatureAreaFlag( Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::IsPathCriticalObject( Scriptable* Sender, Trigger* parameters)
+int GS::IsPathCriticalObject( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3955,7 +3955,7 @@ int GameScript::IsPathCriticalObject( Scriptable* Sender, Trigger* parameters)
 }
 
 // 0 - ability, 1 - number, 2 - mode
-int GameScript::ChargeCount( Scriptable* Sender, Trigger* parameters)
+int GS::ChargeCount( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -3994,7 +3994,7 @@ int GameScript::ChargeCount( Scriptable* Sender, Trigger* parameters)
 }
 
 // no idea if it checks only alive partymembers
-int GameScript::CheckPartyLevel( Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CheckPartyLevel( Scriptable* /*Sender*/, Trigger* parameters)
 {
 	if (core->GetGame()->GetPartyLevel(false)<parameters->int0Parameter) {
 		return 0;
@@ -4003,7 +4003,7 @@ int GameScript::CheckPartyLevel( Scriptable* /*Sender*/, Trigger* parameters)
 }
 
 // no idea if it checks only alive partymembers
-int GameScript::CheckPartyAverageLevel( Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CheckPartyAverageLevel( Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int level = core->GetGame()->GetPartyLevel(false);
 	switch (parameters->int1Parameter) {
@@ -4028,7 +4028,7 @@ int GameScript::CheckPartyAverageLevel( Scriptable* /*Sender*/, Trigger* paramet
 	return 1;
 }
 
-int GameScript::CheckDoorFlags( Scriptable* Sender, Trigger* parameters)
+int GS::CheckDoorFlags( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_DOOR) {
@@ -4043,7 +4043,7 @@ int GameScript::CheckDoorFlags( Scriptable* Sender, Trigger* parameters)
 
 // works only on animations?
 // Be careful when converting to GetActorFromObject, it won't return animations (those are not scriptable)
-int GameScript::Frame( Scriptable* Sender, Trigger* parameters)
+int GS::Frame( Scriptable* Sender, Trigger* parameters)
 {
 	//to avoid a crash
 	if (!parameters->objectParameter) {
@@ -4062,7 +4062,7 @@ int GameScript::Frame( Scriptable* Sender, Trigger* parameters)
 }
 
 //Modalstate in IWD2 allows specifying an object
-int GameScript::ModalState( Scriptable* Sender, Trigger* parameters)
+int GS::ModalState( Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable *scr;
 
@@ -4083,7 +4083,7 @@ int GameScript::ModalState( Scriptable* Sender, Trigger* parameters)
 }
 
 /* a special redundant trigger for iwd2 - could do something extra */
-int GameScript::IsCreatureHiddenInShadows( Scriptable* Sender, Trigger* /*parameters*/)
+int GS::IsCreatureHiddenInShadows( Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -4096,7 +4096,7 @@ int GameScript::IsCreatureHiddenInShadows( Scriptable* Sender, Trigger* /*parame
 	return 0;
 }
 
-int GameScript::IsWeather( Scriptable* /*Sender*/, Trigger* parameters)
+int GS::IsWeather( Scriptable* /*Sender*/, Trigger* parameters)
 {
 	Game *game = core->GetGame();
 	ieDword weather = game->WeatherBits & parameters->int0Parameter;
@@ -4106,7 +4106,7 @@ int GameScript::IsWeather( Scriptable* /*Sender*/, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::Delay( Scriptable* Sender, Trigger* parameters)
+int GS::Delay( Scriptable* Sender, Trigger* parameters)
 {
 	ieDword delay = (ieDword) parameters->int0Parameter;
 	if (delay<=1) {
@@ -4121,7 +4121,7 @@ int GameScript::Delay( Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::TimeOfDay(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::TimeOfDay(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	ieDword timeofday = (core->GetGame()->GameTime/AI_UPDATE_TIME)%7200/1800;
 
@@ -4132,7 +4132,7 @@ int GameScript::TimeOfDay(Scriptable* /*Sender*/, Trigger* parameters)
 }
 
 //this is a PST action, it's using delta, not diffmode
-int GameScript::RandomStatCheck(Scriptable* Sender, Trigger* parameters)
+int GS::RandomStatCheck(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -4159,7 +4159,7 @@ int GameScript::RandomStatCheck(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::PartyRested(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::PartyRested(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->GetInternalFlag()&IF_PARTYRESTED) {
 		Sender->SetBitTrigger(BT_PARTYRESTED);
@@ -4168,7 +4168,7 @@ int GameScript::PartyRested(Scriptable* Sender, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::IsWeaponRanged(Scriptable* Sender, Trigger* parameters)
+int GS::IsWeaponRanged(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable* tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type!=ST_ACTOR) {
@@ -4182,7 +4182,7 @@ int GameScript::IsWeaponRanged(Scriptable* Sender, Trigger* parameters)
 }
 
 //HoW applies sequence on area animations
-int GameScript::Sequence(Scriptable* Sender, Trigger* parameters)
+int GS::Sequence(Scriptable* Sender, Trigger* parameters)
 {
 	//to avoid a crash, check if object is NULL
 	if (parameters->objectParameter) {
@@ -4208,7 +4208,7 @@ int GameScript::Sequence(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::TimerExpired(Scriptable* Sender, Trigger* parameters)
+int GS::TimerExpired(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->TimerExpired(parameters->int0Parameter) ) {
 		return 1;
@@ -4216,7 +4216,7 @@ int GameScript::TimerExpired(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::TimerActive(Scriptable* Sender, Trigger* parameters)
+int GS::TimerActive(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->TimerActive(parameters->int0Parameter) ) {
 		return 1;
@@ -4224,14 +4224,14 @@ int GameScript::TimerActive(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::ActuallyInCombat(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::ActuallyInCombat(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	Game *game=core->GetGame();
 	if (game->AnyPCInCombat()) return 1;
 	return 0;
 }
 
-int GameScript::InMyGroup(Scriptable* Sender, Trigger* parameters)
+int GS::InMyGroup(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -4252,7 +4252,7 @@ int GameScript::InMyGroup(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::AnyPCSeesEnemy(Scriptable* /*Sender*/, Trigger* /*parameters*/)
+int GS::AnyPCSeesEnemy(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 {
 	Game *game = core->GetGame();
 	unsigned int i = (unsigned int) game->GetLoadedMapCount();
@@ -4265,7 +4265,7 @@ int GameScript::AnyPCSeesEnemy(Scriptable* /*Sender*/, Trigger* /*parameters*/)
 	return 0;
 }
 
-int GameScript::Unusable(Scriptable* Sender, Trigger* parameters)
+int GS::Unusable(Scriptable* Sender, Trigger* parameters)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;
@@ -4283,7 +4283,7 @@ int GameScript::Unusable(Scriptable* Sender, Trigger* parameters)
 	return ret;
 }
 
-int GameScript::HasBounceEffects(Scriptable* Sender, Trigger* parameters)
+int GS::HasBounceEffects(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable *tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -4294,7 +4294,7 @@ int GameScript::HasBounceEffects(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::HasImmunityEffects(Scriptable* Sender, Trigger* parameters)
+int GS::HasImmunityEffects(Scriptable* Sender, Trigger* parameters)
 {
 	Scriptable *tar = GetActorFromObject( Sender, parameters->objectParameter );
 	if (!tar || tar->Type != ST_ACTOR) {
@@ -4314,7 +4314,7 @@ int GameScript::HasImmunityEffects(Scriptable* Sender, Trigger* parameters)
 #define SYSV_REPUTATION     2
 #define SYSV_PARTYGOLD      3
 
-int GameScript::SystemVariable_Trigger(Scriptable* Sender, Trigger* parameters)
+int GS::SystemVariable_Trigger(Scriptable* Sender, Trigger* parameters)
 {
 	ieDword value;
 
@@ -4339,7 +4339,7 @@ int GameScript::SystemVariable_Trigger(Scriptable* Sender, Trigger* parameters)
 	return 1;
 }
 
-int GameScript::SpellCast(Scriptable* Sender, Trigger* parameters)
+int GS::SpellCast(Scriptable* Sender, Trigger* parameters)
 {
 	if(parameters->int0Parameter) {
 		unsigned int param = 2000+parameters->int0Parameter%1000;
@@ -4354,7 +4354,7 @@ int GameScript::SpellCast(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::SpellCastPriest(Scriptable* Sender, Trigger* parameters)
+int GS::SpellCastPriest(Scriptable* Sender, Trigger* parameters)
 {
 	if(parameters->int0Parameter) {
 		unsigned int param = 1000+parameters->int0Parameter%1000;
@@ -4369,7 +4369,7 @@ int GameScript::SpellCastPriest(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::SpellCastInnate(Scriptable* Sender, Trigger* parameters)
+int GS::SpellCastInnate(Scriptable* Sender, Trigger* parameters)
 {
 	if(parameters->int0Parameter) {
 		unsigned int param = 3000+parameters->int0Parameter%1000;
@@ -4384,7 +4384,7 @@ int GameScript::SpellCastInnate(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::SpellCastOnMe(Scriptable* Sender, Trigger* parameters)
+int GS::SpellCastOnMe(Scriptable* Sender, Trigger* parameters)
 {
 	if(parameters->int0Parameter) {
 		if ((ieDword) parameters->int0Parameter!=Sender->LastSpellOnMe) {
@@ -4398,7 +4398,7 @@ int GameScript::SpellCastOnMe(Scriptable* Sender, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CalendarDay(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CalendarDay(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int day = core->GetCalendar()->GetCalendarDay(core->GetGame()->GameTime/AI_UPDATE_TIME/7200);
 	if(day == parameters->int0Parameter) {
@@ -4407,7 +4407,7 @@ int GameScript::CalendarDay(Scriptable* /*Sender*/, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CalendarDayGT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CalendarDayGT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int day = core->GetCalendar()->GetCalendarDay(core->GetGame()->GameTime/AI_UPDATE_TIME/7200);
 	if(day > parameters->int0Parameter) {
@@ -4416,7 +4416,7 @@ int GameScript::CalendarDayGT(Scriptable* /*Sender*/, Trigger* parameters)
 	return 0;
 }
 
-int GameScript::CalendarDayLT(Scriptable* /*Sender*/, Trigger* parameters)
+int GS::CalendarDayLT(Scriptable* /*Sender*/, Trigger* parameters)
 {
 	int day = core->GetCalendar()->GetCalendarDay(core->GetGame()->GameTime/AI_UPDATE_TIME/7200);
 	if(day < parameters->int0Parameter) {
@@ -4426,7 +4426,7 @@ int GameScript::CalendarDayLT(Scriptable* /*Sender*/, Trigger* parameters)
 }
 
 //NT Returns true only if the active CRE was turned by the specified priest or paladin.
-int GameScript::TurnedBy(Scriptable* Sender, Trigger* /*parameters*/)
+int GS::TurnedBy(Scriptable* Sender, Trigger* /*parameters*/)
 {
 	if (Sender->Type!=ST_ACTOR) {
 		return 0;

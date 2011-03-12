@@ -29,7 +29,7 @@
 #include "GameData.h"
 #include "Interface.h"
 #include "Item.h"
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 
 Store::Store(void)
 {

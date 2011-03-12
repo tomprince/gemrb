@@ -181,6 +181,35 @@ struct PolymorphCache;
 #define DC_LADY   2
 #define DC_MURDER 3
 
+//verbal constant (bg2), we need a lookup table for other games
+enum VerbalConstant {
+	VB_PANIC      = 1,
+	VB_HAPPY      = 2,
+	VB_UNHAPPY    = 3,
+	VB_LEADER     = 6,
+	VB_TIRED      = 7,
+	VB_BORED      = 8,
+	VB_ATTACK     = 9,
+	VB_DAMAGE     = 18,
+	VB_DIE        = 19,
+	VB_SELECT     = 26,
+	VB_INSULT     = 44,
+	VB_COMPLIMENT = 47,
+	VB_SPECIAL    = 50,
+	VB_REACT      = 53,
+	VB_REACT_S    = 54,
+	VB_RESP_COMP  = 55,
+	VB_RESP_INS   = 58,
+	VB_HOSTILE    = 59,
+	VB_DIALOG     = 60,
+	VB_CRITHIT    = 65,
+	VB_CRITMISS   = 66,
+	VB_TIMMUNE    = 67,
+	VB_INVENTORY  = 68,
+	VB_PP_SUCC    = 69,
+	VB_BIO        = 74
+};
+
 // used for distinguishing damage immunity from high damage resistance
 #define DR_IMMUNE 999999
 

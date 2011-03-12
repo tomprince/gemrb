@@ -3220,7 +3220,7 @@ void Actor::Turn(Scriptable *cleric, ieDword turnlevel)
 		return;
 	}
 
-	if ((cleric->Type==ST_ACTOR) && GameScript::ID_Alignment((Actor *)cleric,AL_EVIL) ) {
+	if ((cleric->Type==ST_ACTOR) && GS::ID_Alignment((Actor *)cleric,AL_EVIL) ) {
 		evilcleric = true;
 	}
 
@@ -3404,7 +3404,7 @@ void Actor::Die(Scriptable *killer)
 			} else if (Modified[IE_CLASS] == CLASS_FLAMINGFIST) {
 				repmod = core->GetReputationMod(3);
 			}
-			if (GameScript::ID_Alignment(this,AL_EVIL) ) {
+			if (GS::ID_Alignment(this,AL_EVIL) ) {
 				repmod += core->GetReputationMod(7);
 			}
 			if (repmod) {
