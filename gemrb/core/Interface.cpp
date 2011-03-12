@@ -142,7 +142,6 @@ Interface::Interface(int iargc, char* iargv[])
 	UseContainer = false;
 	InfoTextPalette = NULL;
 	timer = NULL;
-	displaymsg = NULL;
 	evntmgr = NULL;
 	console = NULL;
 	slottypes = NULL;
@@ -394,7 +393,6 @@ Interface::~Interface(void)
 	delete pal16;
 
 	delete timer;
-	delete displaymsg;
 
 	if (video) {
 
@@ -1021,7 +1019,7 @@ bool Interface::ReadDamageTypeTable() {
 
 	DamageInfoStruct di;
 	for (ieDword i = 0; i < tm->GetRowCount(); i++) {
-		di.strref = displaymsg->GetStringReference(atoi(tm->QueryField(i, 0)));
+		di.strref = GetStringReference(atoi(tm->QueryField(i, 0)));
 		di.resist_stat = TranslateStat(tm->QueryField(i, 1));
 		di.value = strtol(tm->QueryField(i, 2), (char **) NULL, 16);
 		di.iwd_mod_type = atoi(tm->QueryField(i, 3));
@@ -1800,9 +1798,8 @@ int Interface::Init()
 	}
 	printStatus( "OK", LIGHT_GREEN );
 
-	displaymsg = new DisplayMessage();
 	printMessage( "Core", "Initializing string constants...", WHITE );
-	if (!displaymsg) {
+	if (!Init_DisplayString()) {
 		printStatus( "ERROR", LIGHT_RED );
 		return GEM_ERROR;
 	}
@@ -4253,14 +4250,14 @@ int Interface::CanUseItemType(int slottype, Item *item, Actor *actor, bool feedb
 		}
 		if (slottype&SLOT_SHIELD) {
 			//cannot equip twohanded in offhand
-			if (feedback) displaymsg->DisplayConstantString(STR_NOT_IN_OFFHAND, 0xf0f0f0);
+			if (feedback) DisplayConstantString(STR_NOT_IN_OFFHAND, 0xf0f0f0);
 			return 0;
 		}
 	}
 
 	if ( (unsigned int) item->ItemType>=(unsigned int) ItemTypes) {
 		//invalid itemtype
-		if (feedback) displaymsg->DisplayConstantString(STR_WRONGITEMTYPE, 0xf0f0f0);
+		if (feedback) DisplayConstantString(STR_WRONGITEMTYPE, 0xf0f0f0);
 		return 0;
 	}
 
@@ -4269,13 +4266,13 @@ int Interface::CanUseItemType(int slottype, Item *item, Actor *actor, bool feedb
 		//constant strings
 		int idx = actor->Unusable(item);
 		if (idx) {
-			if (feedback) displaymsg->DisplayConstantString(idx, 0xf0f0f0);
+			if (feedback) DisplayConstantString(idx, 0xf0f0f0);
 			return 0;
 		}
 		//custom strings
 		ieStrRef str = actor->Disabled(item->Name, item->ItemType);
 		if (str && !equipped) {
-			if (feedback) displaymsg->DisplayString(str, 0xf0f0f0, 0);
+			if (feedback) DisplayString(str, 0xf0f0f0, 0);
 			return 0;
 		}
 	}
@@ -4284,7 +4281,7 @@ int Interface::CanUseItemType(int slottype, Item *item, Actor *actor, bool feedb
 	int ret = (slotmatrix[item->ItemType]&slottype);
 
 	if (!ret) {
-		if (feedback) displaymsg->DisplayConstantString(STR_WRONGITEMTYPE, 0xf0f0f0);
+		if (feedback) DisplayConstantString(STR_WRONGITEMTYPE, 0xf0f0f0);
 		return 0;
 	}
 
@@ -4311,7 +4308,7 @@ int Interface::CanUseItemType(int slottype, Item *item, Actor *actor, bool feedb
 			}
 
 			if (!flg) {
-				displaymsg->DisplayConstantString(STR_UNUSABLEITEM, 0xf0f0f0);
+				DisplayConstantString(STR_UNUSABLEITEM, 0xf0f0f0);
 				return 0;
 			}
 		}
@@ -5331,7 +5328,7 @@ int Interface::Autopause(ieDword flag)
 
 	vars->Lookup("Auto Pause State", autopause_flags);
 	if (autopause_flags & (1<<flag)) {
-		displaymsg->DisplayConstantString(STR_AP_UNUSABLE+flag, 0xff0000);
+		DisplayConstantString(STR_AP_UNUSABLE+flag, 0xff0000);
 		gc->SetDialogueFlags(DF_FREEZE_SCRIPTS, BM_OR);
 		return 1;
 	}

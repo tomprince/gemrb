@@ -1421,21 +1421,21 @@ int fx_control_undead (Scriptable* Owner, Actor* target, Effect* fx)
 		}
 		switch (fx->Parameter2) {
 		case 0: //charmed (target neutral after charm)
-			displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+			DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 			break;
 		case 1: //charmed (target hostile after charm)
-			displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+			DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			break;
 		case 2: //controlled by cleric
-			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			break;
 		case 3: //controlled by cleric (hostile after charm)
-			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			break;
 		case 4: //turn undead
-			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			target->SetStat(IE_MORALE, 0, 0);
 			break;
@@ -2101,7 +2101,7 @@ int fx_resist_spell_and_message (Scriptable* Owner, Actor* target, Effect *fx)
 		char *tmpstr = core->GetString(spellname, 0);
 		core->GetTokenDictionary()->SetAtCopy("RESOURCE", tmpstr);
 		core->FreeString(tmpstr);
-		displaymsg->DisplayConstantStringName(STR_RES_RESISTED, 0xf0f0f0, target);
+		DisplayConstantStringName(STR_RES_RESISTED, 0xf0f0f0, target);
 	}
 	//this has effect only on first apply, it will stop applying the spell
 	return FX_ABORT;
@@ -2505,14 +2505,14 @@ int fx_control (Scriptable* Owner, Actor* target, Effect* fx)
 	switch(fx->Parameter2)
 	{
 	case 0:
-		displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+		DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 		break;
 	case 1:
-		displaymsg->DisplayConstantStringName(STR_DIRECHARMED, 0xf0f0f0, target)
+		DisplayConstantStringName(STR_DIRECHARMED, 0xf0f0f0, target)
 ;
 		break;
 	default:
-		displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+		DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 
 		break;
 	}
@@ -3207,7 +3207,7 @@ int fx_call_lightning (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 	//calculate victim (an opponent of target)
 	Actor *victim = GetRandomEnemySeen(map, target);
 	if (!victim) {
-		displaymsg->DisplayConstantStringName(STR_LIGHTNING_DISS, 0xf0f0f0, target);
+		DisplayConstantStringName(STR_LIGHTNING_DISS, 0xf0f0f0, target);
 		return ret;
 	}
 

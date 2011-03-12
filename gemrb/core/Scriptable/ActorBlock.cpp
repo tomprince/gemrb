@@ -764,7 +764,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 		// caster - spellname : target (repeating spells)
 		Scriptable *target = NULL;
 		char tmp[100];
-		const char* msg = core->GetString(displaymsg->GetStringReference(STR_ACTION_CAST), 0);
+		const char* msg = core->GetString(GetStringReference(STR_ACTION_CAST), 0);
 		const char* spell = core->GetString(spl->SpellName);
 		if (LastTarget) {
 			target = area->GetActorByGlobalID(LastTarget);
@@ -778,7 +778,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 			} else {
 				snprintf(tmp, sizeof(tmp), "%s : %s", spell, GetName(-1));
 			}
-			displaymsg->DisplayStringName(tmp, 0xffffff, this);
+			DisplayStringName(tmp, 0xffffff, this);
 		}
 
 		if(LastTarget) {
@@ -910,7 +910,7 @@ int Scriptable::CanCast(const ieResRef SpellResRef) {
 	// tob AR3004 is a dead magic area, but using a script with personal dead magic
 	if (area->GetInternalFlag()&AF_DEADMAGIC) {
 		// TODO: display fizzling animation
-		displaymsg->DisplayConstantStringName(STR_DEADMAGIC_FAIL, 0xffffff, this);
+		DisplayConstantStringName(STR_DEADMAGIC_FAIL, 0xffffff, this);
 		return 0;
 	}
 
@@ -932,7 +932,7 @@ int Scriptable::CanCast(const ieResRef SpellResRef) {
 		// check for personal dead magic
 		if (actor->Modified[IE_DEADMAGIC]) {
 			// TODO: display fizzling animation
-			displaymsg->DisplayConstantStringName(STR_DEADMAGIC_FAIL, 0xffffff, this);
+			DisplayConstantStringName(STR_DEADMAGIC_FAIL, 0xffffff, this);
 			return 0;
 		}
 
@@ -959,7 +959,7 @@ int Scriptable::CanCast(const ieResRef SpellResRef) {
 		}
 		if (failed) {
 			// TODO: display fizzling animation
-			displaymsg->DisplayConstantStringName(STR_MISCASTMAGIC, 0xffffff, this);
+			DisplayConstantStringName(STR_MISCASTMAGIC, 0xffffff, this);
 			return 0;
 		}
 	}
@@ -1120,8 +1120,8 @@ int Scriptable::CheckWildSurge()
 			if (check < 100) {
 				// display feedback: Wild Surge: bla bla
 				char text[200];
-				snprintf(text, 200, "%s %s", core->GetString(displaymsg->GetStringReference(STR_WILDSURGE), 0), core->GetString(core->SurgeSpells[check-1].message, 0));
-				displaymsg->DisplayStringName(text, 0xffffff, this);
+				snprintf(text, 200, "%s %s", core->GetString(GetStringReference(STR_WILDSURGE), 0), core->GetString(core->SurgeSpells[check-1].message, 0));
+				DisplayStringName(text, 0xffffff, this);
 
 				// lookup the spell in the "check" row of wildmag.2da
 				ieResRef surgeSpellRef;
@@ -2269,12 +2269,12 @@ void Highlightable::TryDisarm(Actor *actor)
 		LastDisarmed = actor->GetGlobalID();
 		//trap removed
 		Trapped = 0;
-		displaymsg->DisplayConstantStringName(STR_DISARM_DONE, 0xd7d7be, actor);
+		DisplayConstantStringName(STR_DISARM_DONE, 0xd7d7be, actor);
 		int xp = actor->CalculateExperience(XP_DISARM, actor->GetXPLevel(1));
 		Game *game = core->GetGame();
 		game->ShareXP(xp, SX_DIVIDE);
 	} else {
-		displaymsg->DisplayConstantStringName(STR_DISARM_FAIL, 0xd7d7be, actor);
+		DisplayConstantStringName(STR_DISARM_FAIL, 0xd7d7be, actor);
 		TriggerTrap(skill, LastTrigger);
 	}
 	ImmediateEvent();
@@ -2284,19 +2284,19 @@ void Door::TryPickLock(Actor *actor)
 {
 	if (LockDifficulty == 100) {
 		if (OpenStrRef != (ieDword)-1) {
-			displaymsg->DisplayStringName(OpenStrRef, 0xbcefbc, actor, IE_STR_SOUND|IE_STR_SPEECH);
+			DisplayStringName(OpenStrRef, 0xbcefbc, actor, IE_STR_SOUND|IE_STR_SPEECH);
 		} else {
-			displaymsg->DisplayConstantStringName(STR_DOOR_NOPICK, 0xbcefbc, actor);
+			DisplayConstantStringName(STR_DOOR_NOPICK, 0xbcefbc, actor);
 		}
 		return;
 	}
 	if (actor->GetStat(IE_LOCKPICKING)<LockDifficulty) {
-		displaymsg->DisplayConstantStringName(STR_LOCKPICK_FAILED, 0xbcefbc, actor);
+		DisplayConstantStringName(STR_LOCKPICK_FAILED, 0xbcefbc, actor);
 		LastPickLockFailed = actor->GetGlobalID();
 		return;
 	}
 	SetDoorLocked( false, true);
-	displaymsg->DisplayConstantStringName(STR_LOCKPICK_DONE, 0xd7d7be, actor);
+	DisplayConstantStringName(STR_LOCKPICK_DONE, 0xd7d7be, actor);
 	LastUnlocked = actor->GetGlobalID();
 	ImmediateEvent();
 	int xp = actor->CalculateExperience(XP_LOCKPICK, actor->GetXPLevel(1));
@@ -2313,11 +2313,11 @@ void Door::TryBashLock(Actor *actor)
 	unsigned int roll = actor->LuckyRoll(1, 10, bonus, 0);
 
 	if(roll < LockDifficulty || LockDifficulty == 100) {
-		displaymsg->DisplayConstantStringName(STR_DOORBASH_FAIL, 0xbcefbc, actor);
+		DisplayConstantStringName(STR_DOORBASH_FAIL, 0xbcefbc, actor);
 		return;
 	}
 
-	displaymsg->DisplayConstantStringName(STR_DOORBASH_DONE, 0xd7d7be, actor);
+	DisplayConstantStringName(STR_DOORBASH_DONE, 0xd7d7be, actor);
 	SetDoorLocked(false, true);
 	//Is this really useful ?
 	LastUnlocked = actor->GetGlobalID();
@@ -2764,19 +2764,19 @@ void Container::TryPickLock(Actor *actor)
 {
 	if (LockDifficulty == 100) {
 		if (OpenFail != (ieDword)-1) {
-			displaymsg->DisplayStringName(OpenFail, 0xbcefbc, actor, IE_STR_SOUND|IE_STR_SPEECH);
+			DisplayStringName(OpenFail, 0xbcefbc, actor, IE_STR_SOUND|IE_STR_SPEECH);
 		} else {
-			displaymsg->DisplayConstantStringName(STR_CONT_NOPICK, 0xbcefbc, actor);
+			DisplayConstantStringName(STR_CONT_NOPICK, 0xbcefbc, actor);
 		}
 		return;
 	}
 	if (actor->GetStat(IE_LOCKPICKING)<LockDifficulty) {
-		displaymsg->DisplayConstantStringName(STR_LOCKPICK_FAILED, 0xbcefbc, actor);
+		DisplayConstantStringName(STR_LOCKPICK_FAILED, 0xbcefbc, actor);
 		LastPickLockFailed = actor->GetGlobalID();
 		return;
 	}
 	SetContainerLocked(false);
-	displaymsg->DisplayConstantStringName(STR_LOCKPICK_DONE, 0xd7d7be, actor);
+	DisplayConstantStringName(STR_LOCKPICK_DONE, 0xd7d7be, actor);
 	LastUnlocked = actor->GetGlobalID();
 	ImmediateEvent();
 	int xp = actor->CalculateExperience(XP_LOCKPICK, actor->GetXPLevel(1));
@@ -2793,11 +2793,11 @@ void Container::TryBashLock(Actor *actor)
 	unsigned int roll = actor->LuckyRoll(1, 10, bonus, 0);
 
 	if(roll < LockDifficulty || LockDifficulty == 100) {
-		displaymsg->DisplayConstantStringName(STR_CONTBASH_FAIL, 0xbcefbc, actor);
+		DisplayConstantStringName(STR_CONTBASH_FAIL, 0xbcefbc, actor);
 		return;
 	}
 
-	displaymsg->DisplayConstantStringName(STR_CONTBASH_DONE, 0xd7d7be, actor);
+	DisplayConstantStringName(STR_CONTBASH_DONE, 0xd7d7be, actor);
 	SetContainerLocked(false);
 	//Is this really useful ?
 	LastUnlocked = actor->GetGlobalID();

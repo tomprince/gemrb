@@ -552,7 +552,7 @@ int SaveGameIterator::CreateSaveGame(int index, bool mqs)
 	GameControl *gc = core->GetGameControl();
 
 	if (!DoSaveGame(Path)) {
-		displaymsg->DisplayConstantString(STR_CANTSAVE, 0xbcefbc);
+		DisplayConstantString(STR_CANTSAVE, 0xbcefbc);
 		if (gc) {
 			gc->SetDisplayText(STR_CANTSAVE, 30);
 		}
@@ -561,12 +561,12 @@ int SaveGameIterator::CreateSaveGame(int index, bool mqs)
 
 	// Save succesful / Quick-save succesful
 	if (qsave) {
-		displaymsg->DisplayConstantString(STR_QSAVESUCCEED, 0xbcefbc);
+		DisplayConstantString(STR_QSAVESUCCEED, 0xbcefbc);
 		if (gc) {
 			gc->SetDisplayText(STR_QSAVESUCCEED, 30);
 		}
 	} else {
-		displaymsg->DisplayConstantString(STR_SAVESUCCEED, 0xbcefbc);
+		DisplayConstantString(STR_SAVESUCCEED, 0xbcefbc);
 		if (gc) {
 			gc->SetDisplayText(STR_SAVESUCCEED, 30);
 		}
@@ -608,7 +608,7 @@ int SaveGameIterator::CreateSaveGame(Holder<SaveGame> save, const char *slotname
 	CreateSavePath(Path, index, slotname);
 
 	if (!DoSaveGame(Path)) {
-		displaymsg->DisplayConstantString(STR_CANTSAVE, 0xbcefbc);
+		DisplayConstantString(STR_CANTSAVE, 0xbcefbc);
 		if (gc) {
 			gc->SetDisplayText(STR_CANTSAVE, 30);
 		}
@@ -616,7 +616,7 @@ int SaveGameIterator::CreateSaveGame(Holder<SaveGame> save, const char *slotname
 	}
 
 	// Save succesful
-	displaymsg->DisplayConstantString(STR_SAVESUCCEED, 0xbcefbc);
+	DisplayConstantString(STR_SAVESUCCEED, 0xbcefbc);
 	if (gc) {
 		gc->SetDisplayText(STR_SAVESUCCEED, 30);
 	}

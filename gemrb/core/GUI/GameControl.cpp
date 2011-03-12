@@ -1021,10 +1021,10 @@ void GameControl::OnKeyRelease(unsigned char Key, unsigned short Mod)
 		case ' ': //soft pause
 			DialogueFlags ^= DF_FREEZE_SCRIPTS;
 	 		if (DialogueFlags&DF_FREEZE_SCRIPTS) {
-				displaymsg->DisplayConstantString(STR_PAUSED,0xff0000);
+				DisplayConstantString(STR_PAUSED,0xff0000);
 				SetDisplayText(STR_PAUSED, 0); // time 0 = removed instantly on unpause
 		 	} else {
-				displaymsg->DisplayConstantString(STR_UNPAUSED,0xff0000);
+				DisplayConstantString(STR_UNPAUSED,0xff0000);
 			}
 			break;
 		case 'm':
@@ -1084,7 +1084,7 @@ void GameControl::DisplayTooltip() {
 					// a guess at a neutral check
 					bool neutral = actor->GetStat(IE_EA) == EA_NEUTRAL;
 					// test for an injured string being present for this game
-					int strindex = displaymsg->GetStringReference(STR_UNINJURED);
+					int strindex = GetStringReference(STR_UNINJURED);
 					// normal tooltips
 					if (actor->InParty) {
 						// in party: display hp
@@ -1111,7 +1111,7 @@ void GameControl::DisplayTooltip() {
 						} else {
 							strindex = STR_INJURED4;
 						}
-						strindex = displaymsg->GetStringReference(strindex);
+						strindex = GetStringReference(strindex);
 						if (strindex != -1) {
 							injuredstring = core->GetString(strindex, 0);
 						}
@@ -2841,6 +2841,6 @@ void GameControl::SetDisplayText(char *text, unsigned int time)
 
 void GameControl::SetDisplayText(ieStrRef text, unsigned int time)
 {
-	SetDisplayText(core->GetString(displaymsg->GetStringReference(text), 0), time);
+	SetDisplayText(core->GetString(GetStringReference(text), 0), time);
 }
 

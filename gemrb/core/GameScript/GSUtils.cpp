@@ -405,9 +405,9 @@ void DisplayStringCore(Scriptable* Sender, int Strref, int flags)
 			//can't play the sound here, we have to delay action
 			//and for that, we have to know how long the text takes
 			if(flags&DS_NONAME) {
-				displaymsg->DisplayString( sb.text );
+				DisplayString( sb.text );
 			} else {
-				displaymsg->DisplayStringName( Strref, 0xf0f0f0, Sender, 0);
+				DisplayStringName( Strref, 0xf0f0f0, Sender, 0);
 			}
 		}
 		if (sb.text[0] && strcmp(sb.text," ") && (flags & (DS_HEAD | DS_AREA))) {
@@ -549,16 +549,16 @@ int MoveItemCore(Scriptable *Sender, Scriptable *target, const char *resref, int
 	}
 	if (!myinv) {
 		delete item;
-		if (lostitem) displaymsg->DisplayConstantString(STR_LOSTITEM, 0xbcefbc);
+		if (lostitem) DisplayConstantString(STR_LOSTITEM, 0xbcefbc);
 		return MIC_GOTITEM; // actually it was lost, not gained
 	}
 	if ( myinv->AddSlotItem(item, SLOT_ONLYINVENTORY) !=ASI_SUCCESS) {
 		// drop it at my feet
 		map->AddItemToLocation(target->Pos, item);
-		if (gotitem) displaymsg->DisplayConstantString(STR_INVFULL_ITEMDROP, 0xbcefbc);
+		if (gotitem) DisplayConstantString(STR_INVFULL_ITEMDROP, 0xbcefbc);
 		return MIC_FULL;
 	}
-	if (gotitem) displaymsg->DisplayConstantString(STR_GOTITEM, 0xbcefbc);
+	if (gotitem) DisplayConstantString(STR_GOTITEM, 0xbcefbc);
 	return MIC_GOTITEM;
 }
 
@@ -994,7 +994,7 @@ void BeginDialog(Scriptable* Sender, Action* parameters, int Flags)
 	// post-swap (and non-actors always have IF_NOINT set) .. also added a check that it's
 	// actually busy doing something, for the same reason
 	if (target->GetInternalFlag()&IF_NOINT && (target->GetCurrentAction() || target->GetNextAction())) {
-		displaymsg->DisplayConstantString(STR_TARGETBUSY,0xff0000);
+		DisplayConstantString(STR_TARGETBUSY,0xff0000);
 		Sender->ReleaseCurrentAction();
 		return;
 	}
@@ -1008,7 +1008,7 @@ void BeginDialog(Scriptable* Sender, Action* parameters, int Flags)
 			if (!(Flags & BD_INTERRUPT)) {
 				// added CurrentAction as part of blocking action fixes
 				if (tar->GetCurrentAction() || tar->GetNextAction()) {
-					displaymsg->DisplayConstantString(STR_TARGETBUSY,0xff0000);
+					DisplayConstantString(STR_TARGETBUSY,0xff0000);
 					Sender->ReleaseCurrentAction();
 					return;
 				}
@@ -1049,7 +1049,7 @@ void BeginDialog(Scriptable* Sender, Action* parameters, int Flags)
 		if (Flags & BD_NOEMPTY) {
 			return;
 		}
-		displaymsg->DisplayConstantStringName(STR_NOTHINGTOSAY,0xff0000,tar);
+		DisplayConstantStringName(STR_NOTHINGTOSAY,0xff0000,tar);
 		return;
 	}
 
@@ -1206,7 +1206,7 @@ void AttackCore(Scriptable *Sender, Scriptable *target, int flags)
 				//DisplayStringCore(Sender, VB_ATTACK, DS_CONSOLE|DS_CONST );
 			}
 			//display attack message
-			displaymsg->DisplayConstantStringAction(STR_ACTION_ATTACK,0xf0f0f0, Sender, target);
+			DisplayConstantStringAction(STR_ACTION_ATTACK,0xf0f0f0, Sender, target);
 		}
 	}
 	//action performed

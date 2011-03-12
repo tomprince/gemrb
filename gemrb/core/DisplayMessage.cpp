@@ -26,8 +26,7 @@
 #include "TableMgr.h"
 #include "GUI/Label.h"
 #include "GUI/TextArea.h"
-
-GEM_EXPORT DisplayMessage * displaymsg;
+#include "Scriptable/Actor.h"
 
 static int strref_table[STRREF_COUNT];
 
@@ -39,11 +38,7 @@ static const char* DisplayFormat = "[/color][p][color=%lX]%s[/color][/p]";
 static const char* DisplayFormatValue = "[/color][p][color=%lX]%s: %d[/color][/p]";
 static const char* DisplayFormatNameString = "[color=%lX]%s - [/color][p][color=%lX]%s: %s[/color][/p]";
 
-DisplayMessage::DisplayMessage(void) {
-	ReadStrrefs();
-}
-
-bool DisplayMessage::ReadStrrefs()
+bool Init_DisplayString()
 {
 	int i;
 	memset(strref_table,-1,sizeof(strref_table) );
@@ -57,7 +52,7 @@ bool DisplayMessage::ReadStrrefs()
 	return true;
 }
 
-void DisplayMessage::DisplayString(const char* Text, Scriptable *target) const
+void DisplayString(const char* Text, Scriptable *target)
 {
 	Label *l = core->GetMessageLabel();
 	if (l) {
@@ -75,17 +70,17 @@ void DisplayMessage::DisplayString(const char* Text, Scriptable *target) const
 	}
 }
 
-ieStrRef DisplayMessage::GetStringReference(int stridx) const
+ieStrRef GetStringReference(int stridx)
 {
 	return strref_table[stridx];
 }
 
-bool DisplayMessage::HasStringReference(int stridx) const
+bool HasStringReference(int stridx)
 {
 	return strref_table[stridx] != -1;
 }
 
-unsigned int DisplayMessage::GetSpeakerColor(const char *&name, const Scriptable *&speaker) const
+unsigned int GetSpeakerColor(const char *&name, const Scriptable *&speaker)
 {
 	unsigned int speaker_color;
 
@@ -110,7 +105,7 @@ unsigned int DisplayMessage::GetSpeakerColor(const char *&name, const Scriptable
 
 
 //simply displaying a constant string
-void DisplayMessage::DisplayConstantString(int stridx, unsigned int color, Scriptable *target) const
+void DisplayConstantString(int stridx, unsigned int color, Scriptable *target)
 {
 	if (stridx<0) return;
 	char* text = core->GetString( strref_table[stridx], IE_STR_SOUND );
@@ -118,7 +113,7 @@ void DisplayMessage::DisplayConstantString(int stridx, unsigned int color, Scrip
 	core->FreeString(text);
 }
 
-void DisplayMessage::DisplayString(int stridx, unsigned int color, ieDword flags) const
+void DisplayString(int stridx, unsigned int color, ieDword flags)
 {
 	if (stridx<0) return;
 	char* text = core->GetString( stridx, flags);
@@ -126,7 +121,7 @@ void DisplayMessage::DisplayString(int stridx, unsigned int color, ieDword flags
 	core->FreeString(text);
 }
 
-void DisplayMessage::DisplayString(const char *text, unsigned int color, Scriptable *target) const
+void DisplayString(const char *text, unsigned int color, Scriptable *target)
 {
 	if (!text) return;
 	int newlen = (int)(strlen( DisplayFormat) + strlen( text ) + 12);
@@ -138,7 +133,7 @@ void DisplayMessage::DisplayString(const char *text, unsigned int color, Scripta
 
 // String format is
 // blah : whatever
-void DisplayMessage::DisplayConstantStringValue(int stridx, unsigned int color, ieDword value) const
+void DisplayConstantStringValue(int stridx, unsigned int color, ieDword value)
 {
 	if (stridx<0) return;
 	char* text = core->GetString( strref_table[stridx], IE_STR_SOUND );
@@ -152,7 +147,7 @@ void DisplayMessage::DisplayConstantStringValue(int stridx, unsigned int color, 
 
 // String format is
 // <charname> - blah blah : whatever
-void DisplayMessage::DisplayConstantStringNameString(int stridx, unsigned int color, int stridx2, const Scriptable *actor) const
+void DisplayConstantStringNameString(int stridx, unsigned int color, int stridx2, const Scriptable *actor)
 {
 	unsigned int actor_color;
 	const char *name = 0;
@@ -176,7 +171,7 @@ void DisplayMessage::DisplayConstantStringNameString(int stridx, unsigned int co
 
 // String format is
 // <charname> - blah blah
-void DisplayMessage::DisplayConstantStringName(int stridx, unsigned int color, const Scriptable *speaker) const
+void DisplayConstantStringName(int stridx, unsigned int color, const Scriptable *speaker)
 {
 	if (stridx<0) return;
 	if(!speaker) return;
@@ -188,7 +183,7 @@ void DisplayMessage::DisplayConstantStringName(int stridx, unsigned int color, c
 
 // String format is
 // <charname> - blah blah <someoneelse>
-void DisplayMessage::DisplayConstantStringAction(int stridx, unsigned int color, const Scriptable *attacker, const Scriptable *target) const
+void DisplayConstantStringAction(int stridx, unsigned int color, const Scriptable *attacker, const Scriptable *target)
 {
 	unsigned int attacker_color;
 	const char *name1 = 0;
@@ -210,7 +205,7 @@ void DisplayMessage::DisplayConstantStringAction(int stridx, unsigned int color,
 	free( newstr );
 }
 
-void DisplayMessage::DisplayStringName(int stridx, unsigned int color, const Scriptable *speaker, ieDword flags) const
+void DisplayStringName(int stridx, unsigned int color, const Scriptable *speaker, ieDword flags)
 {
 	if (stridx<0) return;
 
@@ -219,7 +214,7 @@ void DisplayMessage::DisplayStringName(int stridx, unsigned int color, const Scr
 	core->FreeString( text );
 }
 
-void DisplayMessage::DisplayStringName(const char *text, unsigned int color, const Scriptable *speaker) const
+void DisplayStringName(const char *text, unsigned int color, const Scriptable *speaker)
 {
 	unsigned int speaker_color;
 	const char *name = 0;

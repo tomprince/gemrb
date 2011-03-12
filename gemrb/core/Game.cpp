@@ -1051,9 +1051,9 @@ void Game::ShareXP(int xp, int flags)
 	}
 
 	if (xp>0) {
-		displaymsg->DisplayConstantStringValue( STR_GOTXP, 0xbcefbc, (ieDword) xp); //you have gained ... xp
+		DisplayConstantStringValue( STR_GOTXP, 0xbcefbc, (ieDword) xp); //you have gained ... xp
 	} else {
-		displaymsg->DisplayConstantStringValue( STR_LOSTXP, 0xbcefbc, (ieDword) -xp); //you have lost ... xp
+		DisplayConstantStringValue( STR_LOSTXP, 0xbcefbc, (ieDword) -xp); //you have lost ... xp
 	}
 	for (unsigned int i=0; i<PCs.size(); i++) {
 		if (PCs[i]->GetStat(IE_STATE_ID)&STATE_DEAD) {
@@ -1154,9 +1154,9 @@ void Game::SetReputation(ieDword r)
 	if (r<10) r=10;
 	else if (r>200) r=200;
 	if (Reputation>r) {
-		displaymsg->DisplayConstantStringValue(STR_LOSTREP,0xc0c000,(Reputation-r)/10);
+		DisplayConstantStringValue(STR_LOSTREP,0xc0c000,(Reputation-r)/10);
 	} else if (Reputation<r) {
-		displaymsg->DisplayConstantStringValue(STR_GOTREP,0xc0c000,(r-Reputation)/10);
+		DisplayConstantStringValue(STR_GOTREP,0xc0c000,(r-Reputation)/10);
 	}
 	Reputation = r;
 	for (unsigned int i=0; i<PCs.size(); i++) {
@@ -1186,9 +1186,9 @@ void Game::AddGold(ieDword add)
 	old = PartyGold;
 	PartyGold += add;
 	if (old<PartyGold) {
-		displaymsg->DisplayConstantStringValue( STR_GOTGOLD, 0xc0c000, PartyGold-old);
+		DisplayConstantStringValue( STR_GOTGOLD, 0xc0c000, PartyGold-old);
 	} else {
-		displaymsg->DisplayConstantStringValue( STR_LOSTGOLD, 0xc0c000, old-PartyGold);
+		DisplayConstantStringValue( STR_LOSTGOLD, 0xc0c000, old-PartyGold);
 	}
 }
 
@@ -1457,7 +1457,7 @@ void Game::RestParty(int checks, int dream, int hp)
 	if (!(checks&REST_NOSCATTER) ) {
 		if (!EveryoneNearPoint( area, leader->Pos, 0 ) ) {
 			//party too scattered
-			displaymsg->DisplayConstantString( STR_SCATTERED, 0xff0000 );
+			DisplayConstantString( STR_SCATTERED, 0xff0000 );
 			return;
 		}
 	}
@@ -1465,12 +1465,12 @@ void Game::RestParty(int checks, int dream, int hp)
 	if (!(checks&REST_NOCRITTER) ) {
 		//don't allow resting while in combat
 		if (AnyPCInCombat()) {
-			displaymsg->DisplayConstantString( STR_CANTRESTMONS, 0xff0000 );
+			DisplayConstantString( STR_CANTRESTMONS, 0xff0000 );
 			return;
 		}
 		//don't allow resting if hostiles are nearby
 		if (area->AnyEnemyNearPoint(leader->Pos)) {
-			displaymsg->DisplayConstantString( STR_CANTRESTMONS, 0xff0000 );
+			DisplayConstantString( STR_CANTRESTMONS, 0xff0000 );
 			return;
 		}
 	}
@@ -1481,13 +1481,13 @@ void Game::RestParty(int checks, int dream, int hp)
 	if (!(checks&REST_NOAREA) ) {
 		//you cannot rest here
 		if (area->AreaFlags&1) {
-			displaymsg->DisplayConstantString( STR_MAYNOTREST, 0xff0000 );
+			DisplayConstantString( STR_MAYNOTREST, 0xff0000 );
 			return;
 		}
 		//you may not rest here, find an inn
 		if (!(area->AreaType&(AT_OUTDOOR|AT_FOREST|AT_DUNGEON|AT_CAN_REST) ))
 		{
-			displaymsg->DisplayConstantString( STR_MAYNOTREST, 0xff0000 );
+			DisplayConstantString( STR_MAYNOTREST, 0xff0000 );
 			return;
 		}
 		//area encounters
@@ -1537,16 +1537,16 @@ void Game::RestParty(int checks, int dream, int hp)
 	//restindex will be -1 in the case of PST
 	//FIXME: I don't quite see why we can't sumply use the same strings.2da entry
 	//It seems we could reduce complexity here, and free up 2-3 string slots too
-	int restindex = displaymsg->GetStringReference(STR_REST);
+	int restindex = GetStringReference(STR_REST);
 	int strindex;
 	char* tmpstr = NULL;
 
 	core->GetTokenDictionary()->SetAtCopy("HOUR", hours);
 	if (restindex != -1) {
-		strindex = displaymsg->GetStringReference(STR_HOURS);
+		strindex = GetStringReference(STR_HOURS);
 	} else {
-		strindex = displaymsg->GetStringReference(STR_PST_HOURS);
-		restindex = displaymsg->GetStringReference(STR_PST_REST);
+		strindex = GetStringReference(STR_PST_HOURS);
+		restindex = GetStringReference(STR_PST_REST);
 	}
 
 	//this would be bad
@@ -1557,7 +1557,7 @@ void Game::RestParty(int checks, int dream, int hp)
 
 	core->GetTokenDictionary()->SetAtCopy("DURATION", tmpstr);
 	core->FreeString(tmpstr);
-	displaymsg->DisplayString(restindex, 0xffffff, 0);
+	DisplayString(restindex, 0xffffff, 0);
 }
 
 //timestop effect

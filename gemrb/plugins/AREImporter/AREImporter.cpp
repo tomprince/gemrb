@@ -87,7 +87,7 @@ void ReadAutonoteINI()
 int GetTrackString(const ieResRef areaName)
 {
 	int i;
-	bool trackflag = displaymsg->HasStringReference(STR_TRACKING);
+	bool trackflag = HasStringReference(STR_TRACKING);
 
 	if (!tracks) {
 		AutoTable tm("tracking");
