@@ -1296,6 +1296,43 @@ void Scriptable::StartTimer(ieDword ID, ieDword expiration)
 	script_timers[ID]= core->GetGame()->GameTime + expiration*AI_UPDATE_TIME;
 }
 
+int Scriptable::CanSee(Scriptable* target, bool range, int seeflag)
+{
+	Map *map;
+
+	if (target->Type==ST_ACTOR) {
+		Actor *tar = (Actor *) target;
+
+		if (!tar->ValidTarget(seeflag)) {
+			return 0;
+		}
+	}
+
+	map = target->GetCurrentArea();
+	//if (!(seeflag&GA_GLOBAL)) {
+		if (!map || map!=GetCurrentArea() ) {
+			return 0;
+		}
+	//}
+
+	if (range) {
+		unsigned int dist;
+
+		if (Type == ST_ACTOR) {
+			Actor* snd = ( Actor* ) this;
+			dist = snd->Modified[IE_VISUALRANGE];
+		} else {
+			dist = 30;
+		}
+
+		if (Distance(target->Pos, Pos) > dist * 15) {
+			return 0;
+		}
+	}
+
+	return map->IsVisible(target->Pos, Pos);
+}
+
 /********************
  * Selectable Class *
  ********************/

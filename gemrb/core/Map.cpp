@@ -43,7 +43,7 @@
 #include "Video.h"
 #include "WorldMap.h"
 #include "strrefs.h"
-#include "GameScript/GSUtils.h"
+#include "GameScript/GameScript.h"
 #include "GUI/GameControl.h"
 
 #include <cmath>
@@ -3654,7 +3654,7 @@ void Map::SeeSpellCast(Scriptable *caster, ieDword spell)
 	size_t i = actors.size();
 	while (i--) {
 		Actor* witness = actors[i];
-		if (CanSee(witness, caster, true, 0)) {
+		if (witness->CanSee( caster, true, 0)) {
 			witness->LastSpellSeen=LastSpellSeen;
 			witness->LastCasterSeen=LastCasterSeen;
 		}

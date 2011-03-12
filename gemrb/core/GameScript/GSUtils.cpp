@@ -431,43 +431,6 @@ void DisplayStringCore(Scriptable* Sender, int Strref, int flags)
 	}
 }
 
-int CanSee(Scriptable* Sender, Scriptable* target, bool range, int seeflag)
-{
-	Map *map;
-
-	if (target->Type==ST_ACTOR) {
-		Actor *tar = (Actor *) target;
-
-		if (!tar->ValidTarget(seeflag)) {
-			return 0;
-		}
-	}
-
-	map = target->GetCurrentArea();
-	//if (!(seeflag&GA_GLOBAL)) {
-		if (!map || map!=Sender->GetCurrentArea() ) {
-			return 0;
-		}
-	//}
-
-	if (range) {
-		unsigned int dist;
-
-		if (Sender->Type == ST_ACTOR) {
-			Actor* snd = ( Actor* ) Sender;
-			dist = snd->Modified[IE_VISUALRANGE];
-		} else {
-			dist = 30;
-		}
-
-		if (Distance(target->Pos, Sender->Pos) > dist * 15) {
-			return 0;
-		}
-	}
-
-	return map->IsVisible(target->Pos, Sender->Pos);
-}
-
 //non actors can see too (reducing function to LOS)
 //non actors can be seen too (reducing function to LOS)
 int SeeCore(Scriptable* Sender, Trigger* parameters, int justlos)
@@ -486,7 +449,7 @@ int SeeCore(Scriptable* Sender, Trigger* parameters, int justlos)
 		return 0;
 	}
 	//both are actors
-	if (CanSee(Sender, tar, true, flags) ) {
+	if (Sender->CanSee( tar, true, flags) ) {
 		if (justlos) {
 			return 1;
 		}
@@ -856,7 +819,7 @@ void BeginDialog(Scriptable* Sender, Action* parameters, int Flags)
 
 	speaker = NULL;
 	target = (Actor *) tar;
-	if ((Flags & BD_CHECKDIST) && !CanSee(scr, target, false, seeflag) ) {
+	if ((Flags & BD_CHECKDIST) && !scr->CanSee( target, false, seeflag) ) {
 		printMessage("GameScript"," ",LIGHT_RED);
 		printf("CanSee returned false! Speaker (%s, type %d) and target are:\n", scr->GetScriptName(), scr->Type);
 		if (scr->Type == ST_ACTOR) {
@@ -1103,7 +1066,7 @@ void MoveToObjectCore(Scriptable *Sender, Action *parameters, ieDword flags, boo
 		return;
 	}
 	Actor* actor = ( Actor* ) Sender;
-	if (untilsee && CanSee(actor, target, true, 0) ) {
+	if (untilsee && actor->CanSee( target, true, 0) ) {
 		Sender->ReleaseCurrentAction();
 		return;
 	} else {

@@ -3216,7 +3216,7 @@ void Actor::Turn(Scriptable *cleric, ieDword turnlevel)
 	}
 
 	//determine if we see the cleric (distance)
-	if (!CanSee(cleric, this, true, GA_NO_DEAD)) {
+	if (!cleric->CanSee( this, true, GA_NO_DEAD)) {
 		return;
 	}
 

@@ -5404,7 +5404,7 @@ void GameScript::MarkSpellAndObject(Scriptable* Sender, Action* parameters)
 	if (!(flags & MSO_IGNORE_INVALID) && actor && actor->InvalidSpellTarget() ) {
 		return;
 	}
-	if (!(flags & MSO_IGNORE_SEE) && actor && !CanSee(Sender, actor, true, 0) ) {
+	if (!(flags & MSO_IGNORE_SEE) && actor && !Sender->CanSee( actor, true, 0) ) {
 		return;
 	}
 	int len = strlen(parameters->string0Parameter);

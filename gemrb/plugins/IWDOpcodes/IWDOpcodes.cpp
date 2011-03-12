@@ -3150,7 +3150,7 @@ Actor *GetRandomEnemySeen(Map *map, Actor *origin)
 	i -= pos;
 	while(i--) {
 		Actor *ac = map->GetActor(i,true);
-		if (!CanSee(origin, ac, true, GA_NO_DEAD|GA_NO_HIDDEN)) continue;
+		if (!origin->CanSee( ac, true, GA_NO_DEAD|GA_NO_HIDDEN)) continue;
 		if (type) { //origin is PC
 			if (ac->GetStat(IE_EA) >= EA_EVILCUTOFF) {
 				return ac;
@@ -3166,7 +3166,7 @@ Actor *GetRandomEnemySeen(Map *map, Actor *origin)
 	i=map->GetActorCount(true);
 	while(i--!=pos) {
 		Actor *ac = map->GetActor(i,true);
-		if (!CanSee(origin, ac, true, GA_NO_DEAD|GA_NO_HIDDEN)) continue;
+		if (!origin->CanSee( ac, true, GA_NO_DEAD|GA_NO_HIDDEN)) continue;
 		if (type) { //origin is PC
 			if (ac->GetStat(IE_EA) >= EA_EVILCUTOFF) {
 				return ac;

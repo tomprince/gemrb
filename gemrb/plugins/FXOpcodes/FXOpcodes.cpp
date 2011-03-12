@@ -826,12 +826,12 @@ inline Actor *GetNearestEnemyOf(Map *map, Actor *origin, int whoseeswho)
 		ac=map->GetActor(i,true);
 		int distance = Distance(ac, origin);
 		if (whoseeswho&ENEMY_SEES_ORIGIN) {
-			if (!CanSee(ac, origin, true, GA_NO_DEAD)) {
+			if (!ac->CanSee( origin, true, GA_NO_DEAD)) {
 				continue;
 			}
 		}
 		if (whoseeswho&ORIGIN_SEES_ENEMY) {
-			if (!CanSee(ac, origin, true, GA_NO_DEAD)) {
+			if (!ac->CanSee( origin, true, GA_NO_DEAD)) {
 				continue;
 			}
 		}
