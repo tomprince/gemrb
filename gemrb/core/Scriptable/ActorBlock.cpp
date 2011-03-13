@@ -2043,8 +2043,7 @@ void Door::UpdateDoor()
 	Pos.x = outline->BBox.x + outline->BBox.w/2;
 	Pos.y = outline->BBox.y + outline->BBox.h/2;
 
-	unsigned char oval, cval;
-	oval = PATH_MAP_IMPASSABLE;
+	unsigned char cval;
 	if (Flags & DOOR_TRANSPARENT) {
 		cval = PATH_MAP_DOOR_IMPASSABLE;
 	}

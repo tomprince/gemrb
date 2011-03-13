@@ -34,6 +34,7 @@
 #include "Region.h"
 
 #include <list>
+#include <cstddef>
 
 class Actor;
 class Map;

@@ -293,12 +293,10 @@ void Font::Print(Region cliprgn, Region rgn, const unsigned char* string,
 	Palette* hicolor, unsigned char Alignment, bool anchor, Font* initials,
 	Sprite2D* cursor, unsigned int curpos, bool NoColor) const
 {
-	bool enablecap=false;
 	int capital = 0;
 	if (initials)
 	{
 		capital=1;
-		enablecap=true;
 	}
 
 	unsigned int psx = PARAGRAPH_START_X;
@@ -379,9 +377,6 @@ void Font::Print(Region cliprgn, Region rgn, const unsigned char* string,
 
 			if (strnicmp( tag, "capital=",8)==0) {
 				sscanf( tag, "capital=%d", &capital);
-				if (capital) {
-					enablecap=true;
-				}
 				continue;
 			}
 			
@@ -424,7 +419,6 @@ void Font::Print(Region cliprgn, Region rgn, const unsigned char* string,
 		unsigned char currChar = ( unsigned char ) tmp[i] - 1;
 		if (initials && capital) {
 			x = initials->PrintInitial( x, y, rgn, currChar );
-			enablecap=false;
 			continue;
 		}
 		video->BlitSpriteRegion( sprBuffer, size[currChar],
@@ -457,14 +451,12 @@ int Font::CalcStringWidth(const char* string, bool NoColor) const
 			i++;
 			if (i>=len)
 				break;
-			char tag[256];
 			int k = 0;
 			for (k = 0; k < 256; k++) {
 				if (string[i] == ']') {
-					tag[k] = 0;
 					break;
 				}
-				tag[k] = string[i++];
+				i++;
 			}
 			continue;
 		}

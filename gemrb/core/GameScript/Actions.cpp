@@ -2961,7 +2961,6 @@ void GameScript::ReallyForceSpellPoint(Scriptable* Sender, Action* parameters)
 void GameScript::ReallyForceSpellDead(Scriptable* Sender, Action* parameters)
 {
 	ieResRef spellres;
-	int level;
 
 	if (!ResolveSpellName( spellres, parameters) ) {
 		Sender->ReleaseCurrentAction();
@@ -2980,11 +2979,6 @@ void GameScript::ReallyForceSpellDead(Scriptable* Sender, Action* parameters)
 	Sender->LastTargetPos=parameters->pointParameter;
 	
 	Sender->CastSpell (spellres, tar, false, true);
-	if (parameters->string0Parameter[0]) {
-		level = parameters->int0Parameter;
-	} else {
-		level = parameters->int1Parameter;
-	}
 	if (tar->Type==ST_ACTOR) {
 		Sender->CastSpellEnd(parameters->int1Parameter);
 	} else {
