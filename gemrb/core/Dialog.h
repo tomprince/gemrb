@@ -24,6 +24,8 @@
 #include "exports.h"
 #include "globals.h"
 
+#include "Holder.h"
+
 #include <vector>
 
 #define IE_DLG_TR_TEXT     0x01
@@ -43,7 +45,7 @@ struct DialogTransition {
 	ieStrRef textStrRef;
 	ieStrRef journalStrRef;
 	Condition* condition;
-	std::vector<Action*> actions;
+	std::vector<Holder<Action> > actions;
 	ieResRef Dialog;
 	ieDword stateIndex;
 };

@@ -24,6 +24,8 @@
 #include "exports.h"
 #include "ie_types.h"
 
+#include "Holder.h"
+
 #include <cstddef>
 
 class Action;
@@ -40,7 +42,7 @@ public:
 	const char *GetName() { return this?Name:"NONE\0\0\0\0"; }
 	static void ExecuteString(Scriptable* Sender, char* String);
 	static int EvaluateString(Scriptable* Sender, char* String);
-	static void ExecuteAction(Scriptable* Sender, Action* aC);
+	static void ExecuteAction(Scriptable* Sender, Holder<Action> aC);
 public:
 	bool Update(bool *continuing = NULL, bool *done = NULL);
 	void EvaluateAllBlocks();
@@ -60,8 +62,8 @@ private: //Internal variables
 	int scriptlevel;
 };
 
-GEM_EXPORT Action* GenerateAction(char* String);
-Action* GenerateActionDirect(char* String, Scriptable *object);
+GEM_EXPORT Holder<Action> GenerateAction(char* String);
+Holder<Action> GenerateActionDirect(char* String, Scriptable *object);
 GEM_EXPORT Trigger* GenerateTrigger(char* String);
 
 void InitializeIEScript();

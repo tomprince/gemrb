@@ -114,8 +114,8 @@ GEM_EXPORT int GetGroup(Actor *actor);
 
 GEM_EXPORT void FreeSrc(SrcVector *poi, const ieResRef key);
 GEM_EXPORT SrcVector *LoadSrc(const ieResRef resname);
-Action *ParamCopy(Action *parameters);
-Action *ParamCopyNoOverride(Action *parameters);
+Holder<Action> ParamCopy(Holder<Action> const& parameters);
+Holder<Action> ParamCopyNoOverride(Holder<Action> const& parameters);
 void SetVariable(Scriptable* Sender, const char* VarName, ieDword value);
 Point GetEntryPoint(const char *areaname, const char *entryname);
 //these are used from other plugins
@@ -126,7 +126,7 @@ GEM_EXPORT void SetVariable(Scriptable* Sender, const char* VarName, const char*
 GEM_EXPORT void MoveBetweenAreasCore(Actor* actor, const char *area, const Point &position, int face, bool adjust);
 GEM_EXPORT ieDword CheckVariable(Scriptable* Sender, const char* VarName, bool *valid = NULL);
 GEM_EXPORT ieDword CheckVariable(Scriptable* Sender, const char* VarName, const char* Context, bool *valid = NULL);
-Action* GenerateActionCore(const char *src, const char *str, unsigned short actionID);
+Holder<Action> GenerateActionCore(const char *src, const char *str, unsigned short actionID);
 Trigger *GenerateTriggerCore(const char *src, const char *str, int trIndex, int negate);
 unsigned int GetSpellDistance(const ieResRef spellres, Scriptable *Sender);
 unsigned int GetItemDistance(const ieResRef itemres, int header);

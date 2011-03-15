@@ -25,6 +25,7 @@
 
 #include "exports.h"
 
+#include "Holder.h"
 #include "SymbolMgr.h"
 #include "Variables.h"
 #include "Scriptable/Actor.h"
@@ -204,9 +205,9 @@ public:
 	std::vector<Trigger*> triggers;
 };
 
-class GEM_EXPORT Action {
+class GEM_EXPORT Action : public Held<Action> {
 public:
-	Action(bool autoFree)
+	Action()
 	{
 		actionID = 0;
 		objects[0] = NULL;
@@ -219,11 +220,6 @@ public:
 		int1Parameter = 0;
 		int2Parameter = 0;
 		//changed now
-		if (autoFree) {
-			RefCount = 0; //refcount will be increased by each AddAction
-		} else {
-			RefCount = 1; //one reference hold by the script
-		}
 	}
 	~Action()
 	{
@@ -243,9 +239,6 @@ public:
 private:
 	int RefCount;
 public:
-	int GetRef() {
-		return RefCount;
-	}
 	void Dump()
 	{
 		int i;
@@ -260,30 +253,6 @@ public:
 				printf( "%d. Object - NULL\n",i+1);
 			}
 		}
-
-		printf("RefCount: %d\n", RefCount);
-	}
-
-	void Release()
-	{
-		if (!RefCount) {
-			printf( "WARNING!!! Double Freeing in %s: Line %d\n", __FILE__,
-				__LINE__ );
-			abort();
-		}
-		RefCount--;
-		if (!RefCount) {
-			delete this;
-		}
-	}
-	void IncRef()
-	{
-		RefCount++;
-		if (RefCount >= 65536) {
-			printf( "Refcount increased to: %d in action %d\n", RefCount,
-				actionID );
-			abort();
-		}
 	}
 };
 
@@ -293,21 +262,10 @@ public:
 	{
 		weight = 0;
 	}
-	~Response()
-	{
-		for (size_t c = 0; c < actions.size(); c++) {
-			if (actions[c]) {
-				if (actions[c]->GetRef()>2) {
-					printf("Residue action %d with refcount %d\n", actions[c]->actionID, actions[c]->GetRef());
-				}
-				actions[c]->Release();
-			}
-		}
-	}
 	int Execute(Scriptable* Sender);
 public:
 	unsigned char weight;
-	std::vector<Action*> actions;
+	std::vector<Holder<Action> > actions;
 };
 
 class GEM_EXPORT ResponseSet {

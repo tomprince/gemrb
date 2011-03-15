@@ -43,7 +43,7 @@
 #include "Video.h"
 #include "WorldMap.h"
 #include "strrefs.h"
-#include "GameScript/GameScript.h"
+#include "GameScript/GS.h"
 #include "GUI/GameControl.h"
 
 #include <cmath>

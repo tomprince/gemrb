@@ -705,7 +705,7 @@ void EscapeAreaCore(Scriptable* Sender, const Point &p, const char* area, const 
 		Sender->SetWait(wait);
 	}
 	Sender->ReleaseCurrentAction();
-	Action * action = GenerateAction( Tmp);
+	Holder<Action> action = GenerateAction(Tmp);
 	Sender->AddActionInFront( action );
 }
 
@@ -1085,7 +1085,7 @@ void MoveToObjectCore(Scriptable *Sender, Action *parameters, ieDword flags, boo
 	}
 
 	//repeat movement...
-	Action *newaction = ParamCopyNoOverride(parameters);
+	Holder<Action> newaction = ParamCopyNoOverride(parameters);
 	if (newaction->int0Parameter!=1) {
 		if (newaction->int0Parameter) {
 			newaction->int0Parameter--;
@@ -1301,9 +1301,9 @@ static void ParseObject(const char *&str,const char *&src, Object *&object)
 }
 
 /* this function was lifted from GenerateAction, to make it clearer */
-Action* GenerateActionCore(const char *src, const char *str, unsigned short actionID)
+Holder<Action> GenerateActionCore(const char *src, const char *str, unsigned short actionID)
 {
-	Action *newAction = new Action(true);
+	Holder<Action> newAction = new Action();
 	newAction->actionID = actionID;
 	//this flag tells us to merge 2 consecutive strings together to get
 	//a variable (context+variablename)
@@ -1326,7 +1326,6 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 			default:
 				printf("Invalid type: %s\n",str);
 				//str++;
-				delete newAction;
 				return NULL;
 				break;
 
@@ -1403,14 +1402,12 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 					src++;
 				}
 				action[i] = 0;
-				Action* act = GenerateAction( action);
+				Holder<Action> act = GenerateAction(action);
 				if (!act) {
-					delete newAction;
 					return NULL;
 				}
 				act->objects[0] = newAction->objects[0];
 				newAction->objects[0] = NULL; //avoid freeing of object
-				delete newAction; //freeing action
 				newAction = act;
 			}
 			break;
@@ -1419,7 +1416,6 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 				if (objectCount==3) {
 					printf("Invalid object count!\n");
 					//abort();
-					delete newAction;
 					return NULL;
 				}
 				ParseObject(str, src, newAction->objects[objectCount++]);
@@ -1456,7 +1452,6 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 				//if strings ever need a , inside, this is a FIXME
 				while (*src != '"' && *src !=',') {
 					if (*src == 0) {
-						delete newAction;
 						return NULL;
 					}
 					//sizeof(context+name) = 40
@@ -1473,7 +1468,6 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 					if (*str!='s') {
 						printf("Invalid mergestrings:%s\n",str);
 						//abort();
-						delete newAction;
 						return NULL;
 					}
 					SKIP_ARGUMENT();
@@ -1491,7 +1485,6 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 					i=0;
 					while (*src != '"') {
 						if (*src == 0) {
-							delete newAction;
 							return NULL;
 						}
 						if (i++<6) {
@@ -1520,7 +1513,7 @@ void GoNear(Scriptable *Sender, const Point &p)
 	}
 	char Tmp[256];
 	sprintf( Tmp, "MoveToPoint([%hd.%hd])", p.x, p.y );
-	Action * action = GenerateAction( Tmp);
+	Holder<Action> action = GenerateAction(Tmp);
 	Sender->AddActionInFront( action );
 }
 
@@ -1646,9 +1639,9 @@ static Object *ObjectCopy(Object *object)
 	return newObject;
 }
 
-Action *ParamCopy(Action *parameters)
+Holder<Action> ParamCopy(Holder<Action> const& parameters)
 {
-	Action *newAction = new Action(true);
+	Action *newAction = new Action();
 	newAction->actionID = parameters->actionID;
 	newAction->int0Parameter = parameters->int0Parameter;
 	newAction->int1Parameter = parameters->int1Parameter;
@@ -1662,9 +1655,9 @@ Action *ParamCopy(Action *parameters)
 	return newAction;
 }
 
-Action *ParamCopyNoOverride(Action *parameters)
+Holder<Action> ParamCopyNoOverride(Holder<Action> const& parameters)
 {
-	Action *newAction = new Action(true);
+	Action *newAction = new Action();
 	newAction->actionID = parameters->actionID;
 	newAction->int0Parameter = parameters->int0Parameter;
 	newAction->int1Parameter = parameters->int1Parameter;

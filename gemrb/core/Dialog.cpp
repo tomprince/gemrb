@@ -54,8 +54,6 @@ void Dialog::FreeDialogState(DialogState* ds)
 {
 	for (unsigned int i = 0; i < ds->transitionsCount; i++) {
 		DialogTransition *trans = ds->transitions[i];
-		for (size_t j = 0; j < trans->actions.size(); ++j)
-			trans->actions[j]->Release();
 		if (trans->condition)
 			delete trans->condition;
 		delete( trans );

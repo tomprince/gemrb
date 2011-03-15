@@ -228,10 +228,10 @@ Condition* DLGImporter::GetTransitionTrigger(unsigned int index) const
 	return condition;
 }
 
-std::vector<Action*> DLGImporter::GetAction(unsigned int index) const
+std::vector<Holder<Action> > DLGImporter::GetAction(unsigned int index) const
 {
 	if (index >= ActionsCount) {
-		return std::vector<Action*>();
+		return std::vector<Holder<Action> >();
 	}
 	str->Seek( ActionsOffset + ( index * 8 ), GEM_STREAM_START );
 	ieDword Offset, Length;
@@ -243,14 +243,13 @@ std::vector<Action*> DLGImporter::GetAction(unsigned int index) const
 	string[Length] = 0;
 	unsigned int count;
 	char ** lines = GetStrings( string, count );
-	std::vector<Action*> actions;
+	std::vector<Holder<Action> > actions;
 	for (size_t i = 0; i < count; ++i) {
-		Action *action = GenerateAction(lines[i]);
+		Holder<Action> action = GenerateAction(lines[i]);
 		if (!action) {
 			printMessage( "DLGImporter", "Can't compile action: " ,YELLOW);
 			printf("%s\n", lines[i]);
 		} else {
-			action->IncRef();
 			actions.push_back(action);
 		}
 		free(lines[i]);

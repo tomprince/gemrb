@@ -253,7 +253,7 @@ void GameControl::CreateMovement(Actor *actor, const Point &p)
 {
 	char Tmp[256];
 
-	Action *action = NULL;
+	Holder<Action> action = NULL;
 	if (DoubleClick && EnableRunning) {
 		sprintf( Tmp, "RunToPoint([%d.%d])", p.x, p.y );
  		action = GenerateAction( Tmp );
@@ -1624,7 +1624,7 @@ void GameControl::TryToCast(Actor *source, const Point &tgt)
 		//using item on target
 		strncpy(Tmp, "UseItemPoint(\"\",[0,0],0)", sizeof(Tmp) );
 	}
-	Action* action = GenerateAction( Tmp );
+	Holder<Action> action = GenerateAction( Tmp );
 	action->pointParameter=tgt;
 	if (spellOrItem>=0) {
 		if (spellIndex<0) {
@@ -1672,7 +1672,7 @@ void GameControl::TryToCast(Actor *source, Actor *tgt)
 		//using item on target
 		sprintf(Tmp, "NIDSpecial5()");
 	}
-	Action* action = GenerateActionDirect( Tmp, tgt);
+	Holder<Action> action = GenerateActionDirect( Tmp, tgt);
 	if (spellOrItem>=0) {
 		if (spellIndex<0) {
 			sprintf(action->string0Parameter,"%.8s",spellName);

@@ -350,7 +350,7 @@ void Scriptable::ExecuteScript(int scriptCount)
 	InternalFlags &= ~IF_ONCREATION;
 }
 
-void Scriptable::AddAction(Action* aC)
+void Scriptable::AddAction(Holder<Action> const& aC)
 {
 	if (!aC) {
 		printf( "[GameScript]: NULL action encountered for %s!\n",scriptName );
@@ -358,7 +358,6 @@ void Scriptable::AddAction(Action* aC)
 	}
 
 	InternalFlags|=IF_ACTIVE;
-	aC->IncRef();
 
 	// attempt to handle 'instant' actions, from instant.ids, which run immediately
 	// when added if the action queue is empty, even on actors which are Held/etc
@@ -373,7 +372,7 @@ void Scriptable::AddAction(Action* aC)
 	actionQueue.push_back( aC );
 }
 
-void Scriptable::AddActionInFront(Action* aC)
+void Scriptable::AddActionInFront(Holder<Action> const& aC)
 {
 	if (!aC) {
 		printf( "[GameScript]: NULL action encountered for %s!\n",scriptName );
@@ -381,10 +380,14 @@ void Scriptable::AddActionInFront(Action* aC)
 	}
 	InternalFlags|=IF_ACTIVE;
 	actionQueue.push_front( aC );
-	aC->IncRef();
 }
 
-Action* Scriptable::GetNextAction() const
+Holder<Action> Scriptable::GetCurrentAction() const
+{
+	return CurrentAction;
+}
+
+Holder<Action> Scriptable::GetNextAction() const
 {
 	if (actionQueue.size() == 0) {
 		return NULL;
@@ -392,12 +395,12 @@ Action* Scriptable::GetNextAction() const
 	return actionQueue.front();
 }
 
-Action* Scriptable::PopNextAction()
+Holder<Action> Scriptable::PopNextAction()
 {
 	if (actionQueue.size() == 0) {
 		return NULL;
 	}
-	Action* aC = actionQueue.front();
+	Holder<Action> aC = actionQueue.front();
 	actionQueue.pop_front();
 	return aC;
 }
@@ -405,11 +408,6 @@ Action* Scriptable::PopNextAction()
 void Scriptable::ClearActions()
 {
 	ReleaseCurrentAction();
-	for (unsigned int i = 0; i < actionQueue.size(); i++) {
-		Action* aC = actionQueue.front();
-		actionQueue.pop_front();
-		aC->Release();
-	}
 	actionQueue.clear();
 	WaitCounter = 0;
 	LastTarget = 0;
@@ -426,7 +424,6 @@ void Scriptable::ClearActions()
 void Scriptable::ReleaseCurrentAction()
 {
 	if (CurrentAction) {
-		CurrentAction->Release();
 		CurrentAction = NULL;
 	}
 

@@ -2590,7 +2590,7 @@ void Actor::Panic(Scriptable *attacker, int panicmode)
 	SetBaseBit(IE_STATE_ID, STATE_PANIC, true);
 	DisplayStringCore(this, VB_PANIC, DS_CONSOLE|DS_CONST );
 
-	Action *action;
+	Holder<Action> action;
 	char Tmp[40];
 	//FIXME: GenerateActionDirect should work on any scriptable
 	//they just need global ID

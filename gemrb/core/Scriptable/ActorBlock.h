@@ -25,6 +25,7 @@
 
 #include "CharAnimations.h"
 #include "Inventory.h"
+#include "Holder.h"
 #include "PathFinder.h"
 #include "Spell.h" // for HandleHardcodedSurge (repeat the spell lookup if this header is unwanted)
 #include "Sprite2D.h"
@@ -176,8 +177,8 @@ protected: //let Actor access this
 	ieVariable scriptName;
 	ieDword InternalFlags; //for triggers
 	ieResRef Dialog;
-	std::list< Action*> actionQueue;
-	Action* CurrentAction;
+	std::list< Holder<Action> > actionQueue;
+	Holder<Action> CurrentAction;
 public:
 	int CurrentActionState;
 	ieDword CurrentActionTarget;
@@ -246,11 +247,11 @@ public:
 	void ImmediateEvent();
 	bool IsPC() const;
 	void ExecuteScript(int scriptCount);
-	void AddAction(Action* aC);
-	void AddActionInFront(Action* aC);
-	Action* GetCurrentAction() const { return CurrentAction; }
-	Action* GetNextAction() const;
-	Action* PopNextAction();
+	void AddAction(Holder<Action> const& aC);
+	void AddActionInFront(Holder<Action> const& aC);
+	Holder<Action> GetCurrentAction() const;
+	Holder<Action> GetNextAction() const;
+	Holder<Action> PopNextAction();
 	void ClearActions();
 	void ReleaseCurrentAction();
 	bool InMove() const;

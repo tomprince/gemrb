@@ -1107,7 +1107,7 @@ void GS::TimedMoveToPoint(Scriptable* Sender, Action* parameters)
 
 	//repeat movement...
 	if (parameters->int0Parameter>0) {
-		Action *newaction = ParamCopyNoOverride(parameters);
+		Holder<Action> newaction = ParamCopyNoOverride(parameters);
 		newaction->int0Parameter--;
 		actor->AddActionInFront(newaction);
 		Sender->SetWait(1);
@@ -1392,7 +1392,7 @@ void GS::RunAwayFrom(Scriptable* Sender, Action* parameters)
 
 	//repeat movement...
 	if (parameters->int0Parameter>0) {
-		Action *newaction = ParamCopyNoOverride(parameters);
+		Holder<Action> newaction = ParamCopyNoOverride(parameters);
 		newaction->int0Parameter--;
 		actor->AddActionInFront(newaction);
 		Sender->SetWait(1);
@@ -1425,7 +1425,7 @@ void GS::RunAwayFromNoLeaveArea(Scriptable* Sender, Action* parameters)
 
 	//repeat movement...
 	if (parameters->int0Parameter>0) {
-		Action *newaction = ParamCopyNoOverride(parameters);
+		Holder<Action> newaction = ParamCopyNoOverride(parameters);
 		newaction->int0Parameter--;
 		actor->AddActionInFront(newaction);
 		Sender->SetWait(1);
@@ -1461,7 +1461,7 @@ void GS::RunAwayFromNoInterrupt(Scriptable* Sender, Action* parameters)
 
 	//repeat movement...
 	if (parameters->int0Parameter>0) {
-		Action *newaction = ParamCopyNoOverride(parameters);
+		Holder<Action> newaction = ParamCopyNoOverride(parameters);
 		newaction->int0Parameter--;
 		actor->AddActionInFront(newaction);
 		Sender->SetWait(1);
@@ -1491,7 +1491,7 @@ void GS::RunAwayFromPoint(Scriptable* Sender, Action* parameters)
 
 	//repeat movement...
 	if (parameters->int0Parameter>0) {
-		Action *newaction = ParamCopyNoOverride(parameters);
+		Holder<Action> newaction = ParamCopyNoOverride(parameters);
 		newaction->int0Parameter--;
 		actor->AddActionInFront(newaction);
 		Sender->SetWait(1);
@@ -4714,7 +4714,7 @@ void GS::TakeItemListPartyNum(Scriptable * Sender, Action* parameters)
 	}
 	if (count == 1) {
 		// grant the default table item to the Sender in regular games
-		Action *params = new Action(true);
+		Action *params = new Action();
 		sprintf(params->string0Parameter, "%s", tab->QueryField(9999,9999));
 		CreateItem(Sender, params);
 		delete params;
@@ -5613,7 +5613,7 @@ void GS::ForceUseContainer(Scriptable* Sender, Action* parameters)
 	}
 	char Tmp[256];
 	sprintf( Tmp, "UseContainer()");
-	Action *newaction = GenerateAction(Tmp);
+	Holder<Action> newaction = GenerateAction(Tmp);
 	tar->AddActionInFront(newaction);
 	Sender->ReleaseCurrentAction(); //why blocking???
 }
@@ -6710,7 +6710,7 @@ void GS::Leader(Scriptable* Sender, Action* parameters)
 	char Tmp[256];
 
 	snprintf(Tmp, 256, "MoveToPoint([%d.%d])", parameters->pointParameter.x, parameters->pointParameter.y);
-	Action *newact = GenerateAction(Tmp);
+	Holder<Action> newact = GenerateAction(Tmp);
 	Sender->AddAction(newact);
 }
 
@@ -6724,7 +6724,7 @@ void GS::Follow(Scriptable* Sender, Action* parameters)
 	char Tmp[256];
 
 	snprintf(Tmp, 256, "MoveToPointNoRecticle([%d.%d])", parameters->pointParameter.x, parameters->pointParameter.y);
-	Action *newact = GenerateAction(Tmp);
+	Holder<Action> newact = GenerateAction(Tmp);
 	Sender->AddAction(newact);
 }
 

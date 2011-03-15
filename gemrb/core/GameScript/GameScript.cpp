@@ -1896,7 +1896,7 @@ void GameScript::EvaluateAllBlocks()
 		if (rS->responses.size()) {
 			Response *response = rS->responses[0];
 			if (response->actions.size()) {
-				Action *action = response->actions[0];
+				Holder<Action> action = response->actions[0];
 				Scriptable *target = GetActorFromObject(MySelf, action->objects[1]);
 				if (target) {
 					// TODO: sometimes SetInterrupt(false) and SetInterrupt(true) are added before/after?
@@ -1965,7 +1965,7 @@ Response* GameScript::ReadResponse(DataStream* stream)
 	if (strncmp(poi,"AC",2)==0)
 	while (true) {
 		//not autofreed, because it is referenced by the Script
-		Action* aC = new Action(false);
+		Action* aC = new Action();
 		stream->ReadLine( line, 1024 );
 		aC->actionID = (unsigned short)strtoul(line, NULL,10);
 		for (int i = 0; i < 3; i++) {
@@ -2004,7 +2004,7 @@ void GameScript::ExecuteString(Scriptable* Sender, char* String)
 	if (String[0] == 0) {
 		return;
 	}
-	Action* act = GenerateAction( String );
+	Holder<Action> act = GenerateAction( String );
 	if (!act) {
 		return;
 	}
@@ -2137,7 +2137,7 @@ int Response::Execute(Scriptable* Sender)
 {
 	int ret = 0; // continue or not
 	for (size_t i = 0; i < actions.size(); i++) {
-		Action* aC = actions[i];
+		Holder<Action> aC = actions[i];
 		switch (actionflags[aC->actionID] & AF_MASK) {
 			case AF_IMMEDIATE:
 				GameScript::ExecuteAction( Sender, aC );
@@ -2161,14 +2161,13 @@ void PrintAction(int actionID)
 	printf("Action: %d %s\n", actionID , actionsTable->GetValue(actionID) );
 }
 
-void GameScript::ExecuteAction(Scriptable* Sender, Action* aC)
+void GameScript::ExecuteAction(Scriptable* Sender, Holder<Action> aC)
 {
 	int actionID = aC->actionID;
 
 	if (aC->objects[0]) {
 		Scriptable *scr = GetActorFromObject(Sender, aC->objects[0]);
 
-		aC->IncRef(); // if aC is us, we don't want it deleted!
 		Sender->ReleaseCurrentAction();
 
 		if (scr) {
@@ -2191,8 +2190,6 @@ void GameScript::ExecuteAction(Scriptable* Sender, Action* aC)
 			printMessage("GameScript","Actionoverride failed for object: \n",LIGHT_RED);
 			aC->objects[0]->Dump();
 		}
-
-		aC->Release();
 		return;
 	}
 	if (InDebug&ID_ACTIONS) {
@@ -2214,7 +2211,7 @@ void GameScript::ExecuteAction(Scriptable* Sender, Action* aC)
 				}
 			}
 		}
-		func( Sender, aC );
+		func( Sender, &*aC );
 	} else {
 		actions[actionID] = GS::NoActionAtAll;
 		printMessage("GameScript", "Unknown ", YELLOW);
@@ -2227,12 +2224,6 @@ void GameScript::ExecuteAction(Scriptable* Sender, Action* aC)
 
 	//don't bother with special flow control actions
 	if (actionflags[actionID] & AF_IMMEDIATE) {
-		//this action never entered the action queue, therefore shouldn't be freed
-		if (aC->GetRef()!=1) {
-			printf("Immediate action got queued!\n");
-			PrintAction(actionID);
-			abort();
-		}
 		return;
 	}
 
@@ -2274,7 +2265,7 @@ Trigger* GenerateTrigger(char* String)
 	return trigger;
 }
 
-Action* GenerateAction(char* String)
+Holder<Action> GenerateAction(char* String)
 {
 	strlwr( String );
 	if (InDebug&ID_ACTIONS) {
@@ -2303,7 +2294,7 @@ Action* GenerateAction(char* String)
 		str = actionsTable->GetStringIndex( i )+len;
 		actionID = actionsTable->GetValueIndex(i);
 	}
-	Action *action = GenerateActionCore( src, str, actionID);
+	Holder<Action> action = GenerateActionCore( src, str, actionID);
 	if (!action) {
 		printMessage("GameScript"," ",LIGHT_RED);
 		printf("Malformed scripting action: %s\n", String);
@@ -2312,9 +2303,9 @@ Action* GenerateAction(char* String)
 	return action;
 }
 
-Action* GenerateActionDirect(char *String, Scriptable *object)
+Holder<Action> GenerateActionDirect(char *String, Scriptable *object)
 {
-	Action* action = GenerateAction(String);
+	Holder<Action> action = GenerateAction(String);
 	Object *tmp = action->objects[1];
 	if (tmp && tmp->objectFields[0]==-1) {
 		tmp->objectFields[1] = object->GetGlobalID();
