@@ -32,6 +32,7 @@
 class Actor;
 struct Effect;
 class Factory;
+class GameScript;
 class Item;
 class Palette;
 class ScriptedAnimation;
@@ -90,6 +91,9 @@ public:
 	/** returns factory resource, currently works only with animations */
 	void* GetFactoryResource(const char* resname, SClass_ID type,
 		unsigned char mode = IE_NORMAL, bool silent=false);
+
+	GameScript* GetScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel = 0);
+	GameScript* GetAIScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel = 0);
 private:
 	Cache ItemCache;
 	Cache SpellCache;

@@ -354,7 +354,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		//for some reason the area's script is run from the last slot
 		//at least one area script depends on this, if you need something
 		//more customisable, add a game flag
-		map->Scripts[MAX_SCRIPTS-1] = new GameScript( Script, map );
+		map->Scripts[MAX_SCRIPTS-1] = gamedata->GetScript(Script, map);
 	}
 
 	if (day_or_night) {
@@ -514,7 +514,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		ip->SetEnter(WavResRef);
 
 		if (Script[0]) {
-			ip->Scripts[0] = new GameScript( Script, ip );
+			ip->Scripts[0] = gamedata->GetScript(Script, ip);
 		} else {
 			ip->Scripts[0] = NULL;
 		}
@@ -618,7 +618,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			Script[0]=0;
 
 		if (Script[0]) {
-			c->Scripts[0] = new GameScript( Script, c );
+			c->Scripts[0] = gamedata->GetScript(Script, c);
 		} else {
 			c->Scripts[0] = NULL;
 		}
@@ -796,7 +796,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		door->Cursor = cursor;
 		memcpy( door->KeyResRef, KeyResRef, sizeof(KeyResRef) );
 		if (Script[0]) {
-			door->Scripts[0] = new GameScript( Script, door );
+			door->Scripts[0] = gamedata->GetScript(Script, door);
 		} else {
 			door->Scripts[0] = NULL;
 		}

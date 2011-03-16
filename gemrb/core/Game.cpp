@@ -1431,7 +1431,7 @@ void Game::PlayerDream()
 	Scriptable *Sender = GetPC(0,true);
 	if (!Sender) return;
 
-	GameScript* gs = new GameScript( "player1d", Sender,0,0 );
+	GameScript* gs = gamedata->GetScript("player1d", Sender);
 	gs->Update();
 	delete( gs );
 }

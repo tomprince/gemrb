@@ -35,6 +35,7 @@
 #include "ResourceDesc.h"
 #include "Spell.h"
 #include "SpellMgr.h"
+#include "GameScript/GameScript.h"
 #include "Scriptable/Actor.h"
 #include "System/FileStream.h"
 
@@ -487,4 +488,14 @@ void* GameData::GetFactoryResource(const char* resname, SClass_ID type,
 		printf( "%s files are not supported.\n", core->TypeExt( type ) );
 		return NULL;
 	}
+}
+
+GameScript* GameData::GetScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel)
+{
+	return new GameScript(ResRef, Myself, ScriptLevel, false);
+}
+
+GameScript* GameData::GetAIScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel)
+{
+	return new GameScript(ResRef, Myself, ScriptLevel, true);
 }

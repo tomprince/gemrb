@@ -753,7 +753,7 @@ void GS::EndCutSceneMode(Scriptable* /*Sender*/, Action* /*parameters*/)
 
 void GS::StartCutScene(Scriptable* Sender, Action* parameters)
 {
-	GameScript* gs = new GameScript( parameters->string0Parameter, Sender );
+	GameScript* gs = gamedata->GetScript(parameters->string0Parameter, Sender);
 	gs->EvaluateAllBlocks();
 	delete( gs );
 }

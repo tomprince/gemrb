@@ -178,8 +178,10 @@ void Scriptable::SetScript(const ieResRef aScript, int idx, bool ai)
 	// NONE is an 'invalid' script name, never used seriously
 	// This hack is to prevent flooding of the console
 	if (aScript[0] && stricmp(aScript, "NONE") ) {
-		if (idx!=AI_SCRIPT_LEVEL) ai = false;
-		Scripts[idx] = new GameScript( aScript, this, idx, ai );
+		if ( idx == AI_SCRIPT_LEVEL && ai)
+			Scripts[idx] = gamedata->GetAIScript(aScript, this, idx);
+		else
+			Scripts[idx] = gamedata->GetScript(aScript, this, idx);
 	}
 }
 
