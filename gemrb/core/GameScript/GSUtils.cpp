@@ -52,7 +52,6 @@ short triggerflags[MAX_TRIGGERS];
 ObjectFunction objects[MAX_OBJECTS];
 IDSFunction idtargets[MAX_OBJECT_FIELDS];
 Cache SrcCache; //cache for string resources (pst)
-Cache BcsCache; //cache for scripts
 int ObjectIDSCount = 7;
 int MaxObjectNesting = 5;
 bool HasAdditionalRect = false;

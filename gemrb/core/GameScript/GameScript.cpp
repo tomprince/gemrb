@@ -1601,38 +1601,12 @@ GameScript::GameScript(const ieResRef ResRef, Scriptable* MySelf,
 
 GameScript::~GameScript(void)
 {
-	if (script) {
-		//set 3. parameter to true if you want instant free
-		//and possible death
-		if (InDebug&ID_REFERENCE) {
-			printf("One instance of %s is dropped from %d.\n", Name, BcsCache.RefCount(Name) );
-		}
-		int res = BcsCache.DecRef(script, Name, true);
-
-		if (res<0) {
-			printMessage( "GameScript", "Corrupted Script cache encountered (reference count went below zero), ", LIGHT_RED );
-			printf( "Script name is: %.8s\n", Name);
-			abort();
-		}
-		if (!res) {
-			//printf("Freeing script %s because its refcount has reached 0.\n", Name);
-			delete script;
-		}
-		script = NULL;
-	}
+	delete script;
 }
 
 Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
 {
 	char line[10];
-
-	Script *newScript = (Script *) BcsCache.GetResource(ResRef);
-	if ( newScript ) {
-		if (InDebug&ID_REFERENCE) {
-			printf("Caching %s for the %d. time\n", ResRef, BcsCache.RefCount(ResRef) );
-		}
-		return newScript;
-	}
 
 	DataStream* stream;
 	if (AIScript) {
@@ -1655,11 +1629,7 @@ Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
 		delete( stream );
 		return NULL;
 	}
-	newScript = new Script( );
-	BcsCache.SetAt( ResRef, (void *) newScript );
-	if (InDebug&ID_REFERENCE) {
-		printf("Caching %s for the %d. time\n", ResRef, BcsCache.RefCount(ResRef) );
-	}
+	Script* newScript = new Script( );
 
 	while (true) {
 		ResponseBlock* rB = ReadResponseBlock( stream );
