@@ -492,10 +492,24 @@ void* GameData::GetFactoryResource(const char* resname, SClass_ID type,
 
 GameScript* GameData::GetScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel)
 {
-	return new GameScript(ResRef, Myself, ScriptLevel, false);
+	GameScript* script = (GameScript*)GetResource(ResRef, &GameScript::ID);
+	if (!script)
+		return NULL;
+	script->SetStuff(ResRef, Myself, ScriptLevel);
+	return script;
 }
 
 GameScript* GameData::GetAIScript(const ieResRef ResRef, Scriptable* Myself, int ScriptLevel)
 {
-	return new GameScript(ResRef, Myself, ScriptLevel, true);
+	// Move out of this function.
+	ResourceManager manager;
+	char path[_MAX_PATH];
+	PathJoin( path, core->GamePath, core->GameScriptsPath, NULL);
+	manager.AddSource(path, "Scripts", PLUGIN_RESOURCE_DIRECTORY);
+
+	GameScript* script = (GameScript*)manager.GetResource(ResRef, &GameScript::ID);
+	if (!script)
+		return NULL;
+	script->SetStuff(ResRef, Myself, ScriptLevel);
+	return script;
 }

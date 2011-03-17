@@ -1587,59 +1587,57 @@ void InitializeIEScript()
 }
 
 /********************** GameScript *******************************/
-GameScript::GameScript(const ieResRef ResRef, Scriptable* MySelf,
-	int ScriptLevel, bool AIScript)
-	: MySelf(MySelf)
+GameScript::GameScript()
 {
-	scriptlevel = ScriptLevel;
-	lastAction = (unsigned int) ~0;
-
-	strnlwrcpy( Name, ResRef, 8 );
-
-	script = CacheScript( Name, AIScript);
+	MySelf = NULL;
+	scriptlevel = 0;
+	Name[0] = 0;
 }
 
-GameScript::~GameScript(void)
+IEScript::IEScript()
+{
+	lastAction = (unsigned int) ~0;
+	script = NULL;
+}
+
+void GameScript::SetStuff(const ieResRef Name, Scriptable* MySelf, int ScriptLevel)
+{
+	this->MySelf = MySelf;
+	strnlwrcpy(this->Name, Name, 8);
+	this->scriptlevel = ScriptLevel;
+}
+
+IEScript::~IEScript(void)
 {
 	delete script;
 }
 
-Script* GameScript::CacheScript(ieResRef ResRef, bool AIScript)
+bool IEScript::Open(DataStream* stream)
 {
-	char line[10];
-
-	DataStream* stream;
-	if (AIScript) {
-		// Move out of this function.
-		ResourceManager manager;
-		char path[_MAX_PATH];
-		PathJoin( path, core->GamePath, core->GameScriptsPath, NULL);
-		manager.AddSource(path, "Scripts", PLUGIN_RESOURCE_DIRECTORY);
-
-		stream = manager.GetResource( ResRef, IE_BS_CLASS_ID );
-	} else
-		stream = gamedata->GetResource( ResRef, IE_BCS_CLASS_ID );
-
 	if (!stream) {
-		return NULL;
+		return false;
 	}
+	if (script)
+		delete script;
+
+	char line[10];
 	stream->ReadLine( line, 10 );
 	if (strncmp( line, "SC", 2 ) != 0) {
 		printMessage( "GameScript","Not a Compiled Script file\n", YELLOW );
 		delete( stream );
 		return NULL;
 	}
-	Script* newScript = new Script( );
+	script = new Script( );
 
 	while (true) {
 		ResponseBlock* rB = ReadResponseBlock( stream );
 		if (!rB)
 			break;
-		newScript->responseBlocks.push_back( rB );
+		script->responseBlocks.push_back( rB );
 		stream->ReadLine( line, 10 );
 	}
 	delete( stream );
-	return newScript;
+	return true;
 }
 
 static int ParseInt(const char*& src)
@@ -1769,7 +1767,7 @@ static Condition* ReadCondition(DataStream* stream)
  * (should start false and be passed to next script's Update),
  * and done is set to whether we processed a block without Continue()
  */
-bool GameScript::Update(bool *continuing, bool *done)
+bool IEScript::Update(bool *continuing, bool *done)
 {
 	if (!MySelf)
 		return false;
@@ -1844,7 +1842,7 @@ bool GameScript::Update(bool *continuing, bool *done)
 //then adds these actions to its queue:
 // SetInterrupt(false), <actions>, SetInterrupt(true)
 
-void GameScript::EvaluateAllBlocks()
+void IEScript::EvaluateAllBlocks()
 {
 	if (!MySelf || !(MySelf->GetInternalFlag()&IF_ACTIVE) ) {
 		return;
@@ -1894,7 +1892,7 @@ void GameScript::EvaluateAllBlocks()
 #endif
 }
 
-ResponseBlock* GameScript::ReadResponseBlock(DataStream* stream)
+ResponseBlock* IEScript::ReadResponseBlock(DataStream* stream)
 {
 	char line[10];
 
@@ -1908,7 +1906,7 @@ ResponseBlock* GameScript::ReadResponseBlock(DataStream* stream)
 	return rB;
 }
 
-ResponseSet* GameScript::ReadResponseSet(DataStream* stream)
+ResponseSet* IEScript::ReadResponseSet(DataStream* stream)
 {
 	char line[10];
 
@@ -1928,7 +1926,7 @@ ResponseSet* GameScript::ReadResponseSet(DataStream* stream)
 
 //this is the border of the GameScript object (all subsequent functions are library functions)
 //we can't make this a library function, because scriptlevel is set here
-Response* GameScript::ReadResponse(DataStream* stream)
+Response* IEScript::ReadResponse(DataStream* stream)
 {
 	char* line = ( char* ) malloc( 1024 );
 	stream->ReadLine( line, 1024 );
@@ -2312,3 +2310,12 @@ bool Object::ReadyToDie()
 	return true;
 }
 
+#define STATIC_LINK
+#include "plugindef.h"
+
+const TypeID GameScript::ID = { "Script" };
+
+GEMRB_PLUGIN(_, _)
+PLUGIN_IE_RESOURCE(IEScript, ".bs", (ieWord)IE_BCS_CLASS_ID)
+PLUGIN_IE_RESOURCE(IEScript, ".bcs", (ieWord)IE_BCS_CLASS_ID)
+END_PLUGIN()
