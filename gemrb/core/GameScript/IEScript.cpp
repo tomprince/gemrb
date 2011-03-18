@@ -246,7 +246,7 @@ bool IEScript::Update(bool *continuing, bool *done)
 				}
 				lastAction=a;
 			}
-			continueExecution = ( rB->responseSet->Execute(MySelf) != 0);
+			continueExecution = (rB->responseSet->Execute(this, MySelf) != 0);
 			if (continuing) *continuing = continueExecution;
 			//clear triggers after response executed
 			//MySelf->ClearTriggers();
@@ -281,7 +281,7 @@ void IEScript::EvaluateAllBlocks()
 		ResponseBlock* rB = script->responseBlocks[a];
 		if (rB->Condition->Evaluate(MySelf)) {
 			// TODO: this no longer works since the cutscene changes
-			rB->Execute(MySelf);
+			rB->Execute(this, MySelf);
 		}
 	}
 #else
@@ -299,7 +299,7 @@ void IEScript::EvaluateAllBlocks()
 				Scriptable *target = GetActorFromObject(MySelf, action->objects[1]);
 				if (target) {
 					// TODO: sometimes SetInterrupt(false) and SetInterrupt(true) are added before/after?
-					rS->responses[0]->Execute(target);
+					rS->responses[0]->Execute(this, target);
 					// TODO: this will break blocking instants, if there are any
 					target->ReleaseCurrentAction();
 				} else if (InDebug&ID_CUTSCENE) {
@@ -384,10 +384,6 @@ Response* IEScript::ReadResponse(DataStream* stream)
 		if (aC->actionID>=MAX_ACTIONS) {
 			aC->actionID=0;
 			printMessage("GameScript","Invalid script action ID!",LIGHT_RED);
-		} else {
-			if (actionflags[aC->actionID] & AF_SCRIPTLEVEL) {
-				aC->int0Parameter = scriptlevel;
-			}
 		}
 		rE->actions.push_back( aC );
 		stream->ReadLine( line, 1024 );
@@ -399,7 +395,7 @@ Response* IEScript::ReadResponse(DataStream* stream)
 }
 
 
-int ResponseSet::Execute(Scriptable* Sender)
+int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
 {
 	size_t i;
 
@@ -407,7 +403,7 @@ int ResponseSet::Execute(Scriptable* Sender)
 		case 0:
 			return 0;
 		case 1:
-			return responses[0]->Execute(Sender);
+			return responses[0]->Execute(Script, Sender);
 	}
 	/*default*/
 	int randWeight;
@@ -426,7 +422,7 @@ int ResponseSet::Execute(Scriptable* Sender)
 	for (i = 0; i < responses.size(); i++) {
 		Response* rE = responses[i];
 		if (rE->weight > randWeight) {
-			return rE->Execute(Sender);
+			return rE->Execute(Script, Sender);
 			/* this break is only symbolic */
 			break;
 		}
@@ -436,11 +432,15 @@ int ResponseSet::Execute(Scriptable* Sender)
 }
 
 //continue is effective only as the last action in the block
-int Response::Execute(Scriptable* Sender)
+int Response::Execute(IEScript* Script, Scriptable* Sender)
 {
 	int ret = 0; // continue or not
 	for (size_t i = 0; i < actions.size(); i++) {
 		Holder<Action> aC = actions[i];
+		if (actionflags[aC->actionID] & AF_SCRIPTLEVEL) {
+			aC = ParamCopy(aC);
+			aC->int0Parameter = Script->scriptlevel;
+		}
 		switch (actionflags[aC->actionID] & AF_MASK) {
 			case AF_IMMEDIATE:
 				GameScript::ExecuteAction( Sender, aC );

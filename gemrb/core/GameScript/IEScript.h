@@ -23,13 +23,15 @@
 
 #include "GameScript/GS.h"
 
+class IEScript;
+
 class GEM_EXPORT Response {
 public:
 	Response()
 	{
 		weight = 0;
 	}
-	int Execute(Scriptable* Sender);
+	int Execute(IEScript* Script, Scriptable* Sender);
 public:
 	unsigned char weight;
 	std::vector<Holder<Action> > actions;
@@ -46,7 +48,7 @@ public:
 			delete responses[b];
 		}
 	}
-	int Execute(Scriptable* Sender);
+	int Execute(IEScript* Script, Scriptable* Sender);
 public:
 	std::vector<Response*> responses;
 };
@@ -81,6 +83,7 @@ public:
 };
 
 class IEScript : public GameScript {
+	friend class Response; // for scriptlevel
 public:
 	IEScript();
 	~IEScript();
