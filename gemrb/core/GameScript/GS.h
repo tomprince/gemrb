@@ -256,63 +256,6 @@ public:
 	}
 };
 
-class GEM_EXPORT Response {
-public:
-	Response()
-	{
-		weight = 0;
-	}
-	int Execute(Scriptable* Sender);
-public:
-	unsigned char weight;
-	std::vector<Holder<Action> > actions;
-};
-
-class GEM_EXPORT ResponseSet {
-public:
-	ResponseSet()
-	{
-	}
-	~ResponseSet()
-	{
-		for (size_t b = 0; b < responses.size(); b++) {
-			delete responses[b];
-		}
-	}
-	int Execute(Scriptable* Sender);
-public:
-	std::vector<Response*> responses;
-};
-
-class GEM_EXPORT ResponseBlock {
-public:
-	ResponseBlock()
-	{
-		condition = NULL;
-		responseSet = NULL;
-	}
-	~ResponseBlock()
-	{
-		delete condition;
-		delete responseSet;
-	}
-public:
-	Condition* condition;
-	ResponseSet* responseSet;
-};
-
-class GEM_EXPORT Script {
-public:
-	~Script()
-	{
-		for (unsigned int i = 0; i < responseBlocks.size(); i++) {
-			delete responseBlocks[i];
-		}
-	}
-public:
-	std::vector<ResponseBlock*> responseBlocks;
-};
-
 typedef int (* TriggerFunction)(Scriptable*, Trigger*);
 typedef void (* ActionFunction)(Scriptable*, Action*);
 typedef Targets* (* ObjectFunction)(Scriptable *, Targets*, int ga_flags);

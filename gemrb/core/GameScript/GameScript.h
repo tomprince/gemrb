@@ -54,26 +54,6 @@ protected: //Internal variables
 	int scriptlevel;
 };
 
-class IEScript : public GameScript {
-public:
-	IEScript();
-	~IEScript();
-	virtual bool Open(DataStream* str);
-public:
-	virtual bool Update(bool *continuing = NULL, bool *done = NULL);
-	virtual void EvaluateAllBlocks();
-private: //Internal Functions
-	ResponseBlock* ReadResponseBlock(DataStream* stream);
-	ResponseSet* ReadResponseSet(DataStream* stream);
-	Response* ReadResponse(DataStream* stream);
-	Trigger* ReadTrigger(DataStream* stream);
-	static int ParseInt(const char*& src);
-	static void ParseString(const char*& src, char* tmp);
-private: //Internal variables
-	Script* script;
-	unsigned int lastAction;
-};
-
 GEM_EXPORT Holder<Action> GenerateAction(char* String);
 Holder<Action> GenerateActionDirect(char* String, Scriptable *object);
 GEM_EXPORT Trigger* GenerateTrigger(char* String);
