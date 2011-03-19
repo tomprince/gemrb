@@ -1753,7 +1753,7 @@ void GameScript::ExecuteAction(Scriptable* Sender, Holder<Action> aC)
 				}
 			}
 		}
-		func( Sender, &*aC );
+		func( Sender, aC.get() );
 	} else {
 		actions[actionID] = GS::NoActionAtAll;
 		printMessage("GameScript", "Unknown ", YELLOW);
