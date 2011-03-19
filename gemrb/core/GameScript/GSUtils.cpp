@@ -1256,10 +1256,10 @@ static void ParseIdsTarget(const char *&src, Object *&object)
 //this will skip to the next element in the prototype of an action/trigger
 #define SKIP_ARGUMENT() while (*str && ( *str != ',' ) && ( *str != ')' )) str++
 
-static void ParseObject(const char *&str,const char *&src, Object *&object)
+static Object* ParseObject(const char *&str,const char *&src)
 {
 	SKIP_ARGUMENT();
-	object = new Object();
+	Object* object = new Object();
 	switch (*src) {
 	case '"':
 		//Scriptable Name
@@ -1297,6 +1297,7 @@ static void ParseObject(const char *&str,const char *&src, Object *&object)
 		}
 		src+=Nesting; //skipping )
 	}
+	return object;
 }
 
 /* this function was lifted from GenerateAction, to make it clearer */
@@ -1417,7 +1418,7 @@ Holder<Action> GenerateActionCore(const char *src, const char *str, unsigned sho
 					//abort();
 					return NULL;
 				}
-				ParseObject(str, src, newAction->objects[objectCount++]);
+				newAction->objects[objectCount++] = ParseObject(str, src);
 				break;
 
 			case 's': //String
@@ -1739,7 +1740,7 @@ Trigger *GenerateTriggerCore(const char *src, const char *str, int trIndex, int 
 			break;
 
 			case 'o': //Object
-				ParseObject(str, src, newTrigger->objectParameter);
+				newTrigger->objectParameter = ParseObject(str, src);
 				break;
 
 			case 's': //String
