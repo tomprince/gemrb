@@ -30,7 +30,6 @@
 #include <cstddef>
 
 class Action;
-class Script;
 class Trigger;
 class DataStream;
 class Scriptable;
