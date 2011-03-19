@@ -341,7 +341,6 @@ static EffectDesc effectnames[] = {
 	{ "ArterialStrike", fx_arterial_strike, 0, -1 }, //455
 	{ "HamString", fx_hamstring, 0, -1 }, //456
 	{ "RapidShot", fx_rapid_shot, 0, -1 }, //457
-	{ NULL, NULL, 0, 0 },
 };
 
 struct IWDIDSEntry {
@@ -368,7 +367,7 @@ static void Cleanup()
 
 void RegisterIWDOpcodes()
 {
-	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
+	EffectRegistry.Register(sizeof(effectnames) / sizeof(EffectDesc), effectnames);
 	enhanced_effects=!!core->HasFeature(GF_ENHANCED_EFFECTS);
 	//create enemy trigger object for enemy in line of sight check
 	if (!Enemy) {

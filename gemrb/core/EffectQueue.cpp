@@ -39,8 +39,7 @@ static struct {
 } Opcodes[MAX_EFFECTS];
 
 static int initialized = 0;
-static EffectDesc *effectnames = NULL;
-static int effectnames_count = 0;
+OpcodeRegistry<EffectFunction> EffectRegistry;
 static int pstflags = false;
 
 bool EffectQueue::match_ids(Actor *target, int table, ieDword value)
@@ -173,27 +172,14 @@ int find_effect(const void *a, const void *b)
 	return stricmp((const char *) a,((const EffectRef *) b)->Name);
 }
 
-static EffectDesc* FindEffect(const char* effectname)
-{
-	if( !effectname || !effectnames) {
-		return NULL;
-	}
-	void *tmp = bsearch(effectname, effectnames, effectnames_count, sizeof(EffectDesc), find_effect);
-	if( !tmp) {
-		printMessage( "EffectQueue", "", YELLOW);
-		printf("Couldn't assign effect: %s\n", effectname );
-	}
-	return (EffectDesc *) tmp;
-}
-
 static EffectRef fx_protection_from_display_string_ref = { "Protection:String", -1 };
 
 inline static void ResolveEffectRef(EffectRef &effect_reference)
 {
 	if( effect_reference.opcode==-1) {
-		EffectDesc* ref = FindEffect(effect_reference.Name);
-		if( ref && ref->opcode>=0) {
-			effect_reference.opcode = ref->opcode;
+		EffectDesc const* ref = EffectRegistry.Find(effect_reference.Name);
+		if( ref && ref->Opcode>=0) {
+			effect_reference.opcode = ref->Opcode;
 			return;
 		}
 		effect_reference.opcode = -2;
@@ -242,50 +228,24 @@ bool Init_EffectQueue()
 			}
 		}
 
-		EffectDesc* poi = FindEffect( effectname );
+		EffectDesc* poi = EffectRegistry.Find( effectname );
 		if( poi != NULL) {
 			Opcodes[i].Function = poi->Function;
 			Opcodes[i].Name = poi->Name;
 			Opcodes[i].Flags = poi->Flags;
 			//reverse linking opcode number
 			//using this unused field
-			if( (poi->opcode!=-1) && effectname[0]!='*') {
-				printf("Clashing Opcodes FN: %d vs. %d, %s\n", i, poi->opcode, effectname);
+			if( (poi->Opcode!=-1) && effectname[0]!='*') {
+				printf("Clashing Opcodes FN: %d vs. %d, %s\n", i, poi->Opcode, effectname);
 				abort();
 			}
-			poi->opcode = i;
+			poi->Opcode = i;
 		}
 		//printf("-------- FN: %d, %s\n", i, effectname);
 	}
 	core->DelSymbol( eT );
 
 	return true;
-}
-
-void EffectQueue_ReleaseMemory()
-{
-	if( effectnames) {
-		free (effectnames);
-	}
-	effectnames_count = 0;
-	effectnames = NULL;
-}
-
-void EffectQueue_RegisterOpcodes(int count, const EffectDesc* opcodes)
-{
-	if( ! effectnames) {
-		effectnames = (EffectDesc*) malloc( (count+1) * sizeof( EffectDesc ) );
-	} else {
-		effectnames = (EffectDesc*) realloc( effectnames, (effectnames_count + count + 1) * sizeof( EffectDesc ) );
-	}
-
-	memcpy( effectnames + effectnames_count, opcodes, count * sizeof( EffectDesc ));
-	effectnames_count += count;
-	effectnames[effectnames_count].Name = NULL;
-	//if we merge two effect lists, then we need to sort their effect tables
-	//actually, we might always want to sort this list, so there is no
-	//need to do it manually (sorted table is needed if we use bsearch)
-	qsort(effectnames, effectnames_count, sizeof(EffectDesc), compare_effects);
 }
 
 EffectQueue::EffectQueue()

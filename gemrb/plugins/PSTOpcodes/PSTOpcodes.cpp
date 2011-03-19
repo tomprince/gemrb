@@ -83,12 +83,11 @@ static EffectDesc effectnames[] = {
 	{ "StopAllAction", fx_stop_all_action, EFFECT_NO_ACTOR, -1 }, //cf
 	{ "TintScreen", fx_tint_screen, EFFECT_NO_ACTOR, -1 }, //c3
 	{ "TransferHP", fx_transfer_hp, EFFECT_DICED, -1 }, //c0
-	{ NULL, NULL, 0, 0 },
 };
 
 void RegisterTormentOpcodes()
 {
-	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
+	EffectRegistry.Register(sizeof(effectnames) / sizeof(EffectDesc), effectnames);
 }
 
 //retreat_from (works only in PST) - forces target to run away/walk away from Owner

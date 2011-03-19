@@ -756,7 +756,6 @@ static EffectDesc effectnames[] = {
 	{ "WingBuffet", fx_wing_buffet, 0, -1 },
 	{ "WisdomModifier", fx_wisdom_modifier, 0, -1 },
 	{ "WizardSpellSlotsModifier", fx_bonus_wizard_spells, 0, -1 },
-	{ NULL, NULL, 0, 0 },
 };
 
 static void Cleanup()
@@ -771,7 +770,7 @@ static void Cleanup()
 
 void RegisterCoreOpcodes()
 {
-	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
+	EffectRegistry.Register(sizeof(effectnames) / sizeof(EffectDesc), effectnames);
 	enhanced_effects=!!core->HasFeature(GF_ENHANCED_EFFECTS);
 	pstflags=!!core->HasFeature(GF_PST_STATE_FLAGS);
 	default_spell_hit.SequenceFlags|=IE_VVC_BAM;

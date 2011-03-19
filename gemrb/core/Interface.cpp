@@ -354,7 +354,6 @@ Interface::~Interface(void)
 	PluginMgr::Get()->RunCleanup();
 
 	ReleaseMemoryActor();
-	EffectQueue_ReleaseMemory();
 	CharAnimations::ReleaseMemory();
 	delete CurrentStore;
 
@@ -5332,11 +5331,6 @@ int Interface::Autopause(ieDword flag)
 		return 1;
 	}
 	return 0;
-}
-
-void Interface::RegisterOpcodes(int count, const EffectDesc *opcodes)
-{
-	EffectQueue_RegisterOpcodes(count, opcodes);
 }
 
 void Interface::SetInfoTextColor(const Color &color)

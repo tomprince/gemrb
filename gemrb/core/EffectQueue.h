@@ -31,6 +31,7 @@
 #include "exports.h"
 
 #include "Effect.h"
+#include "Opcode.h"
 #include "Region.h"
 
 #include <list>
@@ -146,12 +147,8 @@ struct EffectRef {
 };
 
 /** Links Effect name to a function implementing the effect */
-struct EffectDesc {
-	const char* Name;
-	EffectFunction Function;
-	int Flags;
-	int opcode;
-};
+typedef OpcodeRegistry<EffectFunction>::Description EffectDesc;
+extern GEM_EXPORT OpcodeRegistry<EffectFunction> EffectRegistry;
 
 enum EffectFlags {
 	EFFECT_NORMAL = 0,
@@ -163,12 +160,6 @@ enum EffectFlags {
 /** Initializes table of available spell Effects used by all the queues. */
 /** The available effects should already be registered by the effect plugins */
 bool Init_EffectQueue();
-
-/** Registers opcodes implemented by an effect plugin */
-void EffectQueue_RegisterOpcodes(int count, const EffectDesc *opcodes);
-
-/** release effect list when Interface is destroyed */
-void EffectQueue_ReleaseMemory();
 
 /** Check if opcode is for an effect that takes a color slot as parameter. */
 bool IsColorslotEffect(int opcode);
