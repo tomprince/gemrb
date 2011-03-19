@@ -28,6 +28,7 @@
 #include "Game.h"
 #include "GameData.h"
 #include "Interface.h"
+#include "Opcode.h"
 #include "PluginMgr.h"
 
 //debug flags
@@ -37,360 +38,7 @@
 // 8 - action execution
 //16 - trigger evaluation
 
-//Make this an ordered list, so we could use bsearch!
-static const TriggerLink triggernames[] = {
-	{"actionlistempty", GS::ActionListEmpty, 0},
-	{"actuallyincombat", GS::ActuallyInCombat, 0},
-	{"acquired", GS::Acquired, 0},
-	{"alignment", GS::Alignment, 0},
-	{"allegiance", GS::Allegiance, 0},
-	{"animstate", GS::AnimState, 0},
-	{"anypconmap", GS::AnyPCOnMap, 0},
-	{"anypcseesenemy", GS::AnyPCSeesEnemy, 0},
-	{"areacheck", GS::AreaCheck, 0},
-	{"areacheckobject", GS::AreaCheckObject, 0},
-	{"areaflag", GS::AreaFlag, 0},
-	{"arearestdisabled", GS::AreaRestDisabled, 0},
-	{"areatype", GS::AreaType, 0},
-	{"atlocation", GS::AtLocation, 0},
-	{"assaltedby", GS::AttackedBy, 0},//pst
-	{"attackedby", GS::AttackedBy, 0},
-	{"becamevisible", GS::BecameVisible, 0},
-	{"bitcheck", GS::BitCheck,TF_MERGESTRINGS},
-	{"bitcheckexact", GS::BitCheckExact,TF_MERGESTRINGS},
-	{"bitglobal", GS::BitGlobal_Trigger,TF_MERGESTRINGS},
-	{"breakingpoint", GS::BreakingPoint, 0},
-	{"calanderday", GS::CalendarDay, 0}, //illiterate developers O_o
-	{"calendarday", GS::CalendarDay, 0},
-	{"calanderdaygt", GS::CalendarDayGT, 0},
-	{"calendardaygt", GS::CalendarDayGT, 0},
-	{"calanderdaylt", GS::CalendarDayLT, 0},
-	{"calendardaylt", GS::CalendarDayLT, 0},
-	{"calledbyname", GS::CalledByName, 0}, //this is still a question
-	{"chargecount", GS::ChargeCount, 0},
-	{"charname", GS::CharName, 0}, //not scripting name
-	{"checkareadifflevel", GS::DifficultyLT, 0},//iwd2 guess
-	{"checkdoorflags", GS::CheckDoorFlags, 0},
-	{"checkpartyaveragelevel", GS::CheckPartyAverageLevel, 0},
-	{"checkpartylevel", GS::CheckPartyLevel, 0},
-	{"checkskill", GS::CheckSkill, 0},
-	{"checkskillgt", GS::CheckSkillGT, 0},
-	{"checkskilllt", GS::CheckSkillLT, 0},
-	{"checkspellstate", GS::CheckSpellState, 0},
-	{"checkstat", GS::CheckStat, 0},
-	{"checkstatgt", GS::CheckStatGT, 0},
-	{"checkstatlt", GS::CheckStatLT, 0},
-	{"class", GS::Class, 0},
-	{"classex", GS::ClassEx, 0}, //will return true for multis
-	{"classlevel", GS::ClassLevel, 0}, //pst
-	{"classlevelgt", GS::ClassLevelGT, 0},
-	{"classlevellt", GS::ClassLevelLT, 0},
-	{"clicked", GS::Clicked, 0},
-	{"closed", GS::Closed, 0},
-	{"combatcounter", GS::CombatCounter, 0},
-	{"combatcountergt", GS::CombatCounterGT, 0},
-	{"combatcounterlt", GS::CombatCounterLT, 0},
-	{"contains", GS::Contains, 0},
-	{"currentareais", GS::CurrentAreaIs, 0},//checks object
-	{"creaturehidden", GS::CreatureHidden, 0},//this is the engine level hiding feature, not the skill
-	{"creatureinarea", GS::AreaCheck, 0}, //pst, checks this object
-	{"damagetaken", GS::HPLost, 0},
-	{"damagetakengt", GS::HPLostGT, 0},
-	{"damagetakenlt", GS::HPLostLT, 0},
-	{"dead", GS::Dead, 0},
-	{"delay", GS::Delay, 0},
-	{"detect", GS::Detect, 0}, //so far i see no difference
-	{"die", GS::Die, 0},
-	{"died", GS::Died, 0},
-	{"difficulty", GS::Difficulty, 0},
-	{"difficultygt", GS::DifficultyGT, 0},
-	{"difficultylt", GS::DifficultyLT, 0},
-	{"disarmed", GS::Disarmed, 0},
-	{"disarmfailed", GS::DisarmFailed, 0},
-	{"entered", GS::Entered, 0},
-	{"entirepartyonmap", GS::EntirePartyOnMap, 0},
-	{"exists", GS::Exists, 0},
-	{"extendedstatecheck", GS::ExtendedStateCheck, 0},
-	{"extraproficiency", GS::ExtraProficiency, 0},
-	{"extraproficiencygt", GS::ExtraProficiencyGT, 0},
-	{"extraproficiencylt", GS::ExtraProficiencyLT, 0},
-	{"faction", GS::Faction, 0},
-	{"failedtoopen", GS::OpenFailed, 0},
-	{"fallenpaladin", GS::FallenPaladin, 0},
-	{"fallenranger", GS::FallenRanger, 0},
-	{"false", GS::False, 0},
-	{"forcemarkedspell", GS::ForceMarkedSpell_Trigger, 0},
-	{"frame", GS::Frame, 0},
-	{"g", GS::G_Trigger, 0},
-	{"gender", GS::Gender, 0},
-	{"general", GS::General, 0},
-	{"ggt", GS::GGT_Trigger, 0},
-	{"glt", GS::GLT_Trigger, 0},
-	{"global", GS::Global,TF_MERGESTRINGS},
-	{"globalandglobal", GS::GlobalAndGlobal_Trigger,TF_MERGESTRINGS},
-	{"globalband", GS::BitCheck,TF_MERGESTRINGS},
-	{"globalbandglobal", GS::GlobalBAndGlobal_Trigger,TF_MERGESTRINGS},
-	{"globalbandglobalexact", GS::GlobalBAndGlobalExact,TF_MERGESTRINGS},
-	{"globalbitglobal", GS::GlobalBitGlobal_Trigger,TF_MERGESTRINGS},
-	{"globalequalsglobal", GS::GlobalsEqual,TF_MERGESTRINGS}, //this is the same
-	{"globalgt", GS::GlobalGT,TF_MERGESTRINGS},
-	{"globalgtglobal", GS::GlobalGTGlobal,TF_MERGESTRINGS},
-	{"globallt", GS::GlobalLT,TF_MERGESTRINGS},
-	{"globalltglobal", GS::GlobalLTGlobal,TF_MERGESTRINGS},
-	{"globalorglobal", GS::GlobalOrGlobal_Trigger,TF_MERGESTRINGS},
-	{"globalsequal", GS::GlobalsEqual, 0},
-	{"globalsgt", GS::GlobalsGT, 0},
-	{"globalslt", GS::GlobalsLT, 0},
-	{"globaltimerexact", GS::GlobalTimerExact, 0},
-	{"globaltimerexpired", GS::GlobalTimerExpired, 0},
-	{"globaltimernotexpired", GS::GlobalTimerNotExpired, 0},
-	{"globaltimerstarted", GS::GlobalTimerStarted, 0},
-	{"happiness", GS::Happiness, 0},
-	{"happinessgt", GS::HappinessGT, 0},
-	{"happinesslt", GS::HappinessLT, 0},
-	{"harmlessclosed", GS::Closed, 0}, //pst, not sure
-	{"harmlessentered", GS::HarmlessEntered, 0}, //???
-	{"harmlessopened", GS::Opened, 0}, //pst, not sure
-	{"hasbounceeffects", GS::HasBounceEffects, 0},
-	{"hasimmunityeffects", GS::HasImmunityEffects, 0},
-	{"hasinnateability", GS::HaveSpell, 0}, //these must be the same
-	{"hasitem", GS::HasItem, 0},
-	{"hasitemequiped", GS::HasItemEquipped, 0}, //typo in bg2
-	{"hasitemequipedreal", GS::HasItemEquipped, 0}, //not sure
-	{"hasitemequipped", GS::HasItemEquipped, 0},
-	{"hasitemequippedreal", GS::HasItemEquipped, 0}, //not sure
-	{"hasiteminslot", GS::HasItemSlot, 0},
-	{"hasitemslot", GS::HasItemSlot, 0},
-	{"hasitemtypeslot", GS::HasItemTypeSlot, 0},//gemrb extension
-	{"hasweaponequiped", GS::HasWeaponEquipped, 0},//a typo again
-	{"hasweaponequipped", GS::HasWeaponEquipped, 0},
-	{"haveanyspells", GS::HaveAnySpells, 0},
-	{"havespell", GS::HaveSpell, 0}, //these must be the same
-	{"havespellparty", GS::HaveSpellParty, 0},
-	{"havespellres", GS::HaveSpell, 0}, //they share the same ID
-	{"haveusableweaponequipped", GS::HaveUsableWeaponEquipped, 0},
-	{"heard", GS::Heard, 0},
-	{"help", GS::Help_Trigger, 0},
-	{"helpex", GS::HelpEX, 0},
-	{"hitby", GS::HitBy, 0},
-	{"hotkey", GS::HotKey, 0},
-	{"hp", GS::HP, 0},
-	{"hpgt", GS::HPGT, 0},
-	{"hplost", GS::HPLost, 0},
-	{"hplostgt", GS::HPLostGT, 0},
-	{"hplostlt", GS::HPLostLT, 0},
-	{"hplt", GS::HPLT, 0},
-	{"hppercent", GS::HPPercent, 0},
-	{"hppercentgt", GS::HPPercentGT, 0},
-	{"hppercentlt", GS::HPPercentLT, 0},
-	{"inactivearea", GS::InActiveArea, 0},
-	{"incutscenemode", GS::InCutSceneMode, 0},
-	{"inline", GS::InLine, 0},
-	{"inmyarea", GS::InMyArea, 0},
-	{"inmygroup", GS::InMyGroup, 0},
-	{"inparty", GS::InParty, 0},
-	{"inpartyallowdead", GS::InPartyAllowDead, 0},
-	{"inpartyslot", GS::InPartySlot, 0},
-	{"internal", GS::Internal, 0},
-	{"internalgt", GS::InternalGT, 0},
-	{"internallt", GS::InternalLT, 0},
-	{"interactingwith", GS::InteractingWith, 0},
-	{"intrap", GS::InTrap, 0},
-	{"inventoryfull", GS::InventoryFull, 0},
-	{"inview", GS::LOS, 0}, //it seems the same, needs research
-	{"inwatcherskeep", GS::AreaStartsWith, 0},
-	{"inweaponrange", GS::InWeaponRange, 0},
-	{"isaclown", GS::IsAClown, 0},
-	{"isactive", GS::IsActive, 0},
-	{"isanimationid", GS::AnimationID, 0},
-	{"iscreatureareaflag", GS::IsCreatureAreaFlag, 0},
-	{"iscreaturehiddeninshadows", GS::IsCreatureHiddenInShadows, 0},
-	{"isfacingobject", GS::IsFacingObject, 0},
-	{"isfacingsavedrotation", GS::IsFacingSavedRotation, 0},
-	{"isgabber", GS::IsGabber, 0},
-	{"isheartoffurymodeon", GS::NightmareModeOn, 0},
-	{"islocked", GS::IsLocked, 0},
-	{"isextendednight", GS::IsExtendedNight, 0},
-	{"ismarkedspell", GS::IsMarkedSpell, 0},
-	{"isoverme", GS::IsOverMe, 0},
-	{"ispathcriticalobject", GS::IsPathCriticalObject, 0},
-	{"isplayernumber", GS::IsPlayerNumber, 0},
-	{"isrotation", GS::IsRotation, 0},
-	{"isscriptname", GS::CalledByName, 0}, //seems the same
-	{"isspelltargetvalid", GS::IsSpellTargetValid, 0},
-	{"isteambiton", GS::IsTeamBitOn, 0},
-	{"isvalidforpartydialog", GS::IsValidForPartyDialog, 0},
-	{"isvalidforpartydialogue", GS::IsValidForPartyDialog, 0},
-	{"isweaponranged", GS::IsWeaponRanged, 0},
-	{"isweather", GS::IsWeather, 0}, //gemrb extension
-	{"itemisidentified", GS::ItemIsIdentified, 0},
-	{"joins", GS::Joins, 0},
-	{"kit", GS::Kit, 0},
-	{"knowspell", GS::KnowSpell, 0}, //gemrb specific
-	{"lastmarkedobject", GS::LastMarkedObject_Trigger, 0},
-	{"lastpersontalkedto", GS::LastPersonTalkedTo, 0}, //pst
-	{"leaves", GS::Leaves, 0},
-	{"level", GS::Level, 0},
-	{"levelgt", GS::LevelGT, 0},
-	{"levelinclass", GS::LevelInClass, 0}, //iwd2
-	{"levelinclassgt", GS::LevelInClassGT, 0},
-	{"levelinclasslt", GS::LevelInClassLT, 0},
-	{"levellt", GS::LevelLT, 0},
-	{"levelparty", GS::LevelParty, 0},
-	{"levelpartygt", GS::LevelPartyGT, 0},
-	{"levelpartylt", GS::LevelPartyLT, 0},
-	{"localsequal", GS::LocalsEqual, 0},
-	{"localsgt", GS::LocalsGT, 0},
-	{"localslt", GS::LocalsLT, 0},
-	{"los", GS::LOS, 0},
-	{"modalstate", GS::ModalState, 0},
-	{"morale", GS::Morale, 0},
-	{"moralegt", GS::MoraleGT, 0},
-	{"moralelt", GS::MoraleLT, 0},
-	{"name", GS::CalledByName, 0}, //this is the same too?
-	{"namelessbitthedust", GS::NamelessBitTheDust, 0},
-	{"nearbydialog", GS::NearbyDialog, 0},
-	{"nearbydialogue", GS::NearbyDialog, 0},
-	{"nearlocation", GS::NearLocation, 0},
-	{"nearsavedlocation", GS::NearSavedLocation, 0},
-	{"nightmaremodeon", GS::NightmareModeOn, 0},
-	{"notstatecheck", GS::NotStateCheck, 0},
-	{"nulldialog", GS::NullDialog, 0},
-	{"nulldialogue", GS::NullDialog, 0},
-	{"numcreature", GS::NumCreatures, 0},
-	{"numcreaturegt", GS::NumCreaturesGT, 0},
-	{"numcreaturelt", GS::NumCreaturesLT, 0},
-	{"numcreaturesatmylevel", GS::NumCreaturesAtMyLevel, 0},
-	{"numcreaturesgtmylevel", GS::NumCreaturesGTMyLevel, 0},
-	{"numcreaturesltmylevel", GS::NumCreaturesLTMyLevel, 0},
-	{"numcreaturevsparty", GS::NumCreatureVsParty, 0},
-	{"numcreaturevspartygt", GS::NumCreatureVsPartyGT, 0},
-	{"numcreaturevspartylt", GS::NumCreatureVsPartyLT, 0},
-	{"numdead", GS::NumDead, 0},
-	{"numdeadgt", GS::NumDeadGT, 0},
-	{"numdeadlt", GS::NumDeadLT, 0},
-	{"numinparty", GS::PartyCountEQ, 0},
-	{"numinpartyalive", GS::PartyCountAliveEQ, 0},
-	{"numinpartyalivegt", GS::PartyCountAliveGT, 0},
-	{"numinpartyalivelt", GS::PartyCountAliveLT, 0},
-	{"numinpartygt", GS::PartyCountGT, 0},
-	{"numinpartylt", GS::PartyCountLT, 0},
-	{"numitems", GS::NumItems, 0},
-	{"numitemsgt", GS::NumItemsGT, 0},
-	{"numitemslt", GS::NumItemsLT, 0},
-	{"numitemsparty", GS::NumItemsParty, 0},
-	{"numitemspartygt", GS::NumItemsPartyGT, 0},
-	{"numitemspartylt", GS::NumItemsPartyLT, 0},
-	{"numtimesinteracted", GS::NumTimesInteracted, 0},
-	{"numtimesinteractedgt", GS::NumTimesInteractedGT, 0},
-	{"numtimesinteractedlt", GS::NumTimesInteractedLT, 0},
-	{"numtimesinteractedobject", GS::NumTimesInteractedObject, 0},//gemrb
-	{"numtimesinteractedobjectgt", GS::NumTimesInteractedObjectGT, 0},//gemrb
-	{"numtimesinteractedobjectlt", GS::NumTimesInteractedObjectLT, 0},//gemrb
-	{"numtimestalkedto", GS::NumTimesTalkedTo, 0},
-	{"numtimestalkedtogt", GS::NumTimesTalkedToGT, 0},
-	{"numtimestalkedtolt", GS::NumTimesTalkedToLT, 0},
-	{"objectactionlistempty", GS::ObjectActionListEmpty, 0}, //same function
-	{"objitemcounteq", GS::NumItems, 0},
-	{"objitemcountgt", GS::NumItemsGT, 0},
-	{"objitemcountlt", GS::NumItemsLT, 0},
-	{"oncreation", GS::OnCreation, 0},
-	{"onisland", GS::OnIsland, 0},
-	{"onscreen", GS::OnScreen, 0},
-	{"opened", GS::Opened, 0},
-	{"openfailed", GS::OpenFailed, 0},
-	{"openstate", GS::OpenState, 0},
-	{"or", GS::Or, 0},
-	{"outofammo", GS::OutOfAmmo, 0},
-	{"ownsfloatermessage", GS::OwnsFloaterMessage, 0},
-	{"partycounteq", GS::PartyCountEQ, 0},
-	{"partycountgt", GS::PartyCountGT, 0},
-	{"partycountlt", GS::PartyCountLT, 0},
-	{"partygold", GS::PartyGold, 0},
-	{"partygoldgt", GS::PartyGoldGT, 0},
-	{"partygoldlt", GS::PartyGoldLT, 0},
-	{"partyhasitem", GS::PartyHasItem, 0},
-	{"partyhasitemidentified", GS::PartyHasItemIdentified, 0},
-	{"partyitemcounteq", GS::NumItemsParty, 0},
-	{"partyitemcountgt", GS::NumItemsPartyGT, 0},
-	{"partyitemcountlt", GS::NumItemsPartyLT, 0},
-	{"partymemberdied", GS::PartyMemberDied, 0},
-	{"partyrested", GS::PartyRested, 0},
-	{"pccanseepoint", GS::PCCanSeePoint, 0},
-	{"pcinstore", GS::PCInStore, 0},
-	{"personalspacedistance", GS::PersonalSpaceDistance, 0},
-	{"picklockfailed", GS::PickLockFailed, 0},
-	{"pickpocketfailed", GS::PickpocketFailed, 0},
-	{"proficiency", GS::Proficiency, 0},
-	{"proficiencygt", GS::ProficiencyGT, 0},
-	{"proficiencylt", GS::ProficiencyLT, 0},
-	{"race", GS::Race, 0},
-	{"randomnum", GS::RandomNum, 0},
-	{"randomnumgt", GS::RandomNumGT, 0},
-	{"randomnumlt", GS::RandomNumLT, 0},
-	{"randomstatcheck", GS::RandomStatCheck, 0},
-	{"range", GS::Range, 0},
-	{"reaction", GS::Reaction, 0},
-	{"reactiongt", GS::ReactionGT, 0},
-	{"reactionlt", GS::ReactionLT, 0},
-	{"realglobaltimerexact", GS::RealGlobalTimerExact, 0},
-	{"realglobaltimerexpired", GS::RealGlobalTimerExpired, 0},
-	{"realglobaltimernotexpired", GS::RealGlobalTimerNotExpired, 0},
-	{"receivedorder", GS::ReceivedOrder, 0},
-	{"reputation", GS::Reputation, 0},
-	{"reputationgt", GS::ReputationGT, 0},
-	{"reputationlt", GS::ReputationLT, 0},
-	{"school", GS::School, 0}, //similar to kit
-	{"see", GS::See, 0},
-	{"sequence", GS::Sequence, 0},
-	{"setlastmarkedobject", GS::SetLastMarkedObject, 0},
-	{"setmarkedspell", GS::SetMarkedSpell_Trigger, 0},
-	{"specifics", GS::Specifics, 0},
-	{"spellcast", GS::SpellCast, 0},
-	{"spellcastinnate", GS::SpellCastInnate, 0},
-	{"spellcastonme", GS::SpellCastOnMe, 0},
-	{"spellcastpriest", GS::SpellCastPriest, 0},
-	{"statecheck", GS::StateCheck, 0},
-	{"stealfailed", GS::StealFailed, 0},
-	{"storehasitem", GS::StoreHasItem, 0},
-	{"stuffglobalrandom", GS::StuffGlobalRandom, 0},//hm, this is a trigger
-	{"subrace", GS::SubRace, 0},
-	{"systemvariable", GS::SystemVariable_Trigger, 0}, //gemrb
-	{"targetunreachable", GS::TargetUnreachable, 0},
-	{"team", GS::Team, 0},
-	{"time", GS::Time, 0},
-	{"timegt", GS::TimeGT, 0},
-	{"timelt", GS::TimeLT, 0},
-	{"timeofday", GS::TimeOfDay, 0},
-	{"timeractive", GS::TimerActive, 0},
-	{"timerexpired", GS::TimerExpired, 0},
-	{"tookdamage", GS::TookDamage, 0},
-	{"totalitemcnt", GS::TotalItemCnt, 0}, //iwd2
-	{"totalitemcntexclude", GS::TotalItemCntExclude, 0}, //iwd2
-	{"totalitemcntexcludegt", GS::TotalItemCntExcludeGT, 0}, //iwd2
-	{"totalitemcntexcludelt", GS::TotalItemCntExcludeLT, 0}, //iwd2
-	{"totalitemcntgt", GS::TotalItemCntGT, 0}, //iwd2
-	{"totalitemcntlt", GS::TotalItemCntLT, 0}, //iwd2
-	{"traptriggered", GS::TrapTriggered, 0},
-	{"trigger", GS::TriggerTrigger, 0},
-	{"triggerclick", GS::Clicked, 0}, //not sure
-	{"triggersetglobal", GS::TriggerSetGlobal,0}, //iwd2, but never used
-	{"true", GS::True, 0},
-	{"turnedby", GS::TurnedBy, 0},
-	{"unlocked", GS::Unlocked, 0},
-	{"unselectablevariable", GS::UnselectableVariable, 0},
-	{"unselectablevariablegt", GS::UnselectableVariableGT, 0},
-	{"unselectablevariablelt", GS::UnselectableVariableLT, 0},
-	{"unusable",GS::Unusable, 0},
-	{"vacant",GS::Vacant, 0},
-	{"walkedtotrigger", GS::WalkedToTrigger, 0},
-	{"wasindialog", GS::WasInDialog, 0},
-	{"xor", GS::Xor,TF_MERGESTRINGS},
-	{"xp", GS::XP, 0},
-	{"xpgt", GS::XPGT, 0},
-	{"xplt", GS::XPLT, 0},
-	{ NULL,NULL,0}
-};
+OpcodeRegistry<TriggerFunction> TriggerRegistry;
 
 //Make this an ordered list, so we could use bsearch!
 static const ActionLink actionnames[] = {
@@ -1073,20 +721,16 @@ static const IDSLink idsnames[] = {
 	{ NULL,NULL}
 };
 
-static const TriggerLink* FindTrigger(const char* triggername)
+static const TriggerDesc* FindTrigger(const char* triggername)
 {
 	if (!triggername) {
 		return NULL;
 	}
 	int len = strlench( triggername, '(' );
-	for (int i = 0; triggernames[i].Name; i++) {
-		if (!strnicmp( triggernames[i].Name, triggername, len )) {
-			if (!triggernames[i].Name[len]) {
-				return triggernames + i;
-			}
-		}
-	}
-	return NULL;
+	char* name = strndup(triggername, len);
+	TriggerDesc* desc = TriggerRegistry.Find(name);
+	free(name);
+	return desc;
 }
 
 static const ActionLink* FindAction(const char* actionname)
@@ -1354,7 +998,7 @@ void InitializeIEScript()
 	j = triggersTable->GetSize();
 	while (j--) {
 		i = triggersTable->GetValueIndex( j );
-		const TriggerLink* poi = FindTrigger(triggersTable->GetStringIndex( j ));
+		const TriggerDesc* poi = FindTrigger(triggersTable->GetStringIndex( j ));
 		//maybe we should watch for this bit?
 		//bool triggerflag = i & 0x4000;
 		i &= 0x3fff;
@@ -1397,18 +1041,18 @@ void InitializeIEScript()
 			continue;
 		}
 		
-		TriggerFunction f = triggers[ii];
-		if (f) {
-			for (i = 0; triggernames[i].Name; i++) {
-				if (f == triggernames[i].Function) {
-					if (InDebug&ID_TRIGGERS) {
-						printMessage("GameScript"," ", WHITE);
-						printf("%s is a synonym of %s\n", triggersTable->GetStringIndex( j ), triggernames[i].Name );
-						break;
-					}
+		if (InDebug&ID_TRIGGERS) {
+			TriggerFunction f = triggers[ii];
+			if (f) {
+				// This only shows the first instance now.
+				TriggerDesc *desc = TriggerRegistry.Find(f);
+				if (desc) {
+					printMessage("GameScript"," ", WHITE);
+					printf("%s is a synonym of %s\n", triggersTable->GetStringIndex( j ), desc->Name );
+					break;
 				}
+				continue;
 			}
-			continue;
 		}
 		printMessage("GameScript","Couldn't assign function to trigger: ", YELLOW);
 		printFunction(triggersTable,j);

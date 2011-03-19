@@ -18,12 +18,16 @@ public:
 public:
 	void Register(int count, const Description* opcodes);
 	Description* Find(const char* Name);
+	Description* Find(FunctionType Name);
 private:
 	static bool Compare(Description const& lhs, Description const& rhs) {
 		return stricmp(lhs.Name, rhs.Name) < 0;
 	}
 	static bool Compare2(Description const& lhs, char const* rhs) {
 		return stricmp(lhs.Name, rhs) < 0;
+	}
+	static bool CompareFunc(Description const& lhs, Description const& rhs) {
+		return lhs.Func == rhs.Func;
 	}
 	std::vector<Description> Names;
 };
@@ -47,6 +51,15 @@ typename OpcodeRegistry<FT>::Description* OpcodeRegistry<FT>::Find(const char* N
 	if (stricmp(it->Name, Name) != 0)
 		return NULL;
 	return &*it;
+}
+
+template<class FT>
+typename OpcodeRegistry<FT>::Description* OpcodeRegistry<FT>::Find(FT Func)
+{
+	for (size_t i = 0; i < Names.size(); ++i)
+		if (Names[i].Function == Func)
+			return &Names[i];
+	return NULL;
 }
 
 #endif
