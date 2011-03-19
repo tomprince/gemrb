@@ -26,6 +26,7 @@
 #include "exports.h"
 
 #include "Holder.h"
+#include "Owner.h"
 #include "SymbolMgr.h"
 #include "Variables.h"
 #include "Scriptable/Actor.h"
@@ -160,10 +161,6 @@ public:
 		int1Parameter = 0;
 		pointParameter.null();
 	}
-	~Trigger()
-	{
-		delete objectParameter;
-	}
 	int Evaluate(Scriptable* Sender);
 public:
 	unsigned short triggerID;
@@ -174,7 +171,7 @@ public:
 	Point pointParameter;
 	char string0Parameter[65];
 	char string1Parameter[65];
-	Object* objectParameter;
+	Owner<Object> objectParameter;
 public:
 	void Dump()
 	{
@@ -194,15 +191,9 @@ public:
 
 class GEM_EXPORT Condition {
 public:
-	~Condition()
-	{
-		for (size_t c = 0; c < triggers.size(); ++c) {
-			delete triggers[c];
-		}
-	}
 	bool Evaluate(Scriptable* Sender);
 public:
-	std::vector<Trigger*> triggers;
+	std::vector<Owner<Trigger> > triggers;
 };
 
 class GEM_EXPORT Action : public Held<Action> {
@@ -221,15 +212,9 @@ public:
 		int2Parameter = 0;
 		//changed now
 	}
-	~Action()
-	{
-		for (int c = 0; c < 3; c++) {
-			delete objects[c];
-		}
-	}
 public:
 	unsigned short actionID;
-	Object* objects[3];
+	Owner<Object> objects[3];
 	int int0Parameter;
 	Point pointParameter;
 	int int1Parameter;

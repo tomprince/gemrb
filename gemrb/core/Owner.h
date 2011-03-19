@@ -59,9 +59,9 @@ public:
 	T& operator*() const { return *ptr; }
 	T* operator->() const { return ptr; }
 	bool operator!() const { return !ptr; }
-#include "operatorbool.h"
-	OPERATOR_BOOL(Owner<T>,T,ptr)
 	T* get() const { return ptr; }
+	// FIXME? or is it too painful to use, otherwise?
+	operator T*() const { return ptr; }
 	void release() {
 		delete ptr;
 		ptr = NULL;

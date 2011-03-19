@@ -23,6 +23,8 @@
 
 #include "GameScript/GS.h"
 
+#include "Owner.h"
+
 class IEScript;
 
 class GEM_EXPORT Response {
@@ -39,47 +41,20 @@ public:
 
 class GEM_EXPORT ResponseSet {
 public:
-	ResponseSet()
-	{
-	}
-	~ResponseSet()
-	{
-		for (size_t b = 0; b < responses.size(); b++) {
-			delete responses[b];
-		}
-	}
 	int Execute(IEScript* Script, Scriptable* Sender);
 public:
-	std::vector<Response*> responses;
+	std::vector<Owner<Response> > responses;
 };
 
 class GEM_EXPORT ResponseBlock {
 public:
-	ResponseBlock()
-	{
-		condition = NULL;
-		responseSet = NULL;
-	}
-	~ResponseBlock()
-	{
-		delete condition;
-		delete responseSet;
-	}
-public:
-	Condition* condition;
-	ResponseSet* responseSet;
+	Owner<Condition> condition;
+	Owner<ResponseSet> responseSet;
 };
 
 class GEM_EXPORT Script {
 public:
-	~Script()
-	{
-		for (unsigned int i = 0; i < responseBlocks.size(); i++) {
-			delete responseBlocks[i];
-		}
-	}
-public:
-	std::vector<ResponseBlock*> responseBlocks;
+	std::vector<Owner<ResponseBlock> > responseBlocks;
 };
 
 class IEScript : public GameScript {
