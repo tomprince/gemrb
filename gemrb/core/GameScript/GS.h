@@ -221,8 +221,6 @@ public:
 	int int2Parameter;
 	char string0Parameter[65];
 	char string1Parameter[65];
-private:
-	int RefCount;
 public:
 	void Dump()
 	{
