@@ -421,7 +421,7 @@ int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
 	}
 
 	for (i = 0; i < responses.size(); i++) {
-		Response& rE = responses[i];
+		Response& rE = *responses[i];
 		if (rE.weight > randWeight) {
 			return rE.Execute(Script, Sender);
 			/* this break is only symbolic */
