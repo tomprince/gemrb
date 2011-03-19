@@ -66,13 +66,6 @@ public:
 public:
 	virtual bool Update(bool *continuing = NULL, bool *done = NULL);
 	virtual void EvaluateAllBlocks();
-private: //Internal Functions
-	ResponseBlock* ReadResponseBlock(DataStream* stream);
-	ResponseSet* ReadResponseSet(DataStream* stream);
-	Response* ReadResponse(DataStream* stream);
-	Trigger* ReadTrigger(DataStream* stream);
-	static int ParseInt(const char*& src);
-	static void ParseString(const char*& src, char* tmp);
 private: //Internal variables
 	Script* script;
 	unsigned int lastAction;

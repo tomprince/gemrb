@@ -34,34 +34,6 @@ IEScript::~IEScript(void)
 	delete script;
 }
 
-bool IEScript::Open(DataStream* stream)
-{
-	if (!stream) {
-		return false;
-	}
-	if (script)
-		delete script;
-
-	char line[10];
-	stream->ReadLine( line, 10 );
-	if (strncmp( line, "SC", 2 ) != 0) {
-		printMessage( "GameScript","Not a Compiled Script file\n", YELLOW );
-		delete( stream );
-		return NULL;
-	}
-	script = new Script( );
-
-	while (true) {
-		ResponseBlock* rB = ReadResponseBlock( stream );
-		if (!rB)
-			break;
-		script->responseBlocks.push_back( rB );
-		stream->ReadLine( line, 10 );
-	}
-	delete( stream );
-	return true;
-}
-
 static int ParseInt(const char*& src)
 {
 	char number[33];
@@ -183,6 +155,111 @@ static Condition* ReadCondition(DataStream* stream)
 		cO->triggers.push_back( tR );
 	}
 	return cO;
+}
+
+static Response* ReadResponse(DataStream* stream)
+{
+	char* line = ( char* ) malloc( 1024 );
+	stream->ReadLine( line, 1024 );
+	if (strncmp( line, "RE", 2 ) != 0) {
+		free( line );
+		return NULL;
+	}
+	Response* rE = new Response();
+	rE->weight = 0;
+	stream->ReadLine( line, 1024 );
+	char *poi;
+	rE->weight = (unsigned char)strtoul(line,&poi,10);
+	if (strncmp(poi,"AC",2)==0)
+	while (true) {
+		Action* aC = new Action();
+		stream->ReadLine( line, 1024 );
+		aC->actionID = (unsigned short)strtoul(line, NULL,10);
+		for (int i = 0; i < 3; i++) {
+			stream->ReadLine( line, 1024 );
+			Object* oB = DecodeObject( line );
+			aC->objects[i] = oB;
+			if (i != 2)
+				stream->ReadLine( line, 1024 );
+		}
+		stream->ReadLine( line, 1024 );
+		sscanf( line, "%d %hd %hd %d %d\"%[^\"]\" \"%[^\"]\" AC",
+			&aC->int0Parameter, &aC->pointParameter.x, &aC->pointParameter.y,
+			&aC->int1Parameter, &aC->int2Parameter, aC->string0Parameter,
+			aC->string1Parameter );
+		strlwr(aC->string0Parameter);
+		strlwr(aC->string1Parameter);
+		if (aC->actionID>=MAX_ACTIONS) {
+			aC->actionID=0;
+			printMessage("GameScript","Invalid script action ID!",LIGHT_RED);
+		}
+		rE->actions.push_back( aC );
+		stream->ReadLine( line, 1024 );
+		if (strncmp( line, "RE", 2 ) == 0)
+			break;
+	}
+	free( line );
+	return rE;
+}
+
+static ResponseSet* ReadResponseSet(DataStream* stream)
+{
+	char line[10];
+
+	stream->ReadLine( line, 10 );
+	if (strncmp( line, "RS", 2 ) != 0) {
+		return NULL;
+	}
+	ResponseSet* rS = new ResponseSet();
+	while (true) {
+		Response* rE = ReadResponse( stream );
+		if (!rE)
+			break;
+		rS->responses.push_back( rE );
+	}
+	return rS;
+}
+
+static ResponseBlock* ReadResponseBlock(DataStream* stream)
+{
+	char line[10];
+
+	stream->ReadLine( line, 10 );
+	if (strncmp( line, "CR", 2 ) != 0) {
+		return NULL;
+	}
+	ResponseBlock* rB = new ResponseBlock();
+	rB->condition = ReadCondition( stream );
+	rB->responseSet = ReadResponseSet( stream );
+	return rB;
+}
+
+bool IEScript::Open(DataStream* stream)
+{
+	if (!stream) {
+		return false;
+	}
+	if (script)
+		delete script;
+
+	char line[10];
+	stream->ReadLine( line, 10 );
+	if (strncmp( line, "SC", 2 ) != 0) {
+		printMessage( "GameScript","Not a Compiled Script file\n", YELLOW );
+		delete( stream );
+		return NULL;
+	}
+	script = new Script( );
+
+	while (true) {
+		ResponseBlock* rB = ReadResponseBlock( stream );
+		if (!rB)
+			break;
+		script->responseBlocks.push_back( rB );
+		stream->ReadLine( line, 10 );
+	}
+	delete( stream );
+	return true;
 }
 
 /*
@@ -314,87 +391,6 @@ void IEScript::EvaluateAllBlocks()
 	}
 #endif
 }
-
-ResponseBlock* IEScript::ReadResponseBlock(DataStream* stream)
-{
-	char line[10];
-
-	stream->ReadLine( line, 10 );
-	if (strncmp( line, "CR", 2 ) != 0) {
-		return NULL;
-	}
-	ResponseBlock* rB = new ResponseBlock();
-	rB->condition = ReadCondition( stream );
-	rB->responseSet = ReadResponseSet( stream );
-	return rB;
-}
-
-ResponseSet* IEScript::ReadResponseSet(DataStream* stream)
-{
-	char line[10];
-
-	stream->ReadLine( line, 10 );
-	if (strncmp( line, "RS", 2 ) != 0) {
-		return NULL;
-	}
-	ResponseSet* rS = new ResponseSet();
-	while (true) {
-		Response* rE = ReadResponse( stream );
-		if (!rE)
-			break;
-		rS->responses.push_back( rE );
-	}
-	return rS;
-}
-
-//this is the border of the GameScript object (all subsequent functions are library functions)
-//we can't make this a library function, because scriptlevel is set here
-Response* IEScript::ReadResponse(DataStream* stream)
-{
-	char* line = ( char* ) malloc( 1024 );
-	stream->ReadLine( line, 1024 );
-	if (strncmp( line, "RE", 2 ) != 0) {
-		free( line );
-		return NULL;
-	}
-	Response* rE = new Response();
-	rE->weight = 0;
-	stream->ReadLine( line, 1024 );
-	char *poi;
-	rE->weight = (unsigned char)strtoul(line,&poi,10);
-	if (strncmp(poi,"AC",2)==0)
-	while (true) {
-		//not autofreed, because it is referenced by the Script
-		Action* aC = new Action();
-		stream->ReadLine( line, 1024 );
-		aC->actionID = (unsigned short)strtoul(line, NULL,10);
-		for (int i = 0; i < 3; i++) {
-			stream->ReadLine( line, 1024 );
-			Object* oB = DecodeObject( line );
-			aC->objects[i] = oB;
-			if (i != 2)
-				stream->ReadLine( line, 1024 );
-		}
-		stream->ReadLine( line, 1024 );
-		sscanf( line, "%d %hd %hd %d %d\"%[^\"]\" \"%[^\"]\" AC",
-			&aC->int0Parameter, &aC->pointParameter.x, &aC->pointParameter.y,
-			&aC->int1Parameter, &aC->int2Parameter, aC->string0Parameter,
-			aC->string1Parameter );
-		strlwr(aC->string0Parameter);
-		strlwr(aC->string1Parameter);
-		if (aC->actionID>=MAX_ACTIONS) {
-			aC->actionID=0;
-			printMessage("GameScript","Invalid script action ID!",LIGHT_RED);
-		}
-		rE->actions.push_back( aC );
-		stream->ReadLine( line, 1024 );
-		if (strncmp( line, "RE", 2 ) == 0)
-			break;
-	}
-	free( line );
-	return rE;
-}
-
 
 int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
 {
