@@ -1856,8 +1856,8 @@ Holder<Action> GenerateActionDirect(char *String, Scriptable *object)
 	return action;
 }
 
-/** Self-destructing object if it is empty */
-bool Object::ReadyToDie()
+/** Return true if object is null */
+bool Object::isNull()
 {
 	if (objectName[0]!=0) {
 		return false;
@@ -1870,7 +1870,5 @@ bool Object::ReadyToDie()
 			return false;
 		}
 	}
-	//commit suicide
-	delete this;
 	return true;
 }

@@ -145,7 +145,7 @@ public:
 		printf("\n");
 	}
 
-	bool ReadyToDie();
+	bool isNull();
 };
 
 class GEM_EXPORT Trigger {

@@ -128,8 +128,9 @@ static Object* DecodeObject(const char* line)
 		printf("%s\n", origline);
 	}
 	//let the object realize it has no future (in case of null objects)
-	if (oB->ReadyToDie()) {
-		oB = NULL;
+	if (oB->isNull()) {
+		delete oB;
+		return NULL;
 	}
 	return oB;
 }
