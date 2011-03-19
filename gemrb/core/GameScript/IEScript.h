@@ -39,22 +39,13 @@ public:
 	std::vector<Holder<Action> > actions;
 };
 
-class GEM_EXPORT ResponseSet {
-public:
-	int Execute(IEScript* Script, Scriptable* Sender);
-public:
-	std::vector<Owner<Response> > responses;
-};
-
 class GEM_EXPORT ResponseBlock {
 public:
-	Owner<Condition> condition;
-	Owner<ResponseSet> responseSet;
-};
-
-class GEM_EXPORT Script {
+	/** The only runs responses */
+	int Execute(IEScript* Script, Scriptable* Sender);
 public:
-	std::vector<Owner<ResponseBlock> > responseBlocks;
+	Owner<Condition> condition;
+	std::vector<Response> responses;
 };
 
 class IEScript : public GameScript {
@@ -67,7 +58,7 @@ public:
 	virtual bool Update(bool *continuing = NULL, bool *done = NULL);
 	virtual void EvaluateAllBlocks();
 private: //Internal variables
-	Script* script;
+	std::vector<ResponseBlock> script;
 	unsigned int lastAction;
 };
 

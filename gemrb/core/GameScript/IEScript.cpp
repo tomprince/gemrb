@@ -26,12 +26,10 @@
 IEScript::IEScript()
 {
 	lastAction = (unsigned int) ~0;
-	script = NULL;
 }
 
 IEScript::~IEScript(void)
 {
-	delete script;
 }
 
 static int ParseInt(const char*& src)
@@ -202,22 +200,23 @@ static Response* ReadResponse(DataStream* stream)
 	return rE;
 }
 
-static ResponseSet* ReadResponseSet(DataStream* stream)
+static std::vector<Response> ReadResponseSet(DataStream* stream)
 {
 	char line[10];
+	std::vector<Response> responses;
 
 	stream->ReadLine( line, 10 );
 	if (strncmp( line, "RS", 2 ) != 0) {
-		return NULL;
+		return responses;
 	}
-	ResponseSet* rS = new ResponseSet();
 	while (true) {
 		Response* rE = ReadResponse( stream );
 		if (!rE)
 			break;
-		rS->responses.push_back( rE );
+		responses.push_back(*rE);
+		delete rE;
 	}
-	return rS;
+	return responses;
 }
 
 static ResponseBlock* ReadResponseBlock(DataStream* stream)
@@ -230,7 +229,7 @@ static ResponseBlock* ReadResponseBlock(DataStream* stream)
 	}
 	ResponseBlock* rB = new ResponseBlock();
 	rB->condition = ReadCondition( stream );
-	rB->responseSet = ReadResponseSet( stream );
+	rB->responses = ReadResponseSet( stream );
 	return rB;
 }
 
@@ -239,8 +238,7 @@ bool IEScript::Open(DataStream* stream)
 	if (!stream) {
 		return false;
 	}
-	if (script)
-		delete script;
+	script.clear();
 
 	char line[10];
 	stream->ReadLine( line, 10 );
@@ -249,13 +247,13 @@ bool IEScript::Open(DataStream* stream)
 		delete( stream );
 		return NULL;
 	}
-	script = new Script( );
 
 	while (true) {
 		ResponseBlock* rB = ReadResponseBlock( stream );
 		if (!rB)
 			break;
-		script->responseBlocks.push_back( rB );
+		script.push_back(*rB);
+		delete rB;
 		stream->ReadLine( line, 10 );
 	}
 	delete( stream );
@@ -270,9 +268,6 @@ bool IEScript::Open(DataStream* stream)
 bool IEScript::Update(bool *continuing, bool *done)
 {
 	if (!MySelf)
-		return false;
-
-	if (!script)
 		return false;
 
 	//ieDword thisTime = core->GetGame()->Ticks;
@@ -290,8 +285,8 @@ bool IEScript::Update(bool *continuing, bool *done)
 	if (continuing) continueExecution = *continuing;
 
 	RandomNumValue=rand();
-	for (size_t a = 0; a < script->responseBlocks.size(); a++) {
-		ResponseBlock& rB = *script->responseBlocks[a];
+	for (size_t a = 0; a < script.size(); a++) {
+		ResponseBlock& rB = script[a];
 		if (rB.condition->Evaluate(MySelf)) {
 			//if this isn't a continue-d block, we have to clear the queue
 			//we cannot clear the queue and cannot execute the new block
@@ -324,7 +319,7 @@ bool IEScript::Update(bool *continuing, bool *done)
 				}
 				lastAction=a;
 			}
-			continueExecution = (rB.responseSet->Execute(this, MySelf) != 0);
+			continueExecution = (rB.Execute(this, MySelf) != 0);
 			if (continuing) *continuing = continueExecution;
 			//clear triggers after response executed
 			//MySelf->ClearTriggers();
@@ -348,15 +343,11 @@ void IEScript::EvaluateAllBlocks()
 		return;
 	}
 
-	if (!script) {
-		return;
-	}
-
 #ifdef GEMRB_CUTSCENES
 	// this is the (unused) more logical way of executing a cutscene, which
 	// evaluates conditions and doesn't just use the first response
-	for (size_t a = 0; a < script->responseBlocks.size(); a++) {
-		ResponseBlock& rB = *script->responseBlocks[a];
+	for (size_t a = 0; a < script.size(); a++) {
+		ResponseBlock& rB = script[a];
 		if (rB.Condition->Evaluate(MySelf)) {
 			// TODO: this no longer works since the cutscene changes
 			rB.Execute(this, MySelf);
@@ -367,17 +358,16 @@ void IEScript::EvaluateAllBlocks()
 	// cutscenes don't evaluate conditions - they just choose the
 	// first response, take the object from the first action,
 	// and then add the actions to that object's queue.
-	for (size_t a = 0; a < script->responseBlocks.size(); a++) {
-		ResponseBlock& rB = *script->responseBlocks[a];
-		ResponseSet& rS = *rB.responseSet;
-		if (rS.responses.size()) {
-			Response& response = *rS.responses[0];
+	for (size_t a = 0; a < script.size(); a++) {
+		ResponseBlock& rB = script[a];
+		if (rB.responses.size()) {
+			Response& response = rB.responses[0];
 			if (response.actions.size()) {
 				Holder<Action> action = response.actions[0];
 				Scriptable *target = GetActorFromObject(MySelf, action->objects[1]);
 				if (target) {
 					// TODO: sometimes SetInterrupt(false) and SetInterrupt(true) are added before/after?
-					rS.responses[0]->Execute(this, target);
+					rB.responses[0].Execute(this, target);
 					// TODO: this will break blocking instants, if there are any
 					target->ReleaseCurrentAction();
 				} else if (InDebug&ID_CUTSCENE) {
@@ -392,7 +382,7 @@ void IEScript::EvaluateAllBlocks()
 #endif
 }
 
-int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
+int ResponseBlock::Execute(IEScript* Script, Scriptable* Sender)
 {
 	size_t i;
 
@@ -400,14 +390,14 @@ int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
 		case 0:
 			return 0;
 		case 1:
-			return responses[0]->Execute(Script, Sender);
+			return responses[0].Execute(Script, Sender);
 	}
 	/*default*/
 	int randWeight;
 	int maxWeight = 0;
 
 	for (i = 0; i < responses.size(); i++) {
-		maxWeight += responses[i]->weight;
+		maxWeight += responses[i].weight;
 	}
 	if (maxWeight) {
 		randWeight = rand() % maxWeight;
@@ -417,7 +407,7 @@ int ResponseSet::Execute(IEScript* Script, Scriptable* Sender)
 	}
 
 	for (i = 0; i < responses.size(); i++) {
-		Response& rE = *responses[i];
+		Response& rE = responses[i];
 		if (rE.weight > randWeight) {
 			return rE.Execute(Script, Sender);
 			/* this break is only symbolic */
