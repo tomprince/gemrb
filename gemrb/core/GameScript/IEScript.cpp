@@ -421,7 +421,6 @@ int ResponseBlock::Execute(IEScript* Script, Scriptable* Sender)
 //continue is effective only as the last action in the block
 int Response::Execute(IEScript* Script, Scriptable* Sender)
 {
-	int ret = 0; // continue or not
 	for (size_t i = 0; i < actions.size(); i++) {
 		Holder<Action> aC = actions[i];
 		if (actionflags[aC->actionID] & AF_SCRIPTLEVEL) {
@@ -431,19 +430,16 @@ int Response::Execute(IEScript* Script, Scriptable* Sender)
 		switch (actionflags[aC->actionID] & AF_MASK) {
 			case AF_IMMEDIATE:
 				GameScript::ExecuteAction( Sender, aC );
-				ret = 0;
-				break;
+				return 0;
 			case AF_NONE:
 				Sender->AddAction( aC );
-				ret = 0;
-				break;
+				return 0;
 			case AF_CONTINUE:
 			case AF_MASK:
-				ret = 1;
-				break;
+				return 1;
 		}
 	}
-	return ret;
+	return 0;
 }
 
 #define STATIC_LINK
