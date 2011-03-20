@@ -10671,7 +10671,9 @@ PyObject* GUIScript::ConstructObject(const char* type, PyObject* pArgs)
 }
 
 #include "plugindef.h"
+#include "AIScript.h"
 
 GEMRB_PLUGIN(0x1B01BE6B, "GUI Script Engine (Python)")
 PLUGIN_CLASS(IE_GUI_SCRIPT_CLASS_ID, GUIScript)
+PLUGIN_RESOURCE(AIScript, ".py")
 END_PLUGIN()
