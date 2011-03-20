@@ -340,6 +340,7 @@ public:
 	Map* GetMap(const char *areaname, bool change);
 	/** Returns slot of the map if found */
 	int FindMap(const char *ResRef);
+	Map* GetMapByGlobalID(unsigned int index) const;
 	int AddMap(Map* map);
 	/** Determine if area is master area*/
 	bool MasterArea(const char *area);

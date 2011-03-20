@@ -622,6 +622,18 @@ Map* Game::GetMap(unsigned int index) const
 	return Maps[index];
 }
 
+Map* Game::GetMapByGlobalID(unsigned int GlobalID) const
+{
+	int index = (int) Maps.size();
+	while (index--) {
+		Map *map=Maps[index];
+		if (map->GetGlobalID() == GlobalID) {
+			return map;
+		}
+	}
+	return NULL;
+}
+
 Map *Game::GetMap(const char *areaname, bool change)
 {
 	int index = LoadMap(areaname, change);

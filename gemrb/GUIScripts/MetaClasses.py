@@ -34,6 +34,8 @@
 # will then execute
 # GemRB.GetTableValue(5, "Row", "Col")
 
+import UserDict
+
 def make_caller_lambda_ID(M):
   return lambda self, *args: M(self.ID, *args)
 class metaIDWrapper(type):
@@ -42,38 +44,32 @@ class metaIDWrapper(type):
       self.ID = ID
     newdict = { '__slots__':['ID'], '__init__':__init__, }
     if len(bases) == 1:
+     try:     
+      bases[0].__metaclass__
       def __subinit__(self, ID):
         bases[0].__init__(self, ID)
       newdict['__init__'] = __subinit__
       newdict['__slots__'] = []
+     except AttributeError:
+      pass
     methods = classdict['methods']
     for key in methods: 
       newdict[key] = make_caller_lambda_ID(methods[key])
+    try:
+      properties = classdict['properties']
+      for key in properties:
+	try:
+	  newdict[key] = property(*map(make_caller_lambda_ID, properties[key]))
+	except TypeError:
+	  newdict[key] = property(make_caller_lambda_ID(properties[key]))
+      keys = properties.keys()
+      newdict['keys'] = lambda self: keys
+      newdict['__getitem__'] = lambda self, name: newdict[name].__get__(self, type(self))
+      newdict['__setitem__'] = lambda self, name, value: newdict[name].__get__(self, value)
+      bases += UserDict.DictMixin,
+    except KeyError:
+      pass
     for key in classdict:
-      if key != 'methods':
+      if key not in ('methods', 'propeties'):
         newdict[key] = classdict[key]
     return type.__new__(cls, classname, bases, newdict)
-
-
-# metaControl has two extra arguments: WinID and ID
-def make_caller_lambda_Control(M):
-  return lambda self, *args: M(self.WinID, self.ID, *args)
-class metaControl(type):
-  def __new__(cls, classname, bases, classdict):
-    def __init__(self, WinID, ID):
-      self.WinID = WinID
-      self.ID = ID
-    newdict = { '__slots__':['WinID', 'ID'], '__init__':__init__, }
-    if len(bases) == 1:
-      def __subinit__(self, WinID, ID):
-        bases[0].__init__(self, WinID, ID)
-      newdict['__init__'] = __subinit__
-      newdict['__slots__'] = []
-    methods = classdict['methods']
-    for key in methods:
-      newdict[key] = make_caller_lambda_Control(methods[key])
-    for key in classdict:
-      if key != 'methods':
-        newdict[key] = classdict[key]
-    return type.__new__(cls, classname, bases, newdict)
-

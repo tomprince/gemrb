@@ -150,6 +150,9 @@ inline PyObject* RuntimeError(const char* msg)
 {
 	printMessage( "GUIScript", "Runtime Error:\n", LIGHT_RED );
 	PyErr_SetString( PyExc_RuntimeError, msg );
+	while (isspace(*(msg++)));
+	if (!*msg)
+		return NULL;
 	if (QuitOnError) {
 		core->Quit();
 	}
@@ -472,7 +475,7 @@ static PyObject* GemRB_TextArea_MoveText(PyObject * /*self*/, PyObject* args)
 {
 	int srcWin, srcCtrl, dstWin, dstCtrl;
 
-	if (!PyArg_ParseTuple( args, "iiii", &srcWin, &srcCtrl, &dstWin, &dstCtrl )) {
+	if (!PyArg_ParseTuple( args, "(ii)(ii)", &srcWin, &srcCtrl, &dstWin, &dstCtrl )) {
 		return AttributeError( GemRB_TextArea_MoveText__doc );
 	}
 
@@ -500,7 +503,7 @@ static PyObject* GemRB_TextArea_Rewind(PyObject * /*self*/, PyObject* args)
 {
 	int Win, Ctrl, Ticks;
 
-	if (!PyArg_ParseTuple( args, "iii", &Win, &Ctrl, &Ticks)) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &Win, &Ctrl, &Ticks)) {
 		return AttributeError( GemRB_TextArea_Rewind__doc );
 	}
 
@@ -522,7 +525,7 @@ static PyObject* GemRB_TextArea_SetHistory(PyObject * /*self*/, PyObject* args)
 {
 	int Win, Ctrl, Keep;
 
-	if (!PyArg_ParseTuple( args, "iii", &Win, &Ctrl, &Keep)) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &Win, &Ctrl, &Keep)) {
 		return AttributeError( GemRB_TextArea_SetHistory__doc );
 	}
 
@@ -1216,17 +1219,17 @@ static PyObject* GemRB_Window_GetControl(PyObject * /*self*/, PyObject* args)
 		return AttributeError( GemRB_Window_GetControl__doc );
 	}
 
-	int ctrlindex = core->GetControl(WindowIndex, ControlID);
-	if (ctrlindex == -1) {
+	int ControlIndex = core->GetControl(WindowIndex, ControlID);
+	if (ControlIndex == -1) {
 		return RuntimeError( "Control is not found" );
 	}
 
 	PyObject* ctrltuple = PyTuple_New(2);
 	PyTuple_SET_ITEM(ctrltuple, 0, PyInt_FromLong(WindowIndex));
-	PyTuple_SET_ITEM(ctrltuple, 1, PyInt_FromLong(ctrlindex));
+	PyTuple_SET_ITEM(ctrltuple, 1, PyInt_FromLong(ControlIndex));
 
 	PyObject* ret = 0;
-	Control *ctrl = GetControl(WindowIndex, ctrlindex, -1);
+	Control *ctrl = GetControl(WindowIndex, ControlIndex, -1);
 	if (!ctrl) {
 		return RuntimeError( "Control is not found" );
 	}
@@ -1253,7 +1256,7 @@ static PyObject* GemRB_Window_GetControl(PyObject * /*self*/, PyObject* args)
 	default:
 		break;
 	}
-	ret = gs->ConstructObject(type, ctrltuple);
+	ret = gs->ConstructObject(type, WindowIndex, ControlIndex);
 	Py_DECREF(ctrltuple);
 
 	if (!ret) {
@@ -1298,7 +1301,7 @@ static PyObject* GemRB_Control_QueryText(PyObject * /*self*/, PyObject* args)
 {
 	int wi, ci;
 
-	if (!PyArg_ParseTuple( args, "ii", &wi, &ci )) {
+	if (!PyArg_ParseTuple( args, "(ii)", &wi, &ci )) {
 		return AttributeError( GemRB_Control_QueryText__doc );
 	}
 
@@ -1326,7 +1329,7 @@ static PyObject* GemRB_TextEdit_SetBufferLength(PyObject * /*self*/, PyObject* a
 {
 	int WindowIndex, ControlIndex, Length;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &Length)) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &WindowIndex, &ControlIndex, &Length)) {
 		return AttributeError( GemRB_TextEdit_SetBufferLength__doc );
 	}
 
@@ -1387,24 +1390,20 @@ PyDoc_STRVAR( GemRB_Control_SetText__doc,
 
 static PyObject* GemRB_Control_SetText(PyObject * /*self*/, PyObject* args)
 {
-	PyObject* wi, * ci, * str;
+	PyObject* str;
 	long WindowIndex, ControlIndex, StrRef;
 	char* string;
 	int ret;
 
-	if (!PyArg_UnpackTuple( args, "ref", 3, 3, &wi, &ci, &str )) {
+	if (!PyArg_ParseTuple( args, "(ii)O", &WindowIndex, &ControlIndex, &str )) {
 		return AttributeError( GemRB_Control_SetText__doc );
 	}
 
-	if (!PyObject_TypeCheck( wi, &PyInt_Type ) ||
-		!PyObject_TypeCheck( ci, &PyInt_Type ) ||
-		( !PyObject_TypeCheck( str, &PyString_Type ) &&
-		!PyObject_TypeCheck( str, &PyInt_Type ) )) {
+	if ( !PyObject_TypeCheck( str, &PyString_Type ) &&
+		!PyObject_TypeCheck( str, &PyInt_Type ) ) {
 		return AttributeError( GemRB_Control_SetText__doc );
 	}
 
-	WindowIndex = PyInt_AsLong( wi );
-	ControlIndex = PyInt_AsLong( ci );
 	if (PyObject_TypeCheck( str, &PyString_Type )) {
 		string = PyString_AsString( str );
 		if (string == NULL) {
@@ -1438,7 +1437,7 @@ PyDoc_STRVAR( GemRB_TextArea_Append__doc,
 
 static PyObject* GemRB_TextArea_Append(PyObject * /*self*/, PyObject* args)
 {
-	PyObject* wi, * ci, * str;
+	PyObject* str;
 	PyObject* row = NULL;
 	PyObject* flag = NULL;
 	long WindowIndex, ControlIndex;
@@ -1446,17 +1445,13 @@ static PyObject* GemRB_TextArea_Append(PyObject * /*self*/, PyObject* args)
 	char* string;
 	int ret;
 
-	if (!PyArg_UnpackTuple( args, "ref", 3, 5, &wi, &ci, &str, &row, &flag )) {
+	if (!PyArg_ParseTuple( args, "(ii)O|OO", &WindowIndex, &ControlIndex, &str, &row, &flag )) {
 		return AttributeError( GemRB_TextArea_Append__doc );
 	}
-	if (!PyObject_TypeCheck( wi, &PyInt_Type ) ||
-		!PyObject_TypeCheck( ci, &PyInt_Type ) ||
-		( !PyObject_TypeCheck( str, &PyString_Type ) &&
-		!PyObject_TypeCheck( str, &PyInt_Type ) )) {
+	if ( !PyObject_TypeCheck( str, &PyString_Type ) &&
+		!PyObject_TypeCheck( str, &PyInt_Type ) ) {
 		return AttributeError( GemRB_TextArea_Append__doc );
 	}
-	WindowIndex = PyInt_AsLong( wi );
-	ControlIndex = PyInt_AsLong( ci );
 
 	TextArea* ta = ( TextArea* ) GetControl( WindowIndex, ControlIndex, IE_GUI_TEXTAREA);
 	if (!ta) {
@@ -1504,18 +1499,11 @@ PyDoc_STRVAR( GemRB_TextArea_Clear__doc,
 
 static PyObject* GemRB_TextArea_Clear(PyObject * /*self*/, PyObject* args)
 {
-	PyObject* wi, * ci;
 	long WindowIndex, ControlIndex;
 
-	if (!PyArg_UnpackTuple( args, "ref", 2, 2, &wi, &ci )) {
+	if (!PyArg_ParseTuple( args, "(ii)", &WindowIndex, &ControlIndex )) {
 		return AttributeError( GemRB_TextArea_Clear__doc );
 	}
-	if (!PyObject_TypeCheck( wi, &PyInt_Type ) ||
-		!PyObject_TypeCheck( ci, &PyInt_Type )) {
-		return AttributeError( GemRB_TextArea_Clear__doc );
-	}
-	WindowIndex = PyInt_AsLong( wi );
-	ControlIndex = PyInt_AsLong( ci );
 	TextArea* ta = ( TextArea* ) GetControl( WindowIndex, ControlIndex, IE_GUI_TEXTAREA);
 	if (!ta) {
 		return NULL;
@@ -1534,7 +1522,7 @@ static PyObject* GemRB_TextArea_Scroll(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, offset;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &offset)) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &WindowIndex, &ControlIndex, &offset)) {
 			return AttributeError( GemRB_TextArea_Scroll__doc );
 	}
 	TextArea* ta = ( TextArea* ) GetControl( WindowIndex, ControlIndex, IE_GUI_TEXTAREA);
@@ -1557,23 +1545,19 @@ PyDoc_STRVAR( GemRB_Control_SetTooltip__doc,
 
 static PyObject* GemRB_Control_SetTooltip(PyObject * /*self*/, PyObject* args)
 {
-	PyObject* wi, * ci, * str;
+	PyObject* str;
 	long WindowIndex, ControlIndex, StrRef;
 	char* string;
 	int ret;
 
-	if (!PyArg_UnpackTuple( args, "ref", 3, 3, &wi, &ci, &str )) {
+	if (!PyArg_ParseTuple( args, "(ii)O", &WindowIndex, &ControlIndex, &str )) {
 		return AttributeError( GemRB_Control_SetTooltip__doc );
 	}
-	if (!PyObject_TypeCheck( wi, &PyInt_Type ) ||
-		!PyObject_TypeCheck( ci, &PyInt_Type ) ||
-		( !PyObject_TypeCheck( str, &PyString_Type ) &&
-		!PyObject_TypeCheck( str, &PyInt_Type ) )) {
+	if ( !PyObject_TypeCheck( str, &PyString_Type ) &&
+		!PyObject_TypeCheck( str, &PyInt_Type ) ) {
 		return AttributeError( GemRB_Control_SetTooltip__doc );
 	}
 
-	WindowIndex = PyInt_AsLong( wi );
-	ControlIndex = PyInt_AsLong( ci );
 	if (PyObject_TypeCheck( str, &PyString_Type )) {
 		string = PyString_AsString( str );
 		if (string == NULL) {
@@ -1718,7 +1702,7 @@ static PyObject* GemRB_Control_SetEvent(PyObject * /*self*/, PyObject* args)
 	int event;
 	PyObject* func;
 
-	if (!PyArg_ParseTuple(args, "iiiO", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple(args, "(ii)iO", &WindowIndex, &ControlIndex,
 				&event, &func)) {
 		return AttributeError(GemRB_Control_SetEvent__doc);
 	}
@@ -1775,7 +1759,7 @@ static PyObject* GemRB_Control_SetStatus(PyObject * /*self*/, PyObject* args)
 	int WindowIndex, ControlIndex;
 	int status;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &status )) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &WindowIndex, &ControlIndex, &status )) {
 		return AttributeError( GemRB_Control_SetStatus__doc );
 	}
 
@@ -1794,9 +1778,9 @@ PyDoc_STRVAR( GemRB_Control_AttachScrollBar__doc,
 
 static PyObject* GemRB_Control_AttachScrollBar(PyObject * /*self*/, PyObject* args)
 {
-	int WindowIndex, ControlIndex, ScbControlIndex;
+	int WindowIndex, ControlIndex, ScbWindowIndex, ScbControlIndex;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &ScbControlIndex )) {
+	if (!PyArg_ParseTuple( args, "(ii)(ii)", &WindowIndex, &ControlIndex, &ScbWindowIndex, &ScbControlIndex )) {
 		return AttributeError( GemRB_Control_AttachScrollBar__doc );
 	}
 
@@ -1808,7 +1792,7 @@ static PyObject* GemRB_Control_AttachScrollBar(PyObject * /*self*/, PyObject* ar
 	Control *scb = NULL;
 
 	if (ScbControlIndex != -1) {
-		scb = GetControl(WindowIndex, ScbControlIndex, IE_GUI_SCROLLBAR);
+		scb = GetControl(ScbWindowIndex, ScbControlIndex, IE_GUI_SCROLLBAR);
 		if (!scb) {
 			return NULL;
 		}
@@ -1833,7 +1817,7 @@ static PyObject* GemRB_Control_SetVarAssoc(PyObject * /*self*/, PyObject* args)
 	ieDword Value;
 	char* VarName;
 
-	if (!PyArg_ParseTuple( args, "iisi", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)si", &WindowIndex, &ControlIndex,
 			&VarName, &Value )) {
 		return AttributeError( GemRB_Control_SetVarAssoc__doc );
 	}
@@ -1939,7 +1923,7 @@ static PyObject* GemRB_Button_CreateLabelOnButton(PyObject * /*self*/, PyObject*
 	int WindowIndex, ControlIndex, ControlID, align;
 	char *font;
 
-	if (!PyArg_ParseTuple( args, "iiisi", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)isi", &WindowIndex, &ControlIndex,
 			&ControlID, &font, &align )) {
 		return AttributeError( GemRB_Button_CreateLabelOnButton__doc );
 	}
@@ -2021,7 +2005,7 @@ static PyObject* GemRB_Label_SetTextColor(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, r, g, b;
 
-	if (!PyArg_ParseTuple( args, "iiiii", &WindowIndex, &ControlIndex, &r, &g,
+	if (!PyArg_ParseTuple( args, "(ii)iii", &WindowIndex, &ControlIndex, &r, &g,
 			&b )) {
 		return AttributeError( GemRB_Label_SetTextColor__doc );
 	}
@@ -2176,7 +2160,7 @@ static PyObject* GemRB_TextEdit_ConvertEdit(PyObject * /*self*/, PyObject* args)
 	Color back={0,0,0,0};
 	int ScrollBarID=0;
 
-	if (!PyArg_ParseTuple( args, "ii|i", &WindowIndex, &ControlIndex, &ScrollBarID)) {
+	if (!PyArg_ParseTuple( args, "(ii)|i", &WindowIndex, &ControlIndex, &ScrollBarID)) {
 		return AttributeError( GemRB_TextEdit_ConvertEdit__doc );
 	}
 
@@ -2220,7 +2204,7 @@ static PyObject* GemRB_ScrollBar_SetSprites(PyObject * /*self*/, PyObject* args)
 	int downunpressed, downpressed, trough, knob;
 	char *ResRef;
 
-	if (!PyArg_ParseTuple( args, "iisiiiiiii", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)siiiiiii", &WindowIndex, &ControlIndex,
 			&ResRef, &cycle, &upunpressed, &uppressed, &downunpressed, &downpressed, &trough, &knob )) {
 		return AttributeError( GemRB_ScrollBar_SetSprites__doc );
 	}
@@ -2278,7 +2262,7 @@ static PyObject* GemRB_Button_SetSprites(PyObject * /*self*/, PyObject* args)
 		disabled;
 	char *ResRef;
 
-	if (!PyArg_ParseTuple( args, "iisiiiii", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)siiiii", &WindowIndex, &ControlIndex,
 			&ResRef, &cycle, &unpressed, &pressed, &selected, &disabled )) {
 		return AttributeError( GemRB_Button_SetSprites__doc );
 	}
@@ -2330,7 +2314,7 @@ static PyObject* GemRB_Button_SetOverlay(PyObject * /*self*/, PyObject* args)
 	int r1,g1,b1,a1;
 	int r2,g2,b2,a2;
 
-	if (!PyArg_ParseTuple( args, "iidiiiiiiii", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)diiiiiiii", &WindowIndex, &ControlIndex,
 		&Clipping, &r1, &g1, &b1, &a1, &r2, &g2, &b2, &a2)) {
 		return AttributeError( GemRB_Button_SetOverlay__doc );
 	}
@@ -2359,7 +2343,7 @@ static PyObject* GemRB_Button_SetBorder(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, BorderIndex, dx1, dy1, dx2, dy2, r, g, b, a, enabled = 0, filled = 0;
 
-	if (!PyArg_ParseTuple( args, "iiiiiiiiiii|ii", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)iiiiiiiii|ii", &WindowIndex, &ControlIndex,
 		&BorderIndex, &dx1, &dy1, &dx2, &dy2, &r, &g, &b, &a, &enabled, &filled)) {
 		return AttributeError( GemRB_Button_SetBorder__doc );
 	}
@@ -2384,7 +2368,7 @@ static PyObject* GemRB_Button_EnableBorder(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, BorderIndex, enabled;
 
-	if (!PyArg_ParseTuple( args, "iiii", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)ii", &WindowIndex, &ControlIndex,
 			&BorderIndex, &enabled)) {
 		return AttributeError( GemRB_Button_EnableBorder__doc );
 	}
@@ -2409,7 +2393,7 @@ static PyObject* GemRB_Button_SetFont(PyObject * /*self*/, PyObject* args)
 	int WindowIndex, ControlIndex;
 	char *FontResRef;
 
-	if (!PyArg_ParseTuple( args, "iis", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)s", &WindowIndex, &ControlIndex,
 			&FontResRef)) {
 		return AttributeError( GemRB_Button_SetFont__doc );
 	}
@@ -2433,7 +2417,7 @@ static PyObject* GemRB_Button_SetTextColor(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, r, g, b, swap = 0;
 
-	if (!PyArg_ParseTuple( args, "iiiii|i", &WindowIndex, &ControlIndex, &r, &g, &b, &swap )) {
+	if (!PyArg_ParseTuple( args, "(ii)iii|i", &WindowIndex, &ControlIndex, &r, &g, &b, &swap )) {
 		return AttributeError( GemRB_Button_SetTextColor__doc );
 	}
 
@@ -2613,7 +2597,7 @@ static PyObject* GemRB_WorldMap_AdjustScrolling(PyObject * /*self*/, PyObject* a
 {
 	int WindowIndex, ControlIndex, x, y;
 
-	if (!PyArg_ParseTuple( args, "iiii", &WindowIndex, &ControlIndex, &x, &y )) {
+	if (!PyArg_ParseTuple( args, "(ii)ii", &WindowIndex, &ControlIndex, &x, &y )) {
 		return AttributeError( GemRB_WorldMap_AdjustScrolling__doc );
 	}
 
@@ -2660,7 +2644,7 @@ static PyObject* GemRB_WorldMap_GetDestinationArea(PyObject * /*self*/, PyObject
 	int WindowIndex, ControlIndex;
 	int eval = 0;
 
-	if (!PyArg_ParseTuple( args, "ii|i", &WindowIndex, &ControlIndex, &eval)) {
+	if (!PyArg_ParseTuple( args, "(ii)|i", &WindowIndex, &ControlIndex, &eval)) {
 		return AttributeError( GemRB_WorldMap_GetDestinationArea__doc );
 	}
 
@@ -2767,7 +2751,7 @@ static PyObject* GemRB_WorldMap_SetTextColor(PyObject * /*self*/, PyObject* args
 {
 	int WindowIndex, ControlIndex, which, r, g, b, a;
 
-	if (!PyArg_ParseTuple( args, "iiiiiii", &WindowIndex, &ControlIndex, &which, &r, &g, &b, &a )) {
+	if (!PyArg_ParseTuple( args, "(ii)iiiii", &WindowIndex, &ControlIndex, &which, &r, &g, &b, &a )) {
 		return AttributeError( GemRB_WorldMap_SetTextColor__doc );
 	}
 
@@ -2881,7 +2865,7 @@ static PyObject* GemRB_Control_SetPos(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, X, Y;
 
-	if (!PyArg_ParseTuple( args, "iiii", &WindowIndex, &ControlIndex, &X, &Y )) {
+	if (!PyArg_ParseTuple( args, "(ii)ii", &WindowIndex, &ControlIndex, &X, &Y )) {
 		return AttributeError( GemRB_Control_SetPos__doc );
 	}
 
@@ -2905,7 +2889,7 @@ static PyObject* GemRB_Control_SetSize(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, Width, Height;
 
-	if (!PyArg_ParseTuple( args, "iiii", &WindowIndex, &ControlIndex, &Width,
+	if (!PyArg_ParseTuple( args, "(ii)ii", &WindowIndex, &ControlIndex, &Width,
 			&Height )) {
 		return AttributeError( GemRB_Control_SetSize__doc );
 	}
@@ -2930,7 +2914,7 @@ static PyObject* GemRB_Label_SetUseRGB(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, status;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &status )) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &WindowIndex, &ControlIndex, &status )) {
 		return AttributeError( GemRB_Label_SetUseRGB__doc );
 	}
 
@@ -3109,7 +3093,7 @@ static PyObject* GemRB_Button_SetFlags(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, Flags, Operation;
 
-	if (!PyArg_ParseTuple( args, "iiii", &WindowIndex, &ControlIndex, &Flags, &Operation )) {
+	if (!PyArg_ParseTuple( args, "(ii)ii", &WindowIndex, &ControlIndex, &Flags, &Operation )) {
 		return AttributeError( GemRB_Button_SetFlags__doc );
 	}
 	if (Operation < BM_SET || Operation > BM_NAND) {
@@ -3141,7 +3125,7 @@ static PyObject* GemRB_Control_TextArea_SetFlags(PyObject * /*self*/, PyObject* 
 	int WindowIndex, ControlIndex, Flags;
 	int Operation=0;
 
-	if (!PyArg_ParseTuple( args, "iii|i", &WindowIndex, &ControlIndex, &Flags, &Operation )) {
+	if (!PyArg_ParseTuple( args, "(ii)i|i", &WindowIndex, &ControlIndex, &Flags, &Operation )) {
 		return AttributeError( GemRB_Control_TextArea_SetFlags__doc );
 	}
 	if (Operation < BM_SET || Operation > BM_NAND) {
@@ -3172,7 +3156,7 @@ static PyObject* GemRB_ScrollBar_SetDefaultScrollBar(PyObject * /*self*/, PyObje
 {
 	int WindowIndex, ControlIndex;
 
-	if (!PyArg_ParseTuple( args, "ii", &WindowIndex, &ControlIndex)) {
+	if (!PyArg_ParseTuple( args, "(ii)", &WindowIndex, &ControlIndex)) {
 		return AttributeError( GemRB_ScrollBar_SetDefaultScrollBar__doc );
 	}
 
@@ -3195,7 +3179,7 @@ static PyObject* GemRB_Button_SetState(PyObject * /*self*/, PyObject* args)
 {
 	int WindowIndex, ControlIndex, state;
 
-	if (!PyArg_ParseTuple( args, "iii", &WindowIndex, &ControlIndex, &state )) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &WindowIndex, &ControlIndex, &state )) {
 		return AttributeError( GemRB_Button_SetState__doc );
 	}
 
@@ -3219,7 +3203,7 @@ static PyObject* GemRB_Button_SetPictureClipping(PyObject * /*self*/, PyObject* 
 	int WindowIndex, ControlIndex;
 	double Clipping;
 
-	if (!PyArg_ParseTuple( args, "iid", &WindowIndex, &ControlIndex, &Clipping )) {
+	if (!PyArg_ParseTuple( args, "(ii)d", &WindowIndex, &ControlIndex, &Clipping )) {
 		return AttributeError( GemRB_Button_SetPictureClipping__doc );
 	}
 
@@ -3246,7 +3230,7 @@ static PyObject* GemRB_Button_SetPicture(PyObject * /*self*/, PyObject* args)
 	char *ResRef;
 	char *DefResRef = NULL;
 
-	if (!PyArg_ParseTuple( args, "iis|s", &WindowIndex, &ControlIndex, &ResRef, &DefResRef )) {
+	if (!PyArg_ParseTuple( args, "(ii)s|s", &WindowIndex, &ControlIndex, &ResRef, &DefResRef )) {
 		return AttributeError( GemRB_Button_SetPicture__doc );
 	}
 
@@ -3295,7 +3279,7 @@ static PyObject* GemRB_Button_SetSprite2D(PyObject * /*self*/, PyObject* args)
 	int wi, ci;
 	PyObject *obj;
 
-	if (!PyArg_ParseTuple( args, "iiO", &wi, &ci, &obj )) {
+	if (!PyArg_ParseTuple( args, "(ii)O", &wi, &ci, &obj )) {
 		return AttributeError( GemRB_Button_SetSprite2D__doc );
 	}
 	Button* btn = ( Button* ) GetControl( wi, ci, IE_GUI_BUTTON);
@@ -3320,7 +3304,7 @@ static PyObject* GemRB_Button_SetMOS(PyObject * /*self*/, PyObject* args)
 	int WindowIndex, ControlIndex;
 	char *ResRef;
 
-	if (!PyArg_ParseTuple( args, "iis", &WindowIndex, &ControlIndex, &ResRef )) {
+	if (!PyArg_ParseTuple( args, "(ii)s", &WindowIndex, &ControlIndex, &ResRef )) {
 		return AttributeError( GemRB_Button_SetMOS__doc );
 	}
 
@@ -3363,7 +3347,7 @@ static PyObject* GemRB_Button_SetPLT(PyObject * /*self*/, PyObject* args)
 	char *ResRef;
 
 	memset(col,-1,sizeof(col));
-	if (!PyArg_ParseTuple( args, "iisiiiiiiii|i", &WindowIndex, &ControlIndex,
+	if (!PyArg_ParseTuple( args, "(ii)siiiiiiii|i", &WindowIndex, &ControlIndex,
 			&ResRef, &(col[0]), &(col[1]), &(col[2]), &(col[3]),
 			&(col[4]), &(col[5]), &(col[6]), &(col[7]), &type) ) {
 		return AttributeError( GemRB_Button_SetPLT__doc );
@@ -3479,7 +3463,7 @@ static PyObject* GemRB_Button_SetBAM(PyObject * /*self*/, PyObject* args)
 	int wi, ci, CycleIndex, FrameIndex, col1 = -1;
 	char *ResRef;
 
-	if (!PyArg_ParseTuple( args, "iisii|i", &wi, &ci,
+	if (!PyArg_ParseTuple( args, "(ii)sii|i", &wi, &ci,
 			&ResRef, &CycleIndex, &FrameIndex, &col1 )) {
 		return AttributeError( GemRB_Button_SetBAM__doc );
 	}
@@ -3501,7 +3485,7 @@ static PyObject* GemRB_Control_SetAnimationPalette(PyObject * /*self*/, PyObject
 	ieDword col[8];
 
 	memset(col,-1,sizeof(col));
-	if (!PyArg_ParseTuple( args, "iiiiiiiiii", &wi, &ci,
+	if (!PyArg_ParseTuple( args, "(ii)iiiiiiii", &wi, &ci,
 			&(col[0]), &(col[1]), &(col[2]), &(col[3]),
 			&(col[4]), &(col[5]), &(col[6]), &(col[7])) ) {
 		return AttributeError( GemRB_Control_SetAnimationPalette__doc );
@@ -3532,7 +3516,7 @@ static PyObject* GemRB_Control_SetAnimation(PyObject * /*self*/, PyObject* args)
 	char *ResRef;
 	int Cycle = 0;
 
-	if (!PyArg_ParseTuple( args, "iis|i", &wi, &ci, &ResRef, &Cycle )) {
+	if (!PyArg_ParseTuple( args, "(ii)s|i", &wi, &ci, &ResRef, &Cycle )) {
 		return AttributeError( GemRB_Control_SetAnimation__doc );
 	}
 
@@ -4132,7 +4116,7 @@ static PyObject* GemRB_TextArea_GetPortraits(PyObject * /*self*/, PyObject* args
 	int wi, ci;
 	int suffix;
 
-	if (!PyArg_ParseTuple( args, "iii", &wi, &ci, &suffix )) {
+	if (!PyArg_ParseTuple( args, "(ii)i", &wi, &ci, &suffix )) {
 		return AttributeError( GemRB_TextArea_GetPortraits__doc );
 	}
 	TextArea* ta = ( TextArea* ) GetControl( wi, ci, IE_GUI_TEXTAREA );
@@ -4150,7 +4134,7 @@ static PyObject* GemRB_TextArea_GetCharSounds(PyObject * /*self*/, PyObject* arg
 {
 	int wi, ci;
 
-	if (!PyArg_ParseTuple( args, "ii", &wi, &ci )) {
+	if (!PyArg_ParseTuple( args, "(ii)", &wi, &ci )) {
 		return AttributeError( GemRB_TextArea_GetCharSounds__doc );
 	}
 	TextArea* ta = ( TextArea* ) GetControl( wi, ci, IE_GUI_TEXTAREA );
@@ -4168,7 +4152,7 @@ static PyObject* GemRB_TextArea_GetCharacters(PyObject * /*self*/, PyObject* arg
 {
 	int wi, ci;
 
-	if (!PyArg_ParseTuple( args, "ii", &wi, &ci )) {
+	if (!PyArg_ParseTuple( args, "(ii)", &wi, &ci )) {
 		return AttributeError( GemRB_TextArea_GetCharacters__doc );
 	}
 	TextArea* ta = ( TextArea* ) GetControl( wi, ci, IE_GUI_TEXTAREA );
@@ -5312,7 +5296,7 @@ static PyObject* GemRB_Button_SetSpellIcon(PyObject * /*self*/, PyObject* args)
 	int tooltip=0;
 	int Function=0;
 
-	if (!PyArg_ParseTuple( args, "iis|iii", &wi, &ci, &SpellResRef, &type, &tooltip, &Function )) {
+	if (!PyArg_ParseTuple( args, "(ii)s|iii", &wi, &ci, &SpellResRef, &type, &tooltip, &Function )) {
 		return AttributeError( GemRB_Button_SetSpellIcon__doc );
 	}
 	PyObject *ret = SetSpellIcon(wi, ci, SpellResRef, type, tooltip, Function);
@@ -5443,7 +5427,7 @@ static PyObject* GemRB_Button_SetItemIcon(PyObject * /*self*/, PyObject* args)
 	int Function = 0;
 	const char *Item2ResRef = NULL;
 
-	if (!PyArg_ParseTuple( args, "iis|iiis", &wi, &ci, &ItemResRef, &Which, &tooltip, &Function, &Item2ResRef )) {
+	if (!PyArg_ParseTuple( args, "(ii)s|iiis", &wi, &ci, &ItemResRef, &Which, &tooltip, &Function, &Item2ResRef )) {
 		return AttributeError( GemRB_Button_SetItemIcon__doc );
 	}
 
@@ -6363,17 +6347,6 @@ static PyObject* GemRB_UpdateAmbientsVolume(PyObject * /*self*/, PyObject* /*arg
 
 	Py_INCREF( Py_None );
 	return Py_None;
-}
-
-PyDoc_STRVAR( GemRB_GetCurrentArea__doc,
-"GetCurrentArea()=>resref\n\n"
-"Returns current area's ResRef." );
-
-static PyObject* GemRB_GetCurrentArea(PyObject * /*self*/, PyObject* /*args*/)
-{
-	GET_GAME();
-
-	return PyString_FromString( game->CurrentArea );
 }
 
 PyDoc_STRVAR( GemRB_MoveToArea__doc,
@@ -8127,7 +8100,7 @@ static PyObject* GemRB_Button_SetActionIcon(PyObject * /*self*/, PyObject* args)
 	int Function = 0;
 	PyObject *dict;
 
-	if (!PyArg_ParseTuple( args, "iiOi|i", &WindowIndex, &ControlIndex, &dict, &Index, &Function )) {
+	if (!PyArg_ParseTuple( args, "(ii)Oi|i", &WindowIndex, &ControlIndex, &dict, &Index, &Function )) {
 		return AttributeError( GemRB_Button_SetActionIcon__doc );
 	}
 
@@ -9959,6 +9932,8 @@ static PyObject* GemRB_AddGameTypeHint(PyObject* /*self*/, PyObject* args)
 	return Py_None;
 }
 
+#include "Actor.inc"
+#include "Area.inc"
 
 static PyMethodDef GemRBMethods[] = {
 	METHOD(ActOnPC, METH_VARARGS),
@@ -10003,6 +9978,7 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GameSetReputation, METH_VARARGS),
 	METHOD(GameGetFirstSelectedActor, METH_NOARGS),
 	METHOD(GameGetFirstSelectedPC, METH_NOARGS),
+	METHOD(GameGetExpansion, METH_NOARGS),
 	METHOD(GameGetFormation, METH_VARARGS),
 	METHOD(GameGetPartyGold, METH_NOARGS),
 	METHOD(GameGetSelectedPCSingle, METH_VARARGS),
@@ -10012,13 +9988,13 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GameSelectPC, METH_VARARGS),
 	METHOD(GameSelectPCSingle, METH_VARARGS),
 	METHOD(GameSetExpansion, METH_VARARGS),
-	METHOD(GameGetExpansion, METH_NOARGS),
 	METHOD(GameSetFormation, METH_VARARGS),
 	METHOD(GameSetPartyGold, METH_VARARGS),
 	METHOD(GameSetPartySize, METH_VARARGS),
 	METHOD(GameSetProtagonistMode, METH_VARARGS),
 	METHOD(GameSetScreenFlags, METH_VARARGS),
 	METHOD(GetAbilityBonus, METH_VARARGS),
+	METHOD(GetAreas, METH_NOARGS),
 	METHOD(GetCombatDetails, METH_VARARGS),
 	METHOD(GetContainer, METH_VARARGS),
 	METHOD(GetContainerItem, METH_VARARGS),
@@ -10045,29 +10021,33 @@ static PyMethodDef GemRBMethods[] = {
 	METHOD(GetMemorizedSpell, METH_VARARGS),
 	METHOD(GetMemorizedSpellsCount, METH_VARARGS),
 	METHOD(GetMessageWindowSize, METH_NOARGS),
-	METHOD(GetPartySize, METH_NOARGS),
+	METHOD(GetNPCs, METH_NOARGS),
 	METHOD(GetPCStats, METH_VARARGS),
+	METHOD(GetPCs, METH_NOARGS),
+	METHOD(GetPartySize, METH_NOARGS),
 	METHOD(GetPlayerName, METH_VARARGS),
 	METHOD(GetPlayerPortrait, METH_VARARGS),
-	METHOD(GetPlayerStat, METH_VARARGS),
-	METHOD(GetPlayerStates, METH_VARARGS),
 	METHOD(GetPlayerScript, METH_VARARGS),
 	METHOD(GetPlayerSound, METH_VARARGS),
+	METHOD(GetPlayerStat, METH_VARARGS),
+	METHOD(GetPlayerStates, METH_VARARGS),
 	METHOD(GetPlayerString, METH_VARARGS),
 	METHOD(GetRumour, METH_VARARGS),
 	METHOD(GetSaveGames, METH_VARARGS),
-	METHOD(GetSelectedSize, METH_NOARGS),
 	METHOD(GetSelectedActors, METH_NOARGS),
-	METHOD(GetString, METH_VARARGS),
-	METHOD(GetSpellCastOn, METH_VARARGS),
-	METHOD(GetSlotType, METH_VARARGS),
-	METHOD(GetStore, METH_VARARGS),
-	METHOD(GetStoreDrink, METH_VARARGS),
-	METHOD(GetStoreCure, METH_VARARGS),
-	METHOD(GetStoreItem, METH_VARARGS),
-	METHOD(GetSpell, METH_VARARGS),
+	METHOD(GetSelectedSize, METH_NOARGS),
 	METHOD(GetSlotItem, METH_VARARGS),
+	METHOD(GetSlotType, METH_VARARGS),
 	METHOD(GetSlots, METH_VARARGS),
+	METHOD(GetSpell, METH_VARARGS),
+	METHOD(GetSpellCastOn, METH_VARARGS),
+	METHOD(GetSpellCastOn, METH_VARARGS),
+	METHOD(GetStore, METH_VARARGS),
+	METHOD(GetStoreCure, METH_VARARGS),
+	METHOD(GetStoreDrink, METH_VARARGS),
+	METHOD(GetString, METH_VARARGS),
+	METHOD(GetStoreItem, METH_VARARGS),
+	METHOD(GetString, METH_VARARGS),
 	METHOD(GetSystemVariable, METH_VARARGS),
 	METHOD(GetToken, METH_VARARGS),
 	METHOD(GetVar, METH_VARARGS),
@@ -10155,6 +10135,12 @@ static PyMethodDef GemRBMethods[] = {
 };
 
 static PyMethodDef GemRBInternalMethods[] = {
+	METHOD(Actor_get_name, METH_VARARGS),
+	METHOD(Actor_get_map, METH_VARARGS),
+	METHOD(Actor_get_scriptname, METH_VARARGS),
+	METHOD(Actor_get_stat, METH_VARARGS),
+	METHOD(Area_get_name, METH_VARARGS),
+	METHOD(Area_get_actors, METH_VARARGS),
 	METHOD(Button_CreateLabelOnButton, METH_VARARGS),
 	METHOD(Button_EnableBorder, METH_VARARGS),
 	METHOD(Button_SetActionIcon, METH_VARARGS),
@@ -10642,6 +10628,20 @@ PyObject* GUIScript::ConstructObject(const char* type, int arg)
 {
 	PyObject* tuple = PyTuple_New(1);
 	PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(arg));
+	PyObject* ret = gs->ConstructObject(type, tuple);
+	Py_DECREF(tuple);
+	return ret;
+}
+
+PyObject* GUIScript::ConstructObject(const char* type, int arg1, int arg2)
+{
+	PyObject* arg = PyTuple_New(2);
+	PyTuple_SET_ITEM(arg, 0, PyInt_FromLong(arg1));
+	PyTuple_SET_ITEM(arg, 1, PyInt_FromLong(arg2));
+
+	PyObject* tuple = PyTuple_New(1);
+	PyTuple_SET_ITEM(tuple, 0, arg);
+
 	PyObject* ret = gs->ConstructObject(type, tuple);
 	Py_DECREF(tuple);
 	return ret;

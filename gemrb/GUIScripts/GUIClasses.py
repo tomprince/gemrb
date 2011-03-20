@@ -19,7 +19,7 @@
 
 import _GemRB
 
-from MetaClasses import metaIDWrapper, metaControl
+from MetaClasses import metaIDWrapper
 
 class GTable:
   __metaclass__ = metaIDWrapper
@@ -92,7 +92,7 @@ class GWindow:
  
 
 class GControl:
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'SetVarAssoc': _GemRB.Control_SetVarAssoc,
     'SetPos': _GemRB.Control_SetPos,
@@ -106,19 +106,19 @@ class GControl:
     'SetStatus': _GemRB.Control_SetStatus,
   }
   def AttachScrollBar(self, scrollbar):
-    if self.WinID != scrollbar.WinID:
+    if self.ID[0] != scrollbar.ID[0]:
       raise RuntimeError, "Scrollbar must be in same Window as Control"
-    return _GemRB.Control_AttachScrollBar(self.WinID, self.ID, scrollbar.ID)
+    return _GemRB.Control_AttachScrollBar(self.ID, scrollbar.ID)
 
 class GLabel(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'SetTextColor': _GemRB.Label_SetTextColor,
     'SetUseRGB': _GemRB.Label_SetUseRGB
   }
 
 class GTextArea(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'Rewind': _GemRB.TextArea_Rewind,
     'SetHistory': _GemRB.TextArea_SetHistory,
@@ -132,26 +132,26 @@ class GTextArea(GControl):
     'GetPortraits': _GemRB.TextArea_GetPortraits
   }
   def MoveText(self, other):
-    _GemRB.TextArea_MoveText(self.WinID, self.ID, other.WinID, other.ID)
+    _GemRB.TextArea_MoveText(self.ID, other.ID)
 
 class GTextEdit(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'SetBufferLength': _GemRB.TextEdit_SetBufferLength
   }
   def ConvertEdit(self, ScrollBarID):
-    newID = _GemRB.TextEdit_ConvertEdit(self.WinID, self.ID, ScrollBarID)
-    return GTextArea(self.WinID, self.ID)
+    newID = _GemRB.TextEdit_ConvertEdit(self.ID, ScrollBarID)
+    return GTextArea(self.ID)
 
 class GScrollBar(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'SetDefaultScrollBar': _GemRB.ScrollBar_SetDefaultScrollBar,
     'SetSprites': _GemRB.ScrollBar_SetSprites
   }
 
 class GButton(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'SetSprites': _GemRB.Button_SetSprites,
     'SetOverlay': _GemRB.Button_SetOverlay,
@@ -172,18 +172,24 @@ class GButton(GControl):
     'SetActionIcon': _GemRB.Button_SetActionIcon
   }
   def CreateLabelOnButton(self, control, *args):
-    _GemRB.Button_CreateLabelOnButton(self.WinID, self.ID, control, *args)
-    return _GemRB.Window_GetControl(self.WinID, control)
+    _GemRB.Button_CreateLabelOnButton(self.ID, control, *args)
+    return _GemRB.Window_GetControl(self.ID[0], control)
 
 class GWorldMap(GControl):
-  __metaclass__ = metaControl
+  __metaclass__ = metaIDWrapper
   methods = {
     'AdjustScrolling': _GemRB.WorldMap_AdjustScrolling,
     'GetDestinationArea': _GemRB.WorldMap_GetDestinationArea,
     'SetTextColor': _GemRB.WorldMap_SetTextColor
   }
 
-class GSaveGame:
+class _Portraits:
+  def __init__(self, ID):
+    self.ID = ID
+  def __getitem__(self, index):
+    return _GemRB.SaveGame_GetPortrait(self.ID, index)
+
+class GSaveGame(object):
   __metaclass__ = metaIDWrapper
   methods = {
     'GetDate': _GemRB.SaveGame_GetDate,
@@ -193,7 +199,45 @@ class GSaveGame:
     'GetPreview': _GemRB.SaveGame_GetPreview,
     'GetSaveID': _GemRB.SaveGame_GetSaveID,
   }
+  properties = {
+    'date': _GemRB.SaveGame_GetDate,
+    'game_date': _GemRB.SaveGame_GetGameDate,
+    'name': _GemRB.SaveGame_GetName,
+    'portrait': _Portraits,
+    'preview': _GemRB.SaveGame_GetPreview,
+    'save_ID': _GemRB.SaveGame_GetSaveID,
+  }
 
 class GSprite2D:
   __metaclass__ = metaIDWrapper
   methods = {}
+
+class _Stats:
+  def __init__(self, ID):
+    self.ID = ID
+  def __getitem__(self, index):
+    return _GemRB.Actor_get_stat(self.ID, index)
+
+class GActor(object):
+  __metaclass__ = metaIDWrapper
+  methods = {}
+  properties = {
+    'name' : [ lambda ID: _GemRB.Actor_get_name(ID, -1) ],
+    'shortname' : [ lambda ID: _GemRB.Actor_get_name(ID, 0) ],
+    'longname' : [ lambda ID: _GemRB.Actor_get_name(ID, 1) ],
+    'scriptname' : [ _GemRB.Actor_get_scriptname ],
+    'GlobalID' : [ lambda ID: ID ],
+    'map' : [ _GemRB.Actor_get_map ],
+    'stats' : _Stats,
+  }
+  def __hash__(self):
+	  return self.ID
+
+class GArea(object):
+  __metaclass__ = metaIDWrapper
+  methods = {}
+  properties = {
+    'name' : [ _GemRB.Area_get_name ],
+    'actors' : [ _GemRB.Area_get_actors ],
+    'GlobalID' : [ lambda ID: ID ],
+  }

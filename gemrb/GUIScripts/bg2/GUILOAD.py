@@ -87,14 +87,14 @@ def ScrollBarPress():
 			Button2.SetState(IE_GUI_BUTTON_DISABLED)
 
 		if ActPos<len(Games):
-			Slotname = Games[ActPos].GetName()
+			Slotname = Games[ActPos].name
 		else:
 			Slotname = ""
 		Label = LoadWindow.GetControl(0x10000008+i)
 		Label.SetText(Slotname)
 
 		if ActPos<len(Games):
-			Slotname = Games[ActPos].GetGameDate()
+			Slotname = Games[ActPos].game_date
 		else:
 			Slotname = ""
 		Label = LoadWindow.GetControl(0x10000010+i)
@@ -102,13 +102,13 @@ def ScrollBarPress():
 
 		Button=LoadWindow.GetControl(1+i)
 		if ActPos<len(Games):
-			Button.SetSprite2D(Games[ActPos].GetPreview())
+			Button.SetSprite2D(Games[ActPos].preview)
 		else:
 			Button.SetPicture("")
 		for j in range(PARTY_SIZE):
 			Button=LoadWindow.GetControl(40+i*PARTY_SIZE+j)
 			if ActPos<len(Games):
-				Button.SetSprite2D(Games[ActPos].GetPortrait(j))
+				Button.SetSprite2D(Games[ActPos].portrait[j])
 			else:
 				Button.SetPicture("")
 	return

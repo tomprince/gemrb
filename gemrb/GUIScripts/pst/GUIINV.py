@@ -78,7 +78,7 @@ def OpenInventoryWindow ():
 	GemRB.LoadWindowPack ("GUIINV")
 	InventoryWindow = Window = GemRB.LoadWindow (3)
 	GemRB.SetVar ("OtherWindow", InventoryWindow.ID)
-	GemRB.SetVar ("MessageLabel", Window.GetControl(0x1000003d).ID)
+	GemRB.SetVar ("MessageLabel", Window.GetControl(0x1000003d).ID[1])
 
 	# inventory slots
 	for i in range (44):
