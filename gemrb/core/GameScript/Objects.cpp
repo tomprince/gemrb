@@ -36,59 +36,59 @@
 //in this implementation, Myself will drop the parameter array
 //i think all object filters could be expected to do so
 //they should remove unnecessary elements from the parameters
-Targets *GS::Myself(Scriptable* Sender, Targets* parameters, int ga_flags)
+Targets *Myself(Scriptable* Sender, Targets* parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(Sender, 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::NearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *NearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 0);
 }
 
-Targets *GS::SecondNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *SecondNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 1);
 }
 
-Targets *GS::ThirdNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *ThirdNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 2);
 }
 
-Targets *GS::FourthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *FourthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 3);
 }
 
-Targets *GS::FifthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *FifthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 4);
 }
 
-Targets *GS::SixthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *SixthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 5);
 }
 
-Targets *GS::SeventhNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *SeventhNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 6);
 }
 
-Targets *GS::EighthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *EighthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 7);
 }
 
-Targets *GS::NinthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *NinthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 8);
 }
 
-Targets *GS::TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
+Targets *TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /*ga_flags*/)
 {
 	return XthNearestDoor(parameters, 9);
 }
@@ -97,7 +97,7 @@ Targets *GS::TenthNearestDoor(Scriptable* /*Sender*/, Targets *parameters, int /
 //in iwd2 this is the Gabber!!!
 //but also, if there is no gabber, it is the first PC
 //probably it is simply the nearest exportable character...
-Targets *GS::Protagonist(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *Protagonist(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	//this sucks but IWD2 is like that...
@@ -124,7 +124,7 @@ Targets *GS::Protagonist(Scriptable* Sender, Targets *parameters, int ga_flags)
 }
 
 //last talker
-Targets *GS::Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	GameControl* gc = core->GetGameControl();
@@ -134,7 +134,7 @@ Targets *GS::Gabber(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	if (Sender->LastTriggerObject) {
@@ -144,7 +144,7 @@ Targets *GS::LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -163,7 +163,7 @@ Targets *GS::LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_fl
 }
 
 //actions should always use LastMarkedObject, because LastSeen could be deleted
-Targets *GS::LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -181,7 +181,7 @@ Targets *GS::LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -199,7 +199,7 @@ Targets *GS::LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -219,7 +219,7 @@ Targets *GS::LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 
 //i was told that Group means the same specifics, so this is just an
 //object selector for everyone with the same specifics as the current object
-Targets *GS::GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -243,7 +243,7 @@ Targets *GS::GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 }
 
 /*this one is tough, but done */
-Targets *GS::ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -266,7 +266,7 @@ Targets *GS::ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -284,7 +284,7 @@ Targets *GS::ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -304,18 +304,18 @@ Targets *GS::LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_fla
 
 // this is essentially a LastTargetedBy(0) - or MySelf
 // but IWD2 defines it
-Targets *GS::MyTarget(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *MyTarget(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	return GetMyTarget(Sender, NULL, parameters, ga_flags);
 }
 
-Targets *GS::LastTargetedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastTargetedBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	return GetMyTarget(Sender, actor, parameters, ga_flags);
 }
 
-Targets *GS::LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -333,7 +333,7 @@ Targets *GS::LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flag
 	return parameters;
 }
 
-Targets *GS::LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -351,7 +351,7 @@ Targets *GS::LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -369,7 +369,7 @@ Targets *GS::LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flags)
+Targets *LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -387,7 +387,7 @@ Targets *GS::LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flag
 	return parameters;
 }
 
-Targets *GS::LastSummonerOf(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *LastSummonerOf(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	Actor *actor = (Actor *) parameters->GetTarget(0, ST_ACTOR);
 	if (!actor) {
@@ -405,119 +405,119 @@ Targets *GS::LastSummonerOf(Scriptable* Sender, Targets *parameters, int ga_flag
 	return parameters;
 }
 
-Targets *GS::Player1(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player1(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(0,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player1Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player1Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(1), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player2(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player2(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(1,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player2Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player2Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(2), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player3(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player3(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(2,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player3Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player3Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(3), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player4(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player4(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(3,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player4Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player4Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(4), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player5(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player5(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(4,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player5Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player5Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(5), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player6(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player6(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(5,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player6Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player6Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(6), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player7(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player7(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(6,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player7Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player7Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(7), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player8(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player8(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->GetPC(7,false), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::Player8Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Player8Fill(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	parameters->AddTarget(core->GetGame()->FindPC(8), 0, ga_flags);
 	return parameters;
 }
 
-Targets *GS::BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -543,7 +543,7 @@ Targets *GS::BestAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 }
 
 /*no idea why this object exists since the gender could be filtered easier*/
-Targets *GS::StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -570,7 +570,7 @@ Targets *GS::StrongestOfMale(Scriptable* /*Sender*/, Targets *parameters, int ga
 	return parameters;
 }
 
-Targets *GS::StrongestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *StrongestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -594,7 +594,7 @@ Targets *GS::StrongestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_fla
 	return parameters;
 }
 
-Targets *GS::WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -618,7 +618,7 @@ Targets *GS::WeakestOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags
 	return parameters;
 }
 
-Targets *GS::WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -642,7 +642,7 @@ Targets *GS::WorstAC(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::MostDamagedOf(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *MostDamagedOf(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	//Original engines restrict this to the PCs...
 	/*targetlist::iterator m;
@@ -684,7 +684,7 @@ Targets *GS::MostDamagedOf(Scriptable* Sender, Targets *parameters, int ga_flags
 	parameters->AddTarget(scr, 0, ga_flags);
 	return parameters;
 }
-Targets *GS::LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	targetlist::iterator m;
 	const targettype *t = parameters->GetFirstTarget(m, ST_ACTOR);
@@ -708,7 +708,7 @@ Targets *GS::LeastDamagedOf(Scriptable* /*Sender*/, Targets *parameters, int ga_
 	return parameters;
 }
 
-Targets *GS::Farthest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Farthest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	const targettype *t = parameters->GetLastTarget(ST_ACTOR);
 	parameters->Clear();
@@ -718,168 +718,168 @@ Targets *GS::Farthest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::FarthestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *FarthestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, -1, ga_flags);
 }
 
-Targets *GS::NearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *NearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 0, ga_flags);
 }
 
-Targets *GS::SecondNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SecondNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 1, ga_flags);
 }
 
-Targets *GS::ThirdNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *ThirdNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 2, ga_flags);
 }
 
-Targets *GS::FourthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *FourthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 3, ga_flags);
 }
 
-Targets *GS::FifthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *FifthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 4, ga_flags);
 }
 
-Targets *GS::SixthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SixthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 5, ga_flags);
 }
 
-Targets *GS::SeventhNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SeventhNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 6, ga_flags);
 }
 
-Targets *GS::EighthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *EighthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 7, ga_flags);
 }
 
-Targets *GS::NinthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *NinthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 8, ga_flags);
 }
 
-Targets *GS::TenthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *TenthNearestEnemyOf(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOf(parameters, 9, ga_flags);
 }
 
-Targets *GS::NearestEnemySummoned(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NearestEnemySummoned(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return ClosestEnemySummoned(Sender, parameters, ga_flags);
 }
 
-Targets *GS::NearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 0, ga_flags);
 }
 
-Targets *GS::SecondNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SecondNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 1, ga_flags);
 }
 
-Targets *GS::ThirdNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *ThirdNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 2, ga_flags);
 }
 
-Targets *GS::FourthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *FourthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 3, ga_flags);
 }
 
-Targets *GS::FifthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *FifthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 4, ga_flags);
 }
 
-Targets *GS::SixthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SixthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 5, ga_flags);
 }
 
-Targets *GS::SeventhNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SeventhNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 6, ga_flags);
 }
 
-Targets *GS::EighthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *EighthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 7, ga_flags);
 }
 
-Targets *GS::NinthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NinthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 8, ga_flags);
 }
 
-Targets *GS::TenthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *TenthNearestEnemyOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestEnemyOfType(Sender, parameters, 9, ga_flags);
 }
 
-Targets *GS::NearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 0, ga_flags);
 }
 
-Targets *GS::SecondNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SecondNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 1, ga_flags);
 }
 
-Targets *GS::ThirdNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *ThirdNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 2, ga_flags);
 }
 
-Targets *GS::FourthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *FourthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 3, ga_flags);
 }
 
-Targets *GS::FifthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *FifthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 4, ga_flags);
 }
 
-Targets *GS::SixthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SixthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 5, ga_flags);
 }
 
-Targets *GS::SeventhNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *SeventhNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 6, ga_flags);
 }
 
-Targets *GS::EighthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *EighthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 7, ga_flags);
 }
 
-Targets *GS::NinthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NinthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 8, ga_flags);
 }
 
-Targets *GS::TenthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *TenthNearestMyGroupOfType(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	return XthNearestMyGroupOfType(Sender, parameters, 9, ga_flags);
 }
 
 /* returns only living PC's? if not, alter getpartysize/getpc flag*/
-Targets *GS::NearestPC(Scriptable* Sender, Targets *parameters, int ga_flags)
+Targets *NearestPC(Scriptable* Sender, Targets *parameters, int ga_flags)
 {
 	parameters->Clear();
 	Map *map = Sender->GetCurrentArea();
@@ -909,57 +909,57 @@ Targets *GS::NearestPC(Scriptable* Sender, Targets *parameters, int ga_flags)
 	return parameters;
 }
 
-Targets *GS::Nearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *Nearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 0, ga_flags);
 }
 
-Targets *GS::SecondNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SecondNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 1, ga_flags);
 }
 
-Targets *GS::ThirdNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *ThirdNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 2, ga_flags);
 }
 
-Targets *GS::FourthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *FourthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 3, ga_flags);
 }
 
-Targets *GS::FifthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *FifthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 4, ga_flags);
 }
 
-Targets *GS::SixthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SixthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 5, ga_flags);
 }
 
-Targets *GS::SeventhNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *SeventhNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 6, ga_flags);
 }
 
-Targets *GS::EighthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *EighthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 7, ga_flags);
 }
 
-Targets *GS::NinthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *NinthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 8, ga_flags);
 }
 
-Targets *GS::TenthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
+Targets *TenthNearest(Scriptable* /*Sender*/, Targets *parameters, int ga_flags)
 {
 	return XthNearestOf(parameters, 9, ga_flags);
 }
 
-Targets *GS::SelectedCharacter(Scriptable* Sender, Targets* parameters, int ga_flags)
+Targets *SelectedCharacter(Scriptable* Sender, Targets* parameters, int ga_flags)
 {
 	Map *cm = Sender->GetCurrentArea();
 	parameters->Clear();
@@ -976,7 +976,7 @@ Targets *GS::SelectedCharacter(Scriptable* Sender, Targets* parameters, int ga_f
 	return parameters;
 }
 
-Targets *GS::Nothing(Scriptable* /*Sender*/, Targets* parameters, int /*ga_flags*/)
+Targets *Nothing(Scriptable* /*Sender*/, Targets* parameters, int /*ga_flags*/)
 {
 	parameters->Clear();
 	return parameters;
@@ -1156,3 +1156,120 @@ int GS::ID_Specific(Actor *actor, int parameter)
 	int value = actor->GetStat(IE_SPECIFIC);
 	return parameter==value;
 }
+
+static const ObjectDesc objectnames[] = {
+	{"bestac", BestAC, 0, 0},
+	{"eighthnearest", EighthNearest, 0, 0},
+	{"eighthnearestdoor", EighthNearestDoor, 0, 0},
+	{"eighthnearestenemyof", EighthNearestEnemyOf, 0, 0},
+	{"eighthnearestenemyoftype", EighthNearestEnemyOfType, 0, 0},
+	{"eighthnearestmygroupoftype", EighthNearestEnemyOfType, 0, 0},
+	{"eigthnearestenemyof", EighthNearestEnemyOf, 0, 0}, //typo in iwd
+	{"eigthnearestenemyoftype", EighthNearestEnemyOfType, 0, 0}, //bg2
+	{"eigthnearestmygroupoftype", EighthNearestEnemyOfType, 0, 0},//bg2
+	{"farthest", Farthest, 0, 0},
+	{"farthestenemyof", FarthestEnemyOf, 0, 0},
+	{"fifthnearest", FifthNearest, 0, 0},
+	{"fifthnearestdoor", FifthNearestDoor, 0, 0},
+	{"fifthnearestenemyof", FifthNearestEnemyOf, 0, 0},
+	{"fifthnearestenemyoftype", FifthNearestEnemyOfType, 0, 0},
+	{"fifthnearestmygroupoftype", FifthNearestEnemyOfType, 0, 0},
+	{"fourthnearest", FourthNearest, 0, 0},
+	{"fourthnearestdoor", FourthNearestDoor, 0, 0},
+	{"fourthnearestenemyof", FourthNearestEnemyOf, 0, 0},
+	{"fourthnearestenemyoftype", FourthNearestEnemyOfType, 0, 0},
+	{"fourthnearestmygroupoftype", FourthNearestEnemyOfType, 0, 0},
+	{"gabber", Gabber, 0, 0},
+	{"groupof", GroupOf, 0, 0},
+	{"lastattackerof", LastAttackerOf, 0, 0},
+	{"lastcommandedby", LastCommandedBy, 0, 0},
+	{"lastheardby", LastHeardBy, 0, 0},
+	{"lasthelp", LastHelp, 0, 0},
+	{"lasthitter", LastHitter, 0, 0},
+	{"lastmarkedobject", LastMarkedObject, 0, 0},
+	{"lastseenby", LastSeenBy, 0, 0},
+	{"lastsummonerof", LastSummonerOf, 0, 0},
+	{"lasttalkedtoby", LastTalkedToBy, 0, 0},
+	{"lasttargetedby", LastTargetedBy, 0, 0},
+	{"lasttrigger", LastTrigger, 0, 0},
+	{"leaderof", LeaderOf, 0, 0},
+	{"leastdamagedof", LeastDamagedOf, 0, 0},
+	{"marked", LastMarkedObject, 0, 0}, //pst
+	{"mostdamagedof", MostDamagedOf, 0, 0},
+	{"myself", Myself, 0, 0},
+	{"mytarget", MyTarget, 0, 0},//see lasttargetedby(myself)
+	{"nearest", Nearest, 0, 0}, //actually this seems broken in IE and resolve as Myself
+	{"nearestdoor", NearestDoor, 0, 0},
+	{"nearestenemyof", NearestEnemyOf, 0, 0},
+	{"nearestenemyoftype", NearestEnemyOfType, 0, 0},
+	{"nearestenemysummoned", NearestEnemySummoned, 0, 0},
+	{"nearestmygroupoftype", NearestMyGroupOfType, 0, 0},
+	{"nearestpc", NearestPC, 0, 0},
+	{"ninthnearest", NinthNearest, 0, 0},
+	{"ninthnearestdoor", NinthNearestDoor, 0, 0},
+	{"ninthnearestenemyof", NinthNearestEnemyOf, 0, 0},
+	{"ninthnearestenemyoftype", NinthNearestEnemyOfType, 0, 0},
+	{"ninthnearestmygroupoftype", NinthNearestMyGroupOfType, 0, 0},
+	{"nothing", Nothing, 0, 0},
+	{"player1", Player1, 0, 0},
+	{"player1fill", Player1Fill, 0, 0},
+	{"player2", Player2, 0, 0},
+	{"player2fill", Player2Fill, 0, 0},
+	{"player3", Player3, 0, 0},
+	{"player3fill", Player3Fill, 0, 0},
+	{"player4", Player4, 0, 0},
+	{"player4fill", Player4Fill, 0, 0},
+	{"player5", Player5, 0, 0},
+	{"player5fill", Player5Fill, 0, 0},
+	{"player6", Player6, 0, 0},
+	{"player6fill", Player6Fill, 0, 0},
+	{"player7", Player7, 0, 0},
+	{"player7fill", Player7Fill, 0, 0},
+	{"player8", Player8, 0, 0},
+	{"player8fill", Player8Fill, 0, 0},
+	{"protectedby", ProtectedBy, 0, 0},
+	{"protectorof", ProtectorOf, 0, 0},
+	{"protagonist", Protagonist, 0, 0},
+	{"secondnearest", SecondNearest, 0, 0},
+	{"secondnearestdoor", SecondNearestDoor, 0, 0},
+	{"secondnearestenemyof", SecondNearestEnemyOf, 0, 0},
+	{"secondnearestenemyoftype", SecondNearestEnemyOfType, 0, 0},
+	{"secondnearestmygroupoftype", SecondNearestMyGroupOfType, 0, 0},
+	{"selectedcharacter", SelectedCharacter, 0, 0},
+	{"seventhnearest", SeventhNearest, 0, 0},
+	{"seventhnearestdoor", SeventhNearestDoor, 0, 0},
+	{"seventhnearestenemyof", SeventhNearestEnemyOf, 0, 0},
+	{"seventhnearestenemyoftype", SeventhNearestEnemyOfType, 0, 0},
+	{"seventhnearestmygroupoftype", SeventhNearestMyGroupOfType, 0, 0},
+	{"sixthnearest", SixthNearest, 0, 0},
+	{"sixthnearestdoor", SixthNearestDoor, 0, 0},
+	{"sixthnearestenemyof", SixthNearestEnemyOf, 0, 0},
+	{"sixthnearestenemyoftype", SixthNearestEnemyOfType, 0, 0},
+	{"sixthnearestmygroupoftype", SixthNearestMyGroupOfType, 0, 0},
+	{"strongestof", StrongestOf, 0, 0},
+	{"strongestofmale", StrongestOfMale, 0, 0},
+	{"tenthnearest", TenthNearest, 0, 0},
+	{"tenthnearestdoor", TenthNearestDoor, 0, 0},
+	{"tenthnearestenemyof", TenthNearestEnemyOf, 0, 0},
+	{"tenthnearestenemyoftype", TenthNearestEnemyOfType, 0, 0},
+	{"tenthnearestmygroupoftype", TenthNearestMyGroupOfType, 0, 0},
+	{"thirdnearest", ThirdNearest, 0, 0},
+	{"thirdnearestdoor", ThirdNearestDoor, 0, 0},
+	{"thirdnearestenemyof", ThirdNearestEnemyOf, 0, 0},
+	{"thirdnearestenemyoftype", ThirdNearestEnemyOfType, 0, 0},
+	{"thirdnearestmygroupoftype", ThirdNearestMyGroupOfType, 0, 0},
+	{"weakestof", WeakestOf, 0, 0},
+	{"worstac", WorstAC, 0, 0},
+};
+
+void RegisterObjects()
+{
+	ObjectRegistry.Register(sizeof(objectnames)/sizeof(ObjectDesc), objectnames);
+}
+
+#define STATIC_LINK
+#include "plugindef.h"
+
+GEMRB_PLUGIN(_, _)
+PLUGIN_INITIALIZER(RegisterObjects)
+END_PLUGIN()

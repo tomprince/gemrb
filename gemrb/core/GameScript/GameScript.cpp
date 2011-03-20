@@ -40,113 +40,7 @@
 
 OpcodeRegistry<TriggerFunction> TriggerRegistry;
 OpcodeRegistry<ActionFunction> ActionRegistry;
-
-//Make this an ordered list, so we could use bsearch!
-static const ObjectLink objectnames[] = {
-	{"bestac", GS::BestAC},
-	{"eighthnearest", GS::EighthNearest},
-	{"eighthnearestdoor", GS::EighthNearestDoor},
-	{"eighthnearestenemyof", GS::EighthNearestEnemyOf},
-	{"eighthnearestenemyoftype", GS::EighthNearestEnemyOfType},
-	{"eighthnearestmygroupoftype", GS::EighthNearestEnemyOfType},
-	{"eigthnearestenemyof", GS::EighthNearestEnemyOf}, //typo in iwd
-	{"eigthnearestenemyoftype", GS::EighthNearestEnemyOfType}, //bg2
-	{"eigthnearestmygroupoftype", GS::EighthNearestEnemyOfType},//bg2
-	{"farthest", GS::Farthest},
-	{"farthestenemyof", GS::FarthestEnemyOf},
-	{"fifthnearest", GS::FifthNearest},
-	{"fifthnearestdoor", GS::FifthNearestDoor},
-	{"fifthnearestenemyof", GS::FifthNearestEnemyOf},
-	{"fifthnearestenemyoftype", GS::FifthNearestEnemyOfType},
-	{"fifthnearestmygroupoftype", GS::FifthNearestEnemyOfType},
-	{"fourthnearest", GS::FourthNearest},
-	{"fourthnearestdoor", GS::FourthNearestDoor},
-	{"fourthnearestenemyof", GS::FourthNearestEnemyOf},
-	{"fourthnearestenemyoftype", GS::FourthNearestEnemyOfType},
-	{"fourthnearestmygroupoftype", GS::FourthNearestEnemyOfType},
-	{"gabber", GS::Gabber},
-	{"groupof", GS::GroupOf},
-	{"lastattackerof", GS::LastAttackerOf},
-	{"lastcommandedby", GS::LastCommandedBy},
-	{"lastheardby", GS::LastHeardBy},
-	{"lasthelp", GS::LastHelp},
-	{"lasthitter", GS::LastHitter},
-	{"lastmarkedobject", GS::LastMarkedObject},
-	{"lastseenby", GS::LastSeenBy},
-	{"lastsummonerof", GS::LastSummonerOf},
-	{"lasttalkedtoby", GS::LastTalkedToBy},
-	{"lasttargetedby", GS::LastTargetedBy},
-	{"lasttrigger", GS::LastTrigger},
-	{"leaderof", GS::LeaderOf},
-	{"leastdamagedof", GS::LeastDamagedOf},
-	{"marked", GS::LastMarkedObject}, //pst
-	{"mostdamagedof", GS::MostDamagedOf},
-	{"myself", GS::Myself},
-	{"mytarget", GS::MyTarget},//see lasttargetedby(myself)
-	{"nearest", GS::Nearest}, //actually this seems broken in IE and resolve as Myself
-	{"nearestdoor", GS::NearestDoor},
-	{"nearestenemyof", GS::NearestEnemyOf},
-	{"nearestenemyoftype", GS::NearestEnemyOfType},
-	{"nearestenemysummoned", GS::NearestEnemySummoned},
-	{"nearestmygroupoftype", GS::NearestMyGroupOfType},
-	{"nearestpc", GS::NearestPC},
-	{"ninthnearest", GS::NinthNearest},
-	{"ninthnearestdoor", GS::NinthNearestDoor},
-	{"ninthnearestenemyof", GS::NinthNearestEnemyOf},
-	{"ninthnearestenemyoftype", GS::NinthNearestEnemyOfType},
-	{"ninthnearestmygroupoftype", GS::NinthNearestMyGroupOfType},
-	{"nothing", GS::Nothing},
-	{"player1", GS::Player1},
-	{"player1fill", GS::Player1Fill},
-	{"player2", GS::Player2},
-	{"player2fill", GS::Player2Fill},
-	{"player3", GS::Player3},
-	{"player3fill", GS::Player3Fill},
-	{"player4", GS::Player4},
-	{"player4fill", GS::Player4Fill},
-	{"player5", GS::Player5},
-	{"player5fill", GS::Player5Fill},
-	{"player6", GS::Player6},
-	{"player6fill", GS::Player6Fill},
-	{"player7", GS::Player7},
-	{"player7fill", GS::Player7Fill},
-	{"player8", GS::Player8},
-	{"player8fill", GS::Player8Fill},
-	{"protectedby", GS::ProtectedBy},
-	{"protectorof", GS::ProtectorOf},
-	{"protagonist", GS::Protagonist},
-	{"secondnearest", GS::SecondNearest},
-	{"secondnearestdoor", GS::SecondNearestDoor},
-	{"secondnearestenemyof", GS::SecondNearestEnemyOf},
-	{"secondnearestenemyoftype", GS::SecondNearestEnemyOfType},
-	{"secondnearestmygroupoftype", GS::SecondNearestMyGroupOfType},
-	{"selectedcharacter", GS::SelectedCharacter},
-	{"seventhnearest", GS::SeventhNearest},
-	{"seventhnearestdoor", GS::SeventhNearestDoor},
-	{"seventhnearestenemyof", GS::SeventhNearestEnemyOf},
-	{"seventhnearestenemyoftype", GS::SeventhNearestEnemyOfType},
-	{"seventhnearestmygroupoftype", GS::SeventhNearestMyGroupOfType},
-	{"sixthnearest", GS::SixthNearest},
-	{"sixthnearestdoor", GS::SixthNearestDoor},
-	{"sixthnearestenemyof", GS::SixthNearestEnemyOf},
-	{"sixthnearestenemyoftype", GS::SixthNearestEnemyOfType},
-	{"sixthnearestmygroupoftype", GS::SixthNearestMyGroupOfType},
-	{"strongestof", GS::StrongestOf},
-	{"strongestofmale", GS::StrongestOfMale},
-	{"tenthnearest", GS::TenthNearest},
-	{"tenthnearestdoor", GS::TenthNearestDoor},
-	{"tenthnearestenemyof", GS::TenthNearestEnemyOf},
-	{"tenthnearestenemyoftype", GS::TenthNearestEnemyOfType},
-	{"tenthnearestmygroupoftype", GS::TenthNearestMyGroupOfType},
-	{"thirdnearest", GS::ThirdNearest},
-	{"thirdnearestdoor", GS::ThirdNearestDoor},
-	{"thirdnearestenemyof", GS::ThirdNearestEnemyOf},
-	{"thirdnearestenemyoftype", GS::ThirdNearestEnemyOfType},
-	{"thirdnearestmygroupoftype", GS::ThirdNearestMyGroupOfType},
-	{"weakestof", GS::WeakestOf},
-	{"worstac", GS::WorstAC},
-	{ NULL,NULL}
-};
+OpcodeRegistry<ObjectFunction> ObjectRegistry;
 
 static const IDSLink idsnames[] = {
 	{"align", GS::ID_Alignment},
@@ -190,20 +84,16 @@ static const ActionDesc* FindAction(const char* actionname)
 	return desc;
 }
 
-static const ObjectLink* FindObject(const char* objectname)
+static const ObjectDesc* FindObject(const char* objectname)
 {
 	if (!objectname) {
 		return NULL;
 	}
 	int len = strlench( objectname, '(' );
-	for (int i = 0; objectnames[i].Name; i++) {
-		if (!strnicmp( objectnames[i].Name, objectname, len )) {
-			if (!objectnames[i].Name[len]) {
-				return objectnames + i;
-			}
-		}
-	}
-	return NULL;
+	char* name = strndup(objectname, len);
+	ObjectDesc* desc = ObjectRegistry.Find(name);
+	free(name);
+	return desc;
 }
 
 static const IDSLink* FindIdentifier(const char* idsname)
@@ -597,7 +487,7 @@ void InitializeIEScript()
 			printf("object %d (%s) is too high, ignoring\n", i, objectsTable->GetStringIndex( j ) );
 			continue;
 		}
-		const ObjectLink* poi = FindObject( objectsTable->GetStringIndex( j ));
+		const ObjectDesc* poi = FindObject( objectsTable->GetStringIndex( j ));
 		if (objects[i]) {
 			if (poi && objects[i]!=poi->Function) {
 				printMessage("GameScript"," ", YELLOW);
@@ -630,12 +520,11 @@ void InitializeIEScript()
 
 		ObjectFunction f = objects[ii];
 		if (f) {
-			for (i = 0; objectnames[i].Name; i++) {
-				if (f == objectnames[i].Function) {
-					printMessage("GameScript"," ", WHITE);
-					printf("%s is a synonym of %s\n", objectsTable->GetStringIndex( j ), objectnames[i].Name );
-					break;
-				}
+			ObjectDesc* desc = ObjectRegistry.Find(f);
+			if (desc) {
+				printMessage("GameScript"," ", WHITE);
+				printf("%s is a synonym of %s\n", objectsTable->GetStringIndex( j ), desc->Name );
+				break;
 			}
 			continue;
 		}

@@ -250,6 +250,9 @@ extern GEM_EXPORT OpcodeRegistry<TriggerFunction> TriggerRegistry;
 typedef OpcodeRegistry<ActionFunction>::Description ActionDesc;
 extern GEM_EXPORT OpcodeRegistry<ActionFunction> ActionRegistry;
 
+typedef OpcodeRegistry<ObjectFunction>::Description ObjectDesc;
+extern GEM_EXPORT OpcodeRegistry<ObjectFunction> ObjectRegistry;
+
 #define TF_NONE 	0
 #define TF_CONDITION    1 //this isn't a trigger, just a condition (0x4000)
 #define TF_MERGESTRINGS 8 //same value as actions' mergestring
@@ -298,11 +301,6 @@ extern GEM_EXPORT OpcodeRegistry<ActionFunction> ActionRegistry;
 #define AF_ALIVE         512 //only alive actors can do this
 #define AF_INSTANT       1024
 
-struct ObjectLink {
-	const char* Name;
-	ObjectFunction Function;
-};
-
 struct IDSLink {
 	const char* Name;
 	IDSFunction Function;
@@ -332,112 +330,6 @@ namespace GS {
 	GEM_EXPORT int ID_Specific(Actor *actor, int parameter);
 	GEM_EXPORT int ID_Subrace(Actor *actor, int parameter);
 	GEM_EXPORT int ID_Team(Actor *actor, int parameter);
-//Objects
-	GEM_EXPORT Targets *BestAC(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *EighthNearest(Scriptable *Sender, Targets *parameter, int ga_flagss);
-	GEM_EXPORT Targets *EighthNearestDoor(Scriptable *Sender, Targets *parameter, int ga_flagss);
-	GEM_EXPORT Targets *EighthNearestEnemyOf(Scriptable *Sender, Targets *parameter, int ga_flagss);
-	GEM_EXPORT Targets *EighthNearestEnemyOfType(Scriptable *Sender, Targets *parameter, int ga_flagss);
-	GEM_EXPORT Targets *EighthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Farthest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FarthestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FifthNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FifthNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FifthNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FifthNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FifthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FourthNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FourthNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FourthNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FourthNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *FourthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Gabber(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *GroupOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastAttackerOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastCommandedBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastHeardBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastHelp(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastHitter(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastMarkedObject(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastSeenBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastSummonerOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastTalkedToBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastTargetedBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LastTrigger(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LeaderOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *LeastDamagedOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *MostDamagedOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Myself(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *MyTarget(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Nearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestEnemySummoned(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NearestPC(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NinthNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NinthNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NinthNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NinthNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *NinthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Nothing(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player1(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player1Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player2(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player2Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player3(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player3Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player4(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player4Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player5(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player5Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player6(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player6Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Protagonist(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ProtectedBy(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ProtectorOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SecondNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SecondNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SecondNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SecondNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SecondNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SelectedCharacter(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SeventhNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SeventhNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SeventhNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SeventhNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SeventhNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SixthNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SixthNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SixthNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SixthNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *SixthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *StrongestOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *StrongestOfMale(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *TenthNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *TenthNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *TenthNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *TenthNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *TenthNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ThirdNearest(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ThirdNearestDoor(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ThirdNearestEnemyOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ThirdNearestEnemyOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *ThirdNearestMyGroupOfType(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *WeakestOf(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *WorstAC(Scriptable *Sender, Targets *parameters, int ga_flags);
-
-// GemRB extensions/actions
-	GEM_EXPORT void RunAwayFromPoint(Scriptable* Sender, Action* parameters);
-	GEM_EXPORT void UnMakeGlobal(Scriptable* Sender, Action* parameters);
-	GEM_EXPORT void UnloadArea(Scriptable* Sender, Action* parameters);
-
-// GemRB extensions/objects
-	GEM_EXPORT Targets *Player7(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player7Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player8(Scriptable *Sender, Targets *parameters, int ga_flags);
-	GEM_EXPORT Targets *Player8Fill(Scriptable *Sender, Targets *parameters, int ga_flags);
 }
 
 #endif
