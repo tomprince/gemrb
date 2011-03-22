@@ -120,3 +120,36 @@ static PyObject* GemRB_Actor_get_map(PyObject*, PyObject* args)
 
 	return gs->ConstructObject("Area", map->GetGlobalID());
 }
+
+PyDoc_STRVAR(GemRB_Actor_GetCurrentAction__doc,
+"Get currently running action.");
+
+static PyObject* GemRB_Actor_GetCurrentAction(PyObject*, PyObject* args)
+{
+	Actor *actor;
+
+	if (!PyArg_ParseTuple(args, "O&", get_actor, &actor)) {
+		return AttributeError(GemRB_Actor_get_map__doc);
+	}
+
+	return CObject<Action>(actor->GetCurrentAction());
+}
+
+PyDoc_STRVAR(GemRB_Actor_AddAction__doc,
+"Enqueue an action");
+
+static PyObject* GemRB_Actor_AddAction(PyObject*, PyObject* args)
+{
+	Actor *actor;
+	PyObject* a;
+
+	if (!PyArg_ParseTuple(args, "O&O", get_actor, &actor, &a)) {
+		return AttributeError(GemRB_Actor_get_map__doc);
+	}
+
+	CObject<Action> action(a);
+	if (action)
+		actor->AddAction(action);
+
+	Py_RETURN_NONE;
+}

@@ -198,6 +198,8 @@ public:
 
 class GEM_EXPORT Action : public Held<Action> {
 public:
+	static const TypeID ID;
+public:
 	Action()
 	{
 		actionID = 0;

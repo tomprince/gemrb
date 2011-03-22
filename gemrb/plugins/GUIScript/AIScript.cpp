@@ -22,10 +22,13 @@
 
 #include "PythonHelpers.h"
 
+#include "Scriptable/Actor.h"
+
 AIScript::AIScript()
 {
 	Script = NULL;
 	Globals = PyDict_New();
+	PyDict_Merge( Globals, gs->pMainDic, false );
 }
 
 AIScript::~AIScript()
@@ -51,7 +54,13 @@ bool AIScript::Open(DataStream* str)
 }
 bool AIScript::Update(bool* /*continuing*/, bool* /*done*/)
 {
+	PyDict_SetItemString(Globals, "self", gs->ConstructObject("Actor", MySelf->GetGlobalID()));
+
 	PyObject* ret = PyObject_CallObject(Script, NULL);	
+	if (PyErr_Occurred()) {
+		PyErr_Print();
+		return false;
+	}
 	bool result = PyObject_IsTrue(ret);
 	Py_DECREF(ret);
 	return result;

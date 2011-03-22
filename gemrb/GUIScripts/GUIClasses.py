@@ -220,7 +220,10 @@ class _Stats:
 
 class GActor(object):
   __metaclass__ = metaIDWrapper
-  methods = {}
+  methods = {
+    'AddAction' : _GemRB.Actor_AddAction,
+    'GetCurrentAction' : _GemRB.Actor_GetCurrentAction,
+  }
   properties = {
     'name' : [ lambda ID: _GemRB.Actor_get_name(ID, -1) ],
     'shortname' : [ lambda ID: _GemRB.Actor_get_name(ID, 0) ],
@@ -232,6 +235,10 @@ class GActor(object):
   }
   def __hash__(self):
 	  return self.ID
+
+class GAction(object):
+  __metaclass__ = metaIDWrapper
+  methods = {}
 
 class GArea(object):
   __metaclass__ = metaIDWrapper

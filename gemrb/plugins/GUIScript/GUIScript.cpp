@@ -10135,6 +10135,8 @@ static PyMethodDef GemRBMethods[] = {
 };
 
 static PyMethodDef GemRBInternalMethods[] = {
+	METHOD(Actor_AddAction, METH_VARARGS),
+	METHOD(Actor_GetCurrentAction, METH_VARARGS),
 	METHOD(Actor_get_name, METH_VARARGS),
 	METHOD(Actor_get_map, METH_VARARGS),
 	METHOD(Actor_get_scriptname, METH_VARARGS),

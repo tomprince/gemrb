@@ -31,6 +31,8 @@
 #include "Opcode.h"
 #include "PluginMgr.h"
 
+const TypeID Action::ID = { "Action" };
+
 //debug flags
 // 1 - cache
 // 2 - cutscene ID
