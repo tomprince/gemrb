@@ -22,6 +22,7 @@
 
 #include "GameScript/GSUtils.h"
 #include "GameScript/Matching.h"
+#include "Scriptable/ActorBlock.h"
 
 IEScript::IEScript()
 {

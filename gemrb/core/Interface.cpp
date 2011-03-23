@@ -2703,7 +2703,7 @@ ScriptEngine* Interface::GetGUIScriptEngine() const
 static EffectRef fx_summon_disable_ref = { "AvatarRemovalModifier", -1 };
 
 //NOTE: if there were more summoned creatures, it will return only the last
-Actor *Interface::SummonCreature(const ieResRef resource, const ieResRef vvcres, Scriptable *Owner, Actor *target, const Point &position, int eamod, int level, Effect *fx, bool sexmod)
+Actor *Interface::SummonCreature(const ieResRef resource, const ieResRef vvcres, Scriptable *owner, Actor *target, const Point &position, int eamod, int level, Effect *fx, bool sexmod)
 {
 	//maximum number of monsters summoned
 	int cnt=10;
@@ -2719,16 +2719,16 @@ Actor *Interface::SummonCreature(const ieResRef resource, const ieResRef vvcres,
 			return NULL;
 		}
 
-		if (Owner && Owner->Type==ST_ACTOR) {
-			ab->LastSummoner = Owner->GetGlobalID();
+		if (owner && owner->Type==ST_ACTOR) {
+			ab->LastSummoner = owner->GetGlobalID();
 		}
 		//Always use Base stats for the recently summoned creature
 
 		int enemyally;
 
 		if (eamod==EAM_SOURCEALLY || eamod==EAM_SOURCEENEMY) {
-			if (Owner && Owner->Type==ST_ACTOR) {
-				enemyally = ((Actor *) Owner)->GetStat(IE_EA)>EA_GOODCUTOFF;
+			if (owner && owner->Type==ST_ACTOR) {
+				enemyally = ((Actor *) owner)->GetStat(IE_EA)>EA_GOODCUTOFF;
 			} else {
 				enemyally = true;
 			}
@@ -2773,7 +2773,7 @@ Actor *Interface::SummonCreature(const ieResRef resource, const ieResRef vvcres,
 		if (target) {
 			map = target->GetCurrentArea();
 		} else {
-			map = Owner->GetCurrentArea();
+			map = owner->GetCurrentArea();
 		}
 		map->AddActor(ab);
 		ab->SetPosition(position, true, 0);
@@ -2804,7 +2804,7 @@ Actor *Interface::SummonCreature(const ieResRef resource, const ieResRef vvcres,
 			ab->SetBase(IE_XPVALUE, 0);
 		}
 		if (fx) {
-			ApplyEffect(fx, ab, Owner);
+			ApplyEffect(fx, ab, owner);
 		}
 
 		//this check should happen after the fact

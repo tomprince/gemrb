@@ -233,12 +233,12 @@ unsigned int SquaredPersonalDistance(Scriptable *a, Scriptable *b)
 
 // returns EA relation between two scriptables (non actors are always enemies)
 // it is used for protectile targeting/iwd ids targeting too!
-int EARelation(Scriptable* Owner, Actor* target)
+int EARelation(Scriptable* owner, Actor* target)
 {
 	ieDword eao = EA_ENEMY;
 
-	if (Owner && Owner->Type==ST_ACTOR) {
-		eao = ((Actor *) Owner)->GetStat(IE_EA);
+	if (owner && owner->Type==ST_ACTOR) {
+		eao = ((Actor *) owner)->GetStat(IE_EA);
 	}
 
 	ieDword eat = target->GetStat(IE_EA);

@@ -27,16 +27,18 @@
 
 #include "Holder.h"
 #include "Owner.h"
+#include "Opcode.h"
 #include "SymbolMgr.h"
 #include "Variables.h"
-#include "Scriptable/Actor.h"
 #include "System/DataStream.h"
 
 #include <cstdio>
 #include <vector>
 
 class Action;
+class Actor;
 class GameScript;
+class Scriptable;
 
 //escapearea flags
 #define EA_DESTROY 1        //destroy actor at the exit (otherwise move to new place)

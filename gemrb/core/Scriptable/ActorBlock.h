@@ -45,6 +45,11 @@ class Scriptable;
 class Selectable;
 class SpriteCover;
 
+#ifdef _MSC_VER // No SFINAE
+#include "GameScript/GS.h"
+#endif
+
+
 #define MAX_SCRIPTS		8
 #define MAX_GROUND_ICON_DRAWN   3
 #define MAX_TIMER		256

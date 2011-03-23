@@ -35,6 +35,9 @@
 #define ID_ACTIONS   8
 #define ID_TRIGGERS  16
 
+class Gem_Polygon;
+class Inventory;
+
 extern Holder<SymbolMgr> triggersTable;
 extern Holder<SymbolMgr> actionsTable;
 extern Holder<SymbolMgr> overrideActionsTable;
