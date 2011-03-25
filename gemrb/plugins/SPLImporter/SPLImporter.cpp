@@ -182,73 +182,74 @@ Spell* SPLImporter::GetSpell(Spell *s, bool /*silent*/)
 
 	for (i = 0; i < s->ExtHeaderCount; i++) {
 		str->Seek( s->ExtHeaderOffset + i * 40, GEM_STREAM_START );
-		GetExtHeader( s, s->ext_headers+i );
+		GetExtHeader(*s, s->ext_headers[i]);
 	}
 
 	s->casting_features = core->GetFeatures(s->CastingFeatureCount);
 	str->Seek( s->FeatureBlockOffset + 48*s->CastingFeatureOffset,
 			GEM_STREAM_START );
 	for (i = 0; i < s->CastingFeatureCount; i++) {
-		GetFeature(s, s->casting_features+i);
+		GetFeature(*s, s->casting_features[i]);
 	}
 
 	return s;
 }
 
-void SPLImporter::GetExtHeader(Spell *s, SPLExtHeader* eh)
+void SPLImporter::GetExtHeader(Spell const& s, SPLExtHeader& eh)
 {
 	ieByte tmpByte;
 
-	str->Read( &eh->SpellForm, 1 );
-	str->Read( &eh->unknown1, 1 );
-	str->Read( &eh->Location, 1 );
-	str->Read( &eh->unknown2, 1 );
-	str->ReadResRef( eh->MemorisedIcon );
-	str->Read( &eh->Target, 1 );
+	str->Read( &eh.SpellForm, 1 );
+	str->Read( &eh.unknown1, 1 );
+	str->Read( &eh.Location, 1 );
+	str->Read( &eh.unknown2, 1 );
+	str->ReadResRef( eh.MemorisedIcon );
+	str->Read( &eh.Target, 1 );
 
 	//this hack is to let gemrb target dead actors by some spells
-	if (eh->Target == 1) {
-		if (core->GetSpecialSpell(s->Name)&SPEC_DEAD) {
-			eh->Target = 3;
+	if (eh.Target == 1) {
+		if (core->GetSpecialSpell(s.Name)&SPEC_DEAD) {
+			eh.Target = 3;
 		}
 	}
 	str->Read( &tmpByte,1 );
 	if (!tmpByte) {
 		tmpByte = 1;
 	}
-	eh->TargetNumber = tmpByte;
-	str->ReadWord( &eh->Range );
-	str->ReadWord( &eh->RequiredLevel );
-	str->ReadDword( &eh->CastingTime );
-	str->ReadWord( &eh->DiceSides );
-	str->ReadWord( &eh->DiceThrown );
-	str->ReadWord( &eh->DamageBonus );
-	str->ReadWord( &eh->DamageType );
-	str->ReadWord( &eh->FeatureCount );
-	str->ReadWord( &eh->FeatureOffset );
-	str->ReadWord( &eh->Charges );
-	str->ReadWord( &eh->ChargeDepletion );
-	str->ReadWord( &eh->ProjectileAnimation );
+	eh.TargetNumber = tmpByte;
+	str->ReadWord( &eh.Range );
+	str->ReadWord( &eh.RequiredLevel );
+	str->ReadDword( &eh.CastingTime );
+	str->ReadWord( &eh.DiceSides );
+	str->ReadWord( &eh.DiceThrown );
+	str->ReadWord( &eh.DamageBonus );
+	str->ReadWord( &eh.DamageType );
+	ieWord FeatureCount, FeatureOffset;
+	str->ReadWord( &FeatureCount );
+	str->ReadWord( &FeatureOffset );
+	str->ReadWord( &eh.Charges );
+	str->ReadWord( &eh.ChargeDepletion );
+	str->ReadWord( &eh.ProjectileAnimation );
 
 	//for some odd reasons 0 and 1 are the same
-	if (eh->ProjectileAnimation) {
-		eh->ProjectileAnimation--;
+	if (eh.ProjectileAnimation) {
+		eh.ProjectileAnimation--;
 	}
-	eh->features = core->GetFeatures( eh->FeatureCount );
-	str->Seek( s->FeatureBlockOffset + 48*eh->FeatureOffset, GEM_STREAM_START );
-	for (unsigned int i = 0; i < eh->FeatureCount; i++) {
-		GetFeature(s, eh->features+i);
+	eh.features = core->GetFeatures( eh.FeatureCount );
+	str->Seek( s.FeatureBlockOffset + 48*eh.FeatureOffset, GEM_STREAM_START );
+	for (unsigned int i = 0; i < eh.FeatureCount; i++) {
+		GetFeature(s, eh.features[i]);
 	}
 }
 
-void SPLImporter::GetFeature(Spell *s, Effect *fx)
+void SPLImporter::GetFeature(Spell const& s, Effect& fx)
 {
 	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
 	eM->Open( str, false );
-	eM->GetEffect( fx );
-	memcpy(fx->Source, s->Name, 9);
-	fx->PrimaryType = s->PrimaryType;
-	fx->SecondaryType = s->SecondaryType;
+	eM->GetEffect( &fx );
+	memcpy(fx.Source, s.Name, 9);
+	fx.PrimaryType = s.PrimaryType;
+	fx.SecondaryType = s.SecondaryType;
 }
 
 #include "plugindef.h"

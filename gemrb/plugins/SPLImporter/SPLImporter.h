@@ -40,8 +40,8 @@ public:
 	bool Open(DataStream* stream, bool autoFree = true);
 	Spell* GetSpell(Spell *spl, bool silent=false);
 private:
-	void GetExtHeader(Spell *s, SPLExtHeader* eh);
-	void GetFeature(Spell *s, Effect *f);
+	void GetExtHeader(Spell const& s, SPLExtHeader& eh);
+	void GetFeature(Spell const& s, Effect& f);
 };
 
 

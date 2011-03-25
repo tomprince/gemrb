@@ -806,7 +806,7 @@ bool Interface::ReadSpecialSpells()
 	return result;
 }
 
-int Interface::GetSpecialSpell(ieResRef resref)
+int Interface::GetSpecialSpell(const ieResRef resref)
 {
 	for (int i=0;i<SpecialSpellsCount;i++) {
 		if (!strnicmp(resref, SpecialSpells[i].resref, sizeof(ieResRef))) {
