@@ -918,7 +918,7 @@ void Spellbook::AddSpellInfo(unsigned int sm_level, unsigned int sm_type, const 
 		}
 	}
 	
-	SPLExtHeader *ext_header = spl->ext_headers+ehc;
+	SPLExtHeader *ext_header = &spl->ext_headers[ehc];
 	seh->headerindex = ehc;
 	seh->level = sm_level;
 	seh->type = sm_type;

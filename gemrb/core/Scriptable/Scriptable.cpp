@@ -1064,7 +1064,7 @@ int Scriptable::SpellCast(bool instant)
 		SpellHeader = 0;
 	}
 
-	SPLExtHeader *header = spl->GetExtHeader(SpellHeader);
+	SPLExtHeader const* header = spl->GetExtHeader(SpellHeader);
 	int casting_time = (int)header->CastingTime;
 	// how does this work for non-actors exactly?
 	if (actor) {

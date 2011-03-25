@@ -194,7 +194,7 @@ EffectQueue *Spell::GetEffectBlock(Scriptable *self, const Point &pos, int block
 
 Projectile *Spell::GetProjectile(Scriptable *self, int header, const Point &target) const
 {
-	SPLExtHeader *seh = GetExtHeader(header);
+	SPLExtHeader const* seh = GetExtHeader(header);
 	if (!seh) {
 		printMessage("Spell", "Cannot retrieve spell header!!! ",RED);
 		printf("required header: %d, maximum: %d\n", header, (int) ExtHeaderCount);
@@ -223,7 +223,7 @@ unsigned int Spell::GetCastingDistance(Scriptable *Sender) const
 		level = 1;
 	}
 	int idx = GetHeaderIndexFromLevel(level);
-	SPLExtHeader *seh = GetExtHeader(idx);
+	SPLExtHeader const* seh = GetExtHeader(idx);
 	if (!seh) {
 		printMessage("Spell", "Cannot retrieve spell header!!! ",RED);
 		printf("required header: %d, maximum: %d\n", idx, (int) ExtHeaderCount);
