@@ -423,15 +423,19 @@ Effect *EffectQueue::CreateUnsummonEffect(Effect *fx)
 	return newfx;
 }
 
-void EffectQueue::AddEffect(Effect* fx, bool insert)
+void EffectQueue::AddEffect(Effect const& fx, bool insert)
 {
-	Effect* new_fx = new Effect;
-	memcpy( new_fx, fx, sizeof( Effect ) );
+	Effect* new_fx = new Effect(fx);
 	if( insert) {
 		effects.insert( effects.begin(), new_fx );
 	} else {
 		effects.push_back( new_fx );
 	}
+}
+
+void EffectQueue::AddEffect(Effect const* fx, bool insert)
+{
+	AddEffect(*fx, insert);
 }
 
 //This method can remove an effect described by a pointer to it, or

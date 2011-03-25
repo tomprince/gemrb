@@ -196,7 +196,9 @@ public:
 	/** adds an effect to the queue, it could also insert it if flagged so
 	 *  fx should be freed by the caller
 	 */
-	void AddEffect(Effect* fx, bool insert=false);
+	void AddEffect(Effect const* fx, bool insert=false);
+	/** adds an effect to the queue */
+	void AddEffect(Effect const& fx, bool insert=false);
 	/** Adds an Effect to the queue, subject to level and other checks.
 	 * Returns FX_ABORT is unsuccessful. fx is just a reference, AddEffect()
 	 * will malloc its own copy */
