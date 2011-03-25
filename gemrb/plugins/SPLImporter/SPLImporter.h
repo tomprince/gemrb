@@ -38,7 +38,7 @@ public:
 	SPLImporter(void);
 	~SPLImporter(void);
 	bool Open(DataStream* stream, bool autoFree = true);
-	Spell* GetSpell(Spell *spl, bool silent=false);
+	Spell* GetSpell(const ieResRef Name, bool silent=false);
 private:
 	void GetExtHeader(Spell const& s, SPLExtHeader& eh);
 	void GetFeature(Spell const& s, Effect& f);

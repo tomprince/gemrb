@@ -113,9 +113,12 @@ bool SPLImporter::Open(DataStream* stream, bool autoFree)
 	return true;
 }
 
-Spell* SPLImporter::GetSpell(Spell *s, bool /*silent*/)
+Spell* SPLImporter::GetSpell(const ieResRef Name, bool /*silent*/)
 {
 	unsigned int i;
+
+	Spell* s = new Spell();
+	strnlwrcpy(s->Name, Name, 8);
 
 	str->ReadDword( &s->SpellName );
 	str->ReadDword( &s->SpellNameIdentified );

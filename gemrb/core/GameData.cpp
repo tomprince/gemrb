@@ -340,10 +340,7 @@ Spell* GameData::GetSpell(const ieResRef resname, bool silent)
 		return NULL;
 	}
 
-	spell = new Spell();
-	//this is required for storing the 'source'
-	strnlwrcpy(spell->Name, resname, 8);
-	sm->GetSpell( spell, silent );
+	spell = sm->GetSpell(resname, silent);
 	if (spell == NULL) {
 		return NULL;
 	}
