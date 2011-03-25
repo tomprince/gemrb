@@ -153,7 +153,7 @@ GUIEnhancements = 1
 #  Enter the full path to the directory.             #
 #####################################################
 
-GamePath=../gemrb/tests/minimal
+GamePath=../src/tests/minimal
 CD1=/mnt/windows/Programmi/Black Isle/BGII - SoA/
 CD2=/mnt/windows/Programmi/Black Isle/BGII - SoA/CD2/
 CD3=/mnt/windows/Programmi/Black Isle/BGII - SoA/CD3/
@@ -168,7 +168,7 @@ CD5=/mnt/windows/Programmi/Black Isle/BGII - SoA/CD5/
 #  Cache directory.                                 #
 #####################################################
 
-CachePath=./gemrb/Cache/
+CachePath=./src/Cache/
 
 #####################################################
 #  GemRB Save Path [String]                         #
@@ -191,7 +191,7 @@ CachePath=./gemrb/Cache/
 #  enter the full path to the GemRB executable      #
 #####################################################
 
-GemRBPath=../gemrb
+GemRBPath=../src
 
 #####################################################
 #  GemRB GUI Scripts Path [String]                  #
@@ -216,7 +216,7 @@ GemRBPath=../gemrb
 #  GemRB from source directory on Linux.            #
 #####################################################
 
-PluginsPath=./gemrb/plugins/
+PluginsPath=./src/plugins/
 
 #####################################################
 #  Game Data Path [String]                          #

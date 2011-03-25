@@ -24,7 +24,7 @@ Makefile.in
 /config.status
 /configure
 /gemrb.spec
-/gemrb/gemrb
+/src/gemrb
 /libtool
 /stamp-h1
 /cmake_uninstall.cmake

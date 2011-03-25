@@ -15,7 +15,7 @@ partition and mounted to your Linux/Unix filesystem, installed on
 windows and then copied to your filesystem, installed with WINE or 
 extracted manually from the CDs using the tool `unshield'.
 
-What little documentation exists is mostly in gemrb/docs/en/ and
+What little documentation exists is mostly in src/docs/en/ and
 subdirectories, the gemrb.6 man page and this file.
 
 Supported platforms

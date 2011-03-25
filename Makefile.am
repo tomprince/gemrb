@@ -1,4 +1,4 @@
-SUBDIRS = gemrb
+SUBDIRS = core plugins src include GUIScripts override doc
 
 SPEC_FILES = \
         gemrb.spec \

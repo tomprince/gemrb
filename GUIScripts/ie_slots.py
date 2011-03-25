@@ -19,7 +19,7 @@
 
 # ie_slots.py - definitions of slottypes
 
-# !!! NOTE: Keep this file synchronized with gemrb/plugins/Core/Inventory.h !!!
+# !!! NOTE: Keep this file synchronized with src/plugins/Core/Inventory.h !!!
 
 SLOT_HELM      = 1
 SLOT_ARMOUR    = 2

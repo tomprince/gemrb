@@ -43,7 +43,7 @@ This file concerns with the first type of scripts, GUIScripts.
 Script execution
 ----------------
 
-GUIScripts are stored in gemrb/GUIScripts/<gametype>/. First script to
+GUIScripts are stored in src/GUIScripts/<gametype>/. First script to
 be run is always named Start.py. Main window with messages, map
 display, character portraits, action buttons etc. is named
 MessageWindow.py. Other scripts are usually named after *.CHU resource
@@ -51,21 +51,21 @@ file they mostly use.
 
   Example: 
      Planescape: Torment startup script:
-       gemrb/GUIScripts/pst/Start.py   
+       src/GUIScripts/pst/Start.py
   
      Baldur's Gate 2 inventory:
-       gemrb/GUIScripts/bg2/GUIINV.py
+       src/GUIScripts/bg2/GUIINV.py
 
 GemRB API is provided to the scripts by means of GemRB module. The
 module is implemented together with Python interpreter glue in
-GUIScript plugin in gemrb/plugins/GUIScript/GUIScript.cpp.
+GUIScript plugin in src/plugins/GUIScript/GUIScript.cpp.
 
   Example:
     import GemRB
     GemRB.LoadTable ("RACES")
 
 Description of all functions in the huge GemRB module is in
-gemrb/docs/en/GUIScript directory, GUIScript.cpp file itself or obtained
+src/docs/en/GUIScript directory, GUIScript.cpp file itself or obtained
 by typing help(GemRB) in GemRB console (type ESC to open console). In 
 that case the help is dumped to stdout.
 
@@ -79,7 +79,7 @@ function, which causes another script to be loaded. Repeated loading
 of a script causes repeated calling of its OnLoad() function.
 
 All scripts automagically import all symbols from file
-gemrb/GUIScripts/GUIDefines.py, which contains definition of constants
+src/GUIScripts/GUIDefines.py, which contains definition of constants
 commonly used in the scripts. Other files in this directory can be
 imported too.
 

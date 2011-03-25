@@ -19,7 +19,7 @@
 
 # ie_stats.py - definitions of creature stats codes
 
-# !!! NOTE: Keep this file synchronized with gemrb/includes/ie_stats.h !!!
+# !!! NOTE: Keep this file synchronized with src/includes/ie_stats.h !!!
 
 # EA values
 INANIMATE     = 1

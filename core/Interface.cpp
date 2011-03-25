@@ -1711,7 +1711,7 @@ int Interface::Init()
 		ret = ReadMusicTable("songlist", 1);
 	} else {
 		/*since bg1 and pst has no .2da for songlist,
-		we must supply one in the gemrb/override folder.
+		we must supply one in the src/override folder.
 		It should be: music.2da, first column is a .mus filename*/
 		ret = ReadMusicTable("music", 0);
 	}

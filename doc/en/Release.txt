@@ -6,7 +6,7 @@ Preparing and testing GIT
 
 * Make sure that version numbers in 
     configure.in
-    gemrb/includes/globals.h 
+    src/includes/globals.h
   are correct for the upcoming version.
 
 * Update NEWS with highlights since the last release 
