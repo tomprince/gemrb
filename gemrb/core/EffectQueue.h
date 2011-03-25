@@ -237,9 +237,9 @@ public:
 	void RemoveLevelEffects(ieResRef &Removed, ieDword level, ieDword flags, ieDword match) const;
 
 	/* returns true if the timing method supports simplified duration */
-	static bool HasDuration(Effect *fx);
+	static bool HasDuration(Effect const* fx);
 	/* returns true if the effect should be saved */
-	static bool Persistent(Effect* fx);
+	static bool Persistent(Effect const* fx);
 	/* returns next saved effect, increases index */
 	std::list< Effect* >::const_iterator GetFirstEffect() const
 	{
@@ -270,7 +270,7 @@ public:
 	//transforming timing modes
 	static void TransformToDelay(ieByte &TimingMode);
 	//getting summarised effects
-	int BonusAgainstCreature(EffectRef &effect_reference, Actor *actor) const;
+	int BonusAgainstCreature(EffectRef &effect_reference, Actor const* actor) const;
 	//getting weapon immunity flag
 	bool WeaponImmunity(int enchantment, ieDword weapontype) const;
 	//melee and ranged effects
@@ -308,7 +308,7 @@ private:
 	Effect *HasOpcodeWithSource(ieDword opcode, const ieResRef source) const;
 	void DecreaseParam1OfEffect(ieDword opcode, ieDword amount) const;
 	int SpecificDamageBonus(ieDword opcode, ieDword param2) const;
-	int BonusAgainstCreature(ieDword opcode, Actor *actor) const;
+	int BonusAgainstCreature(ieDword opcode, Actor const* actor) const;
 	bool WeaponImmunity(ieDword opcode, int enchantment, ieDword weapontype) const;
 };
 

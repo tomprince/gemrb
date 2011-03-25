@@ -1537,7 +1537,7 @@ void EffectQueue::DecreaseParam1OfEffect(EffectRef &effect_reference, ieDword am
 //this function does IDS targeting for effects (extra damage/thac0 against creature)
 static const int ids_stats[7]={IE_EA, IE_GENERAL, IE_RACE, IE_CLASS, IE_SPECIFIC, IE_SEX, IE_ALIGNMENT};
 
-int EffectQueue::BonusAgainstCreature(ieDword opcode, Actor *actor) const
+int EffectQueue::BonusAgainstCreature(ieDword opcode, Actor const* actor) const
 {
 	int sum = 0;
 	std::list< Effect* >::const_iterator f;
@@ -1559,7 +1559,7 @@ int EffectQueue::BonusAgainstCreature(ieDword opcode, Actor *actor) const
 	return sum;
 }
 
-int EffectQueue::BonusAgainstCreature(EffectRef &effect_reference, Actor *actor) const
+int EffectQueue::BonusAgainstCreature(EffectRef &effect_reference, Actor const* actor) const
 {
 	ResolveEffectRef(effect_reference);
 	if( effect_reference.opcode<0) {
@@ -1756,7 +1756,7 @@ Effect *EffectQueue::GetEffect(ieDword idx) const
 */
 
 //returns true if the effect supports simplified duration
-bool EffectQueue::HasDuration(Effect *fx)
+bool EffectQueue::HasDuration(Effect const* fx)
 {
 	switch(fx->TimingMode) {
 	case FX_DURATION_INSTANT_LIMITED: //simple duration
@@ -1771,7 +1771,7 @@ static EffectRef fx_variable_ref = { "Variable:StoreLocalVariable", -1 };
 
 //returns true if the effect must be saved
 //variables are saved differently
-bool EffectQueue::Persistent(Effect* fx)
+bool EffectQueue::Persistent(Effect const* fx)
 {
 	//we save this as variable
 	if( fx->Opcode==(ieDword) ResolveEffect(fx_variable_ref)) {
