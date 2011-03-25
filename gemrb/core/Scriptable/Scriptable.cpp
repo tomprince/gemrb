@@ -605,6 +605,7 @@ static EffectRef fx_set_invisible_state_ref = { "State:Invisible", -1 };
 void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int level, bool fake)
 {
 	Spell* spl = gamedata->GetSpell( SpellResRef );
+	bool cached_spell = true;
 	Actor *caster = NULL;
 
 	//PST has a weird effect, called Enoll Eva's duplication
@@ -624,6 +625,14 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 			//anyway, it would be too many duplications
 			duplicate = 2;
 		}
+	}
+
+	// when doing wild magic mods, use a copy of the spell to avoid mod propagation into the cache
+	if (caster && (caster->wildSurgeMods.target_change_type || caster->wildSurgeMods.saving_throw_mod || caster->wildSurgeMods.projectile_id)) {
+		Spell* tmp = new Spell(*spl);
+		gamedata->FreeSpell(spl, SpellResRef, false);
+		spl = tmp;
+		cached_spell = false;
 	}
 
 	while(duplicate --) {
@@ -813,7 +822,11 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 
 	core->Autopause(AP_SPELLCAST);
 
-	gamedata->FreeSpell(spl, SpellResRef, false);
+	if (cached_spell) {
+		gamedata->FreeSpell(spl, SpellResRef, false);
+	} else {
+		delete spl;
+	}
 
 }
 
