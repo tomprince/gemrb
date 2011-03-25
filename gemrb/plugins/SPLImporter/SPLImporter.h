@@ -34,6 +34,7 @@ private:
 	bool autoFree;
 	int version;
 
+	ieDword FeatureBlockOffset;
 public:
 	SPLImporter(void);
 	~SPLImporter(void);

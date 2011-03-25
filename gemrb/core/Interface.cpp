@@ -4682,11 +4682,6 @@ ITMExtHeader *Interface::GetITMExt(int count)
 	return new ITMExtHeader[count];
 }
 
-SPLExtHeader *Interface::GetSPLExt(int count)
-{
-	return new SPLExtHeader[count];
-}
-
 Effect *Interface::GetEffect(ieDword opcode)
 {
 	if (opcode==0xffffffff) {

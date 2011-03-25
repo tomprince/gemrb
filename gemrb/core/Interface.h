@@ -602,7 +602,6 @@ public:
 	// FIXME: due to Win32 we have to allocate/release all common
 	// memory from Interface. Yes, it is ugly.
 	ITMExtHeader *GetITMExt(int count);
-	SPLExtHeader *GetSPLExt(int count);
 	//creates a standalone effect with opcode
 	Effect *GetEffect(ieDword opcode);
 	Effect *GetFeatures(int count);

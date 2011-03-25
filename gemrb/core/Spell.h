@@ -33,6 +33,8 @@
 
 #include "EffectQueue.h"
 
+#include <vector>
+
 class Projectile;
 
 //values for Spell usability Flags
@@ -84,12 +86,10 @@ public:
 	ieWord DiceThrown;
 	ieWord DamageBonus;
 	ieWord DamageType;
-	ieWord FeatureCount;
-	ieWord FeatureOffset;
 	ieWord Charges;
 	ieWord ChargeDepletion;
 	ieWord ProjectileAnimation;
-	Effect* features;
+	std::vector<Effect> features;
 };
 
 /**
@@ -103,8 +103,8 @@ public:
 	Spell();
 	~Spell();
 
-	SPLExtHeader *ext_headers;
-	Effect* casting_features;
+	std::vector<SPLExtHeader> ext_headers;
+	std::vector<Effect> casting_features;
 
 	/** Resref of the spell itself */
 	ieResRef Name;
@@ -134,11 +134,6 @@ public:
 	ieDword unknown10;
 	ieDword unknown11;
 	ieDword unknown12;
-	ieDword ExtHeaderOffset;
-	ieWord ExtHeaderCount;
-	ieDword FeatureBlockOffset;
-	ieWord CastingFeatureOffset;
-	ieWord CastingFeatureCount;
 
 	// IWD2 only
 	ieDword TimePerLevel;
@@ -155,10 +150,10 @@ public:
 			which = 0;
 		}
 
-		if(ExtHeaderCount<=which) {
+		if(ext_headers.size()<=which) {
 			return NULL;
 		}
-		return ext_headers+which;
+		return &ext_headers[which];
 	}
 	//converts a wanted level to block index count
 	int GetHeaderIndexFromLevel(int level) const;
@@ -169,6 +164,8 @@ public:
 	//returns a projectile created from an extended header
 	Projectile *GetProjectile(Scriptable *self, int headerindex, const Point &pos) const;
 	unsigned int GetCastingDistance(Scriptable *Sender) const;
+private:
+	std::vector<Effect> const& GetFeatureBlock(int block_index) const;
 };
 
 #endif  // ! SPELL_H

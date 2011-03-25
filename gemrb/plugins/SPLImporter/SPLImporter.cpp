@@ -153,11 +153,14 @@ Spell* SPLImporter::GetSpell(const ieResRef Name, bool /*silent*/)
 	str->ReadDword( &s->unknown10 );
 	str->ReadDword( &s->unknown11 );
 	str->ReadDword( &s->unknown12 );
-	str->ReadDword( &s->ExtHeaderOffset );
-	str->ReadWord( &s->ExtHeaderCount );
-	str->ReadDword( &s->FeatureBlockOffset );
-	str->ReadWord( &s->CastingFeatureOffset );
-	str->ReadWord( &s->CastingFeatureCount );
+	ieDword ExtHeaderOffset;
+	ieWord ExtHeaderCount;
+	str->ReadDword( &ExtHeaderOffset );
+	str->ReadWord( &ExtHeaderCount );
+	ieWord CastingFeatureOffset, CastingFeatureCount;
+	str->ReadDword( &FeatureBlockOffset );
+	str->ReadWord( &CastingFeatureOffset );
+	str->ReadWord( &CastingFeatureCount );
 
 	memset( s->unknown13, 0, 8 );
 	if (version == 20) {
@@ -181,17 +184,17 @@ Spell* SPLImporter::GetSpell(const ieResRef Name, bool /*silent*/)
 		}
 	}
 
-	s->ext_headers = core->GetSPLExt(s->ExtHeaderCount);
+	s->ext_headers.resize(ExtHeaderCount);
 
-	for (i = 0; i < s->ExtHeaderCount; i++) {
-		str->Seek( s->ExtHeaderOffset + i * 40, GEM_STREAM_START );
+	for (i = 0; i < ExtHeaderCount; i++) {
+		str->Seek(ExtHeaderOffset + i * 40, GEM_STREAM_START);
 		GetExtHeader(*s, s->ext_headers[i]);
 	}
 
-	s->casting_features = core->GetFeatures(s->CastingFeatureCount);
-	str->Seek( s->FeatureBlockOffset + 48*s->CastingFeatureOffset,
+	s->casting_features.resize(CastingFeatureCount);
+	str->Seek( FeatureBlockOffset + 48*CastingFeatureOffset,
 			GEM_STREAM_START );
-	for (i = 0; i < s->CastingFeatureCount; i++) {
+	for (i = 0; i < CastingFeatureCount; i++) {
 		GetFeature(*s, s->casting_features[i]);
 	}
 
@@ -238,9 +241,9 @@ void SPLImporter::GetExtHeader(Spell const& s, SPLExtHeader& eh)
 	if (eh.ProjectileAnimation) {
 		eh.ProjectileAnimation--;
 	}
-	eh.features = core->GetFeatures( eh.FeatureCount );
-	str->Seek( s.FeatureBlockOffset + 48*eh.FeatureOffset, GEM_STREAM_START );
-	for (unsigned int i = 0; i < eh.FeatureCount; i++) {
+	eh.features.resize(FeatureCount);
+	str->Seek(FeatureBlockOffset + 48*FeatureOffset, GEM_STREAM_START);
+	for (unsigned int i = 0; i < FeatureCount; i++) {
 		GetFeature(s, eh.features[i]);
 	}
 }

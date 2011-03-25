@@ -652,14 +652,15 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 
 		if (caster) {
 			// check for target (type) change
-			int count, i;
+			int count;
+			size_t i;
 			Actor *newact = NULL;
 			SPLExtHeader *seh = NULL;
 			Effect *fx = NULL;
 			switch (caster->wildSurgeMods.target_change_type) {
 				case WSTC_SETTYPE:
 					seh = &spl->ext_headers[SpellHeader];
-					for (i=0; i < seh->FeatureCount; i++) {
+					for (i=0; i < seh->features.size(); i++) {
 						seh->features[i].Target = caster->wildSurgeMods.target_type;
 					}
 					// we need to fetch the projectile, so the effect queue is created
@@ -671,12 +672,12 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 					// TODO: unhardcode to allow for mixing all the target types
 					// caster gets selftargetting fx when the projectile is fetched above
 					seh = &spl->ext_headers[SpellHeader];
-					for (i=0; i < seh->FeatureCount; i++) {
+					for (i=0; i < seh->features.size(); i++) {
 						if (seh->features[i].Target == FX_TARGET_SELF) {
 							seh->features[i].Target = caster->wildSurgeMods.target_type;
 						} else {
 							// also apply to the caster
-							fx = seh->features+i;
+							fx = &seh->features[i];
 							core->ApplyEffect(fx, caster, caster);
 						}
 					}
@@ -703,7 +704,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 					// make it also work for self-targetting spells:
 					// change the payload or this was all in vain
 					seh = &spl->ext_headers[SpellHeader];
-					for (i=0; i < seh->FeatureCount; i++) {
+					for (i=0; i < seh->features.size(); i++) {
 						if (seh->features[i].Target == FX_TARGET_SELF) {
 							seh->features[i].Target = FX_TARGET_PRESET;
 						}
@@ -720,7 +721,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 			// apply the saving throw mod
 			if (caster->wildSurgeMods.saving_throw_mod) {
 				seh = &spl->ext_headers[SpellHeader];
-				for (i=0; i < seh->FeatureCount; i++) {
+				for (i=0; i < seh->features.size(); i++) {
 					seh->features[i].SavingThrowBonus += caster->wildSurgeMods.saving_throw_mod;
 				}
 			}
@@ -731,7 +732,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 				// make it also work for self-targetting spells:
 				// change the payload or this was all in vain
 				seh = &spl->ext_headers[SpellHeader];
-				for (i=0; i < seh->FeatureCount; i++) {
+				for (i=0; i < seh->features.size(); i++) {
 					if (seh->features[i].Target == FX_TARGET_SELF) {
 						seh->features[i].Target = FX_TARGET_PRESET;
 					}
@@ -791,7 +792,7 @@ void Scriptable::CreateProjectile(const ieResRef SpellResRef, ieDword tgt, int l
 				//can't check GetEffectBlock, since it doesn't construct the queue for selftargetting spells
 				bool invis = false;
 				unsigned int opcode = EffectQueue::ResolveEffect(fx_set_invisible_state_ref);
-				for (unsigned int i=0; i < spl->ext_headers[SpellHeader].FeatureCount; i++) {
+				for (unsigned int i=0; i < spl->ext_headers[SpellHeader].features.size(); i++) {
 					if (spl->GetExtHeader(SpellHeader)->features[i].Opcode == opcode) {
 						invis = true;
 						break;

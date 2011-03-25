@@ -33,26 +33,18 @@
 
 SPLExtHeader::SPLExtHeader(void)
 {
-	features = NULL;
 }
 
 SPLExtHeader::~SPLExtHeader(void)
 {
-	delete [] features;
 }
 
 Spell::Spell(void)
 {
-	ext_headers = NULL;
-	casting_features = NULL;
 }
 
 Spell::~Spell(void)
 {
-	//Spell is in the core, so this is not needed, i guess (Avenger)
-	//core->FreeSPLExt(ext_headers, casting_features);
-	delete [] ext_headers;
-	delete [] casting_features;
 }
 
 int Spell::GetHeaderIndexFromLevel(int level) const
@@ -61,13 +53,13 @@ int Spell::GetHeaderIndexFromLevel(int level) const
 	if (Flags & SF_SIMPLIFIED_DURATION) {
 		return level;
 	}
-	int block_index;
-	for(block_index=0;block_index<ExtHeaderCount-1;block_index++) {
+	size_t block_index;
+	for(block_index=0;block_index<ext_headers.size()-1;block_index++) {
 		if (ext_headers[block_index+1].RequiredLevel>level) {
 			return block_index;
 		}
 	}
-	return ExtHeaderCount-1;
+	return ext_headers.size()-1;
 }
 
 //-1 will return cfb
@@ -118,63 +110,64 @@ void Spell::AddCastingGlow(EffectQueue *fxqueue, ieDword duration, int gender)
 	delete fx;
 }
 
-EffectQueue *Spell::GetEffectBlock(Scriptable *self, const Point &pos, int block_index, int level, ieDword pro) const
+std::vector<Effect> const& Spell::GetFeatureBlock(int block_index) const
 {
-	Effect *features;
-	int count;
-
 	//iwd2 has this hack
 	if (block_index>=0) {
 		if (Flags & SF_SIMPLIFIED_DURATION) {
-			features = ext_headers[0].features;
-			count = ext_headers[0].FeatureCount;
+			return ext_headers[0].features;
 		} else {
-			features = ext_headers[block_index].features;
-			count = ext_headers[block_index].FeatureCount;
+			return ext_headers[block_index].features;
 		}
 	} else {
-		features = casting_features;
-		count = CastingFeatureCount;
+		return casting_features;
 	}
+}
+
+EffectQueue *Spell::GetEffectBlock(Scriptable *self, const Point &pos, int block_index, int level, ieDword pro) const
+{
+	std::vector<Effect> const& features = GetFeatureBlock(block_index);
+	size_t count = features.size();
+
 	EffectQueue *fxqueue = new EffectQueue();
 	EffectQueue *selfqueue = NULL;
 
-	for (int i=0;i<count;i++) {
-		Effect *fx = features+i;
+	for (size_t i=0;i<count;i++) {
+		Effect fx = features[i];
 
 		if ((Flags & SF_SIMPLIFIED_DURATION) && (block_index>=0)) {
 			//hack the effect according to Level
 			//fxqueue->AddEffect will copy the effect,
 			//so we don't risk any overwriting
-			if (EffectQueue::HasDuration(features+i)) {
-				fx->Duration = (TimePerLevel*block_index+TimeConstant)*core->Time.round_sec;
+			if (EffectQueue::HasDuration(&features[i])) {
+				fx.Duration = (TimePerLevel*block_index+TimeConstant)*core->Time.round_sec;
 			}
 		}
 		//fill these for completeness, inventoryslot is a good way
 		//to discern a spell from an item effect
 
-		fx->InventorySlot = 0xffff;
+		fx.InventorySlot = 0xffff;
 		//the hostile flag is used to determine if this was an attack
-		fx->SourceFlags = Flags;
-		fx->CasterLevel = level;
+		fx.SourceFlags = Flags;
+		fx.CasterLevel = level;
 
 		// apply the stat-based spell duration modifier
 		if (self->Type == ST_ACTOR) {
 			Actor *caster = (Actor *) self;
 			if (caster->Modified[IE_SPELLDURATIONMODMAGE] && SpellType == IE_SPL_WIZARD) {
-				fx->Duration = (fx->Duration * caster->Modified[IE_SPELLDURATIONMODMAGE]) / 100;
+				fx.Duration = (fx.Duration * caster->Modified[IE_SPELLDURATIONMODMAGE]) / 100;
 			} else if (caster->Modified[IE_SPELLDURATIONMODPRIEST] && SpellType == IE_SPL_PRIEST) {
-				fx->Duration = (fx->Duration * caster->Modified[IE_SPELLDURATIONMODPRIEST]) / 100;
+				fx.Duration = (fx.Duration * caster->Modified[IE_SPELLDURATIONMODPRIEST]) / 100;
 			}
 		}
 
-		if (fx->Target != FX_TARGET_SELF) {
-			fx->Projectile = pro;
+		if (fx.Target != FX_TARGET_SELF) {
+			fx.Projectile = pro;
 			fxqueue->AddEffect( fx );
 		} else {
-			fx->Projectile = 0;
-			fx->PosX=pos.x;
-			fx->PosY=pos.y;
+			fx.Projectile = 0;
+			fx.PosX=pos.x;
+			fx.PosY=pos.y;
 			if (!selfqueue) {
 				selfqueue = new EffectQueue();
 			}
@@ -197,11 +190,11 @@ Projectile *Spell::GetProjectile(Scriptable *self, int header, const Point &targ
 	SPLExtHeader const* seh = GetExtHeader(header);
 	if (!seh) {
 		printMessage("Spell", "Cannot retrieve spell header!!! ",RED);
-		printf("required header: %d, maximum: %d\n", header, (int) ExtHeaderCount);
+		printf("required header: %d, maximum: %d\n", header, (int) ext_headers.size());
 		return NULL;
 	}
 	Projectile *pro = core->GetProjectileServer()->GetProjectileByIndex(seh->ProjectileAnimation);
-	if (seh->FeatureCount) {
+	if (seh->features.size()) {
 		pro->SetEffects(GetEffectBlock(self, target, header, seh->ProjectileAnimation));
 	}
 	return pro;
@@ -226,7 +219,7 @@ unsigned int Spell::GetCastingDistance(Scriptable *Sender) const
 	SPLExtHeader const* seh = GetExtHeader(idx);
 	if (!seh) {
 		printMessage("Spell", "Cannot retrieve spell header!!! ",RED);
-		printf("required header: %d, maximum: %d\n", idx, (int) ExtHeaderCount);
+		printf("required header: %d, maximum: %d\n", idx, (int) ext_headers.size());
 		return 0;
 	}
 
