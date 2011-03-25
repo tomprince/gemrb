@@ -21,7 +21,7 @@ their own files. User specific configuration is in other file (GemRB.cfg).
 [FIXME: eventually, this file could be searched for in user's config directory too]
 
 This file's path can be 
-  <source_dir>/gemrb/override/<game_type>/gemrb.ini
+  <source_dir>/src/override/<game_type>/gemrb.ini
   <install_share_dir>/gemrb/override/<game_type>/gemrb.ini
   <install_dir>/override/<game_type>/gemrb.ini
 

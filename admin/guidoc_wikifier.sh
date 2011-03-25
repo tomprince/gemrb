@@ -19,7 +19,7 @@
 #
 # this script takes the guiscript docs and prepares them to shine on dokuwiki
 
-docdir="${1:-$PWD/gemrb/docs/en/GUIScript}"
+docdir="${1:-$PWD/src/docs/en/GUIScript}"
 out_dir="${2:-$PWD/guiscript-docs.wikified}"
 scriptdir="${3:-$docdir/../../../GUIScripts}"
 index_title="GUIScript function listing"

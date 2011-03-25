@@ -25,7 +25,7 @@
  */
 
 
-// !!! NOTE: keep this file synchronized with gemrb/GUIScripts/ie_stats.py !!!
+// !!! NOTE: keep this file synchronized with src/GUIScripts/ie_stats.py !!!
 
 #ifndef IE_STATS_H
 #define IE_STATS_H

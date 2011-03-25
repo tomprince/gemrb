@@ -19,7 +19,7 @@
 
 # ie_restype.py - definitions of engine resource types
 
-# !!! NOTE: Keep this file synchronized with gemrb/includes/SClassID.h !!!
+# !!! NOTE: Keep this file synchronized with src/includes/SClassID.h !!!
 
 RES_2DA			=  0x000003F4
 RES_ACM			=  0x00010000

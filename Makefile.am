@@ -1,4 +1,4 @@
-SUBDIRS = gemrb
+SUBDIRS = src
 
 SPEC_FILES = \
         gemrb.spec \

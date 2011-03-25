@@ -30,7 +30,7 @@ ENDIF(DEFINED CMAKE_BUILD_TYPE)
 PROJECT(gemrb)
 # try to extract the version from the source
 execute_process(
-	COMMAND sed -n "s/\#define VERSION_GEMRB .\\([^\"]*\\).$/\\1/p" ${CMAKE_CURRENT_SOURCE_DIR}/gemrb/includes/globals.h
+	COMMAND sed -n "s/\#define VERSION_GEMRB .\\([^\"]*\\).$/\\1/p" ${CMAKE_CURRENT_SOURCE_DIR}/src/includes/globals.h
 	OUTPUT_VARIABLE GEMRB_VERSION
 	RESULT_VARIABLE RC
 	OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -226,7 +226,7 @@ if (STATIC_LINK)
 	endif (NOT WIN32 AND NOT APPLE)
 endif (STATIC_LINK)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} gemrb/includes gemrb/core)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} src/includes src/core)
 
 #Platform checks
 INCLUDE (CheckTypeSize)
@@ -274,7 +274,7 @@ MACRO(ADD_GEMRB_PLUGIN plugin_name)
 	endif (STATIC_LINK)
 	SET_TARGET_PROPERTIES(${plugin_name} PROPERTIES PREFIX ""
 		INSTALL_RPATH ${LIB_DIR}
-		LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/gemrb/plugins)
+		LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src/plugins)
 ENDMACRO(ADD_GEMRB_PLUGIN)
 
 #gemrb overrides macro
@@ -290,7 +290,7 @@ CONFIGURE_FILE(
 	IMMEDIATE @ONLY
 )
 
-ADD_SUBDIRECTORY( gemrb )
+ADD_SUBDIRECTORY( src )
 INSTALL( FILES "${CMAKE_CURRENT_BINARY_DIR}/gemrb.6" DESTINATION ${MAN_DIR} )
 INSTALL( FILES artwork/gemrb-logo.png DESTINATION ${ICON_DIR} RENAME gemrb.png )
 INSTALL( FILES artwork/logo04-rb_only.svg DESTINATION ${SVG_DIR} RENAME gemrb.svg )

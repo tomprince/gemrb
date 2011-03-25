@@ -10320,12 +10320,12 @@ char* QuotePath(char* tgt, const char* src)
 PyDoc_STRVAR( GemRB__doc,
 "Module exposing GemRB data and engine internals\n\n"
 "This module exposes to python GUIScripts GemRB engine data and internals."
-"It's implemented in gemrb/plugins/GUIScript/GUIScript.cpp" );
+"It's implemented in src/plugins/GUIScript/GUIScript.cpp" );
 
 PyDoc_STRVAR( GemRB_internal__doc,
 "Internal module for GemRB metaclasses.\n\n"
 "This module is only for implementing GUIClass.py."
-"It's implemented in gemrb/plugins/GUIScript/GUIScript.cpp" );
+"It's implemented in src/plugins/GUIScript/GUIScript.cpp" );
 
 /** Initialization Routine */
 

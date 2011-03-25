@@ -6,7 +6,7 @@ Following is a list of cheats you can use during development of GemRB.
 If you implement a new cheatkey, try to assign the same key as in the
 original engine (if you implement a similar function).
 This list can be incomplete and obsolete - for current status, look into
-gemrb/plugins/Core/GameControl.cpp, functions GameControl::OnKeyRelease() 
+src/plugins/Core/GameControl.cpp, functions GameControl::OnKeyRelease()
 and GameControl::Draw().
 
 Cheat keys are disabled by default. To activate them, either type command

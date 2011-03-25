@@ -33,6 +33,6 @@ else
     echo missing dir parameter - pass the path to the build dir
     exit 1
   fi &&
-  cd gemrb/plugins &&
+  cd src/plugins &&
   ln -sf */*.so .
 fi || return 2

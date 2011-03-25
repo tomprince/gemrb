@@ -22,7 +22,7 @@ if [[ ! -d admin ]]; then
   echo 'Run me from the top gemrb dir that contains the admin subdir!'
   exit 1
 fi
-docdir=gemrb/docs/en/GUIScript
+docdir=src/docs/en/GUIScript
 
 cd admin
 methods=$(./check_gui_doc.pl | grep ^+)
