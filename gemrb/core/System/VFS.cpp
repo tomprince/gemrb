@@ -46,6 +46,12 @@
 #define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
 #endif
 
+#ifndef WIN32
+bool CaseSensitive = true; //this is the default value, so CD1/CD2 will be resolved
+#else
+bool CaseSensitive = false;
+#endif
+
 #ifdef WIN32
 
 struct DIR {
@@ -165,7 +171,7 @@ bool FindInDir(const char* Dir, char *Filename)
 		return true;
 	}
 
-	if (!core->CaseSensitive) {
+	if (!CaseSensitive) {
 		return false;
 	}
 
@@ -307,7 +313,7 @@ void ResolveFilePath(char* FilePath)
 		}
 	}
 
-	if (core && !core->CaseSensitive) {
+	if (CaseSensitive) {
 		return;
 	}
 	strcpy(TempFilePath, FilePath);
@@ -327,7 +333,7 @@ void ResolveFilePath(std::string& FilePath)
 		}
 	}
 
-	if (core && !core->CaseSensitive) {
+	if (CaseSensitive) {
 		return;
 	}
 	PathJoin(TempFilePath, FilePath[0]==PathDelimiter?SPathDelimiter:"", FilePath.c_str(), NULL);

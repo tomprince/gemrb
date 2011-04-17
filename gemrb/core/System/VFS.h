@@ -74,6 +74,9 @@ const char PathListSeparator = ':';
 const char SPathDelimiter[] = { PathDelimiter, '\0' };
 const char SPathListSeparator[] = { PathListSeparator, '\0' };
 
+
+extern bool CaseSensitive;
+
 /**
  * Finds a file matching a glob.
  *
