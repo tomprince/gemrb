@@ -50,7 +50,7 @@
 #include "MoviePlayer.h"
 #include "MusicMgr.h"
 #include "Palette.h"
-#include "PluginMgr.h"
+#include "PluginLoader.h"
 #include "PluginMgr.h"
 #include "ProjectileServer.h"
 #include "SaveGameIterator.h"
@@ -128,6 +128,8 @@ Interface::Interface(int iargc, char* iargv[])
 		pl_uppercase[i]=(ieByte) toupper(i);
 		pl_lowercase[i]=(ieByte) tolower(i);
 	}
+
+	plugin_loader = new PluginLoader();
 
 	projserv = NULL;
 	VideoDriverName = "sdl";
@@ -463,6 +465,9 @@ Interface::~Interface(void)
 
 	// Removing all stuff from Cache, except bifs
 	if (!KeepCache) DelTree((const char *) CachePath, true);
+
+	// This is last because we unload plugins here.
+	delete plugin_loader;
 }
 
 void Interface::SetWindowFrame(int i, Sprite2D *Picture)
@@ -1428,7 +1433,7 @@ int Interface::Init()
 	}
 	printMessage( "Core", "Starting Plugin Manager...\n", WHITE );
 	PluginMgr *plugin = PluginMgr::Get();
-	plugin->LoadPlugins(PluginsPath);
+	plugin_loader->LoadPlugins(PluginsPath);
 	if (plugin && plugin->GetPluginCount()) {
 		printMessage( "Core", "Plugin Loading Complete...", WHITE );
 		printStatus( "OK", LIGHT_GREEN );

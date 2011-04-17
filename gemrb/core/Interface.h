@@ -74,6 +74,7 @@ class Label;
 class Map;
 class MusicMgr;
 class Palette;
+class PluginLoader;
 class ProjectileServer;
 class Resource;
 class SPLExtHeader;
@@ -275,6 +276,7 @@ enum PluginFlagsType {
 class GEM_EXPORT Interface
 {
 private:
+	PluginLoader* plugin_loader;
 	Holder<Video> video;
 	Holder<Audio> AudioDriver;
 	std::string VideoDriverName;
