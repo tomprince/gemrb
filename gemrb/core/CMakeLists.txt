@@ -31,6 +31,7 @@ FILE(GLOB gemrb_core_LIB_SRCS "*.cpp"
 	System/FileStream.cpp
 	System/Logging.cpp
 	System/SlicedStream.cpp
+	System/String.cpp
 	System/VFS.cpp
 	System/snprintf.cpp
 	)
