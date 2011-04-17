@@ -23,6 +23,7 @@
 #include "Interface.h"
 #include "Video.h"
 #include "Game.h"
+#include "GameData.h"
 
 Color sparkcolors[MAX_SPARK_COLOR][MAX_SPARK_PHASE];
 bool inited = false;
@@ -53,7 +54,7 @@ void TranslateColor(const char *value, Color &color)
 void InitSparks()
 {
 	int i,j;
-	AutoTable tab("sprklclr");
+	ResourceHolder<TableMgr> tab("sprklclr");
 	if (!tab)
 		return;
 

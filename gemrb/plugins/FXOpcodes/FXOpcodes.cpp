@@ -1312,7 +1312,7 @@ int SpellAbilityDieRoll(Actor *target, int which)
 
 	ieDword cls = STAT_GET(IE_CLASS);
 	if (!spell_abilities) {
-		AutoTable tab("clssplab");
+		ResourceHolder<TableMgr> tab("clssplab");
 		if (!tab) {
 			spell_abilities = (int *) malloc(sizeof(int)*CSA_CNT);
 			for (int ab=0;ab<CSA_CNT;ab++) {
@@ -3596,7 +3596,7 @@ void CopyPolymorphStats(Actor *source, Actor *target)
 	int i;
 
 	if(!polymorph_stats) {
-		AutoTable tab("polystat");
+		ResourceHolder<TableMgr> tab("polystat");
 		if (!tab) {
 			polymorph_stats = (int *) malloc(0);
 			polystatcount=0;
@@ -6588,7 +6588,7 @@ int fx_generate_wish (Scriptable* Owner, Actor* target, Effect* fx)
 	if (!fx->Resource[0]) {
 		memcpy(fx->Resource,"wishcode",8);
 	}
-	AutoTable tm(fx->Resource);
+	ResourceHolder<TableMgr> tm(fx->Resource);
 	if (!tm) {
 		return FX_NOT_APPLIED;
 	}

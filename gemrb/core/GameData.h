@@ -116,6 +116,12 @@ public:
 		: Holder<T>(static_cast<T*>(manager.GetResource(resname,&T::ID,silent)))
 	{
 	}
+	/// This is for backward compatibility with AutoTable
+	bool load(const char* resname)
+	{
+		*this = ResourceHolder(resname);
+		return *this;
+	}
 };
 
 #endif

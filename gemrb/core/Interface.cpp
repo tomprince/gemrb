@@ -689,7 +689,7 @@ bool GenerateAbilityTables()
 
 bool Interface::ReadAbilityTable(const ieResRef tablename, ieWordSigned *mem, int columns, int rows)
 {
-	AutoTable tab(tablename);
+	ResourceHolder<TableMgr> tab(tablename);
 	if (!tab) {
 		return false;
 	}
@@ -754,7 +754,7 @@ bool Interface::ReadAbilityTables()
 
 bool Interface::ReadGameTimeTable()
 {
-	AutoTable table("gametime");
+	ResourceHolder<TableMgr> table("gametime");
 	if (!table) {
 		return false;
 	}
@@ -772,7 +772,7 @@ bool Interface::ReadSpecialSpells()
 	int i;
 	bool result = true;
 
-	AutoTable table("splspec");
+	ResourceHolder<TableMgr> table("splspec");
 	if (table) {
 		SpecialSpellsCount = table->GetRowCount();
 		SpecialSpells = (SpellDescType *) malloc( sizeof(SpellDescType) * SpecialSpellsCount);
@@ -843,7 +843,7 @@ bool Interface::ReadAuxItemTables()
 		ItemExclTable->SetType(GEM_VARIABLES_INT);
 	}
 
-	AutoTable aa;
+	ResourceHolder<TableMgr> aa;
 
 	//don't report error when the file doesn't exist
 	if (aa.load("itemexcl")) {
@@ -972,7 +972,7 @@ bool Interface::ReadAreaAliasTable(const ieResRef tablename)
 		AreaAliasTable->SetType(GEM_VARIABLES_INT);
 	}
 
-	AutoTable aa(tablename);
+	ResourceHolder<TableMgr> aa(tablename);
 	if (!aa) {
 		//don't report error when the file doesn't exist
 		return true;
@@ -1001,7 +1001,7 @@ int Interface::GetAreaAlias(const ieResRef areaname) const
 }
 
 bool Interface::ReadMusicTable(const ieResRef tablename, int col) {
-	AutoTable tm(tablename);
+	ResourceHolder<TableMgr> tm(tablename);
 	if (!tm)
 		return false;
 
@@ -1013,7 +1013,7 @@ bool Interface::ReadMusicTable(const ieResRef tablename, int col) {
 }
 
 bool Interface::ReadDamageTypeTable() {
-	AutoTable tm("dmgtypes");
+	ResourceHolder<TableMgr> tm("dmgtypes");
 	if (!tm)
 		return false;
 
@@ -1030,7 +1030,7 @@ bool Interface::ReadDamageTypeTable() {
 }
 
 bool Interface::ReadReputationModTable() {
-	AutoTable tm("reputati");
+	ResourceHolder<TableMgr> tm("reputati");
 	if (!tm)
 		return false;
 
@@ -1048,7 +1048,7 @@ bool Interface::ReadReputationModTable() {
 
 bool Interface::ReadModalStates()
 {
-	AutoTable table("modal");
+	ResourceHolder<TableMgr> table("modal");
 	if (!table)
 		return false;
 
@@ -1146,7 +1146,7 @@ int Interface::ReadResRefTable(const ieResRef tablename, ieResRef *&data)
 		free(data);
 		data = NULL;
 	}
-	AutoTable tm(tablename);
+	ResourceHolder<TableMgr> tm(tablename);
 	if (!tm) {
 		printStatus( "ERROR", LIGHT_RED );
 		print( "Cannot find %s.2da.\n",tablename );
@@ -1297,7 +1297,7 @@ int Interface::LoadSprites()
 	printStatus( "OK", LIGHT_GREEN );
 
 	printMessage( "Core", "Loading Fonts...\n", WHITE );
-	AutoTable tab("fonts");
+	ResourceHolder<TableMgr> tab("fonts");
 	if (!tab) {
 		printStatus( "ERROR", LIGHT_RED );
 		print( "Cannot find fonts.2da.\nTermination in Progress...\n" );
@@ -3606,7 +3606,7 @@ int Interface::PlayMovie(const char* ResRef)
 		//ToB flag
 		vars->Lookup("Display Subtitles", subtitles);
 	}
-	AutoTable sttable;
+	ResourceHolder<TableMgr> sttable;
 	if (subtitles && sttable.load(ResRef)) {
 		cnt += sttable->GetRowCount();
 		if (cnt>0) {
@@ -4088,7 +4088,7 @@ bool Interface::InitItemTypes()
 	if (slotmatrix) {
 		free(slotmatrix);
 	}
-	AutoTable it("itemtype");
+	ResourceHolder<TableMgr> it("itemtype");
 	ItemTypes = 0;
 	if (it) {
 		ItemTypes = it->GetRowCount(); //number of itemtypes
@@ -4117,7 +4117,7 @@ bool Interface::InitItemTypes()
 
 	//slottype describes the inventory structure
 	Inventory::Init(HasFeature(GF_MAGICBIT));
-	AutoTable st("slottype");
+	ResourceHolder<TableMgr> st("slottype");
 	if (slottypes) {
 		free(slottypes);
 		slottypes = NULL;
@@ -4524,7 +4524,7 @@ bool Interface::ReadItemTable(const ieResRef TableName, const char * Prefix)
 	ieResRef ItemName;
 	int i,j;
 
-	AutoTable tab(TableName);
+	ResourceHolder<TableMgr> tab(TableName);
 	if (!tab) {
 		return false;
 	}
@@ -4566,7 +4566,7 @@ bool Interface::ReadRandomItems()
 		}
 		RtRows->SetType( GEM_VARIABLES_POINTER );
 	}
-	AutoTable tab("randitem");
+	ResourceHolder<TableMgr> tab("randitem");
 	if (!tab) {
 		return false;
 	}
@@ -5371,7 +5371,7 @@ void Interface::GetResRefFrom2DA(const ieResRef resref, ieResRef resource1, ieRe
 	if (resource3) {
 		resource3[0]=0;
 	}
-	AutoTable tab(resref);
+	ResourceHolder<TableMgr> tab(resref);
 	if (tab) {
 		unsigned int cols = tab->GetColumnCount();
 		unsigned int row = (unsigned int) Roll(1,tab->GetRowCount(),-1);
@@ -5387,7 +5387,7 @@ ieDword *Interface::GetListFrom2DAInternal(const ieResRef resref)
 {
 	ieDword *ret;
 
-	AutoTable tab(resref);
+	ResourceHolder<TableMgr> tab(resref);
 	if (tab) {
 		ieDword cnt = tab->GetRowCount();
 		ret = (ieDword *) malloc((1+cnt)*sizeof(ieDword));

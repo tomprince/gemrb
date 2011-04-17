@@ -445,7 +445,7 @@ int fx_multiple_vvc (Scriptable* Owner, Actor* /*target*/, Effect* fx)
 	if (!area)
 		return FX_NOT_APPLIED;
 
-	AutoTable tab(fx->Resource);
+	ResourceHolder<TableMgr> tab(fx->Resource);
 	if (!tab)
 		return FX_NOT_APPLIED;
 

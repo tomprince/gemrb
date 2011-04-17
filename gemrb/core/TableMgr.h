@@ -67,32 +67,4 @@ public:
 	virtual int FindTableValue(unsigned int column, const char* value, int start = 0) const = 0;
 };
 
-/**
- *  Utility class to automatically handle loading a table,
- *  and obtain and free a reference to it.
- */
-class GEM_EXPORT AutoTable
-{
-public:
-	AutoTable();
-	AutoTable(const char* ResRef);
-	~AutoTable();
-	AutoTable(const AutoTable &);
-	AutoTable& operator=(const AutoTable&);
-
-	bool load(const char* ResRef);
-	void release();
-	bool ok() const { return table; }
-	operator bool() const { return table; }
-
-	const TableMgr& operator*() const { return *table; }
-	const TableMgr* operator->() const { return &*table; }
-	const TableMgr* ptr() const { return &*table; }
-
-private:
-	Holder<TableMgr> table;
-	unsigned int tableref;
-};
-
-
 #endif  // ! TABLEMGR_H

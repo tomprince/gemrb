@@ -72,7 +72,7 @@ Game::Game(void) : Scriptable( ST_GLOBAL )
 	LastScriptUpdate = 0;
 
 	//loading master areas
-	AutoTable table;
+	ResourceHolder<TableMgr> table;
 	if (table.load("mastarea")) {
 		int i = table->GetRowCount();
 		mastarea.reserve(i);
@@ -365,8 +365,8 @@ void Game::InitActorPos(Actor *actor)
 	const char *mode[PMODE_COUNT] = { "NORMAL", "TUTORIAL", "EXPANSION" };
 
 	unsigned int ip = (unsigned int) (actor->InParty-1);
-	AutoTable start("start");
-	AutoTable strta("startpos");
+	ResourceHolder<TableMgr> start("start");
+	ResourceHolder<TableMgr> strta("startpos");
 
 	if (!start || !strta) {
 		printMessage("Game","Game is missing character start data.\n",RED);
@@ -996,8 +996,8 @@ char *Game::GetFamiliar(unsigned int Index)
 //reading the challenge rating table for iwd2 (only when needed)
 void Game::LoadCRTable()
 {
-	AutoTable table("moncrate");
-	if (table.ok()) {
+	ResourceHolder<TableMgr> table("moncrate");
+	if (table) {
 		int maxrow = table->GetRowCount()-1;
 		crtable = new CRRow[MAX_LEVEL];
 		for(int i=0;i<MAX_LEVEL;i++) {

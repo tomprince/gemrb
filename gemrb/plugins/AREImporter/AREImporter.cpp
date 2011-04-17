@@ -94,8 +94,8 @@ int GetTrackString(const ieResRef areaName)
 	bool trackflag = displaymsg->HasStringReference(STR_TRACKING);
 
 	if (!tracks) {
-		AutoTable tm("tracking");
-		if (!tm.ok())
+		ResourceHolder<TableMgr> tm("tracking");
+		if (!tm)
 			return -1;
 		trackcount = tm->GetRowCount();
 		tracks = new ResRefToStrRef[trackcount];
@@ -127,8 +127,8 @@ AREImporter::AREImporter(void)
 	str = NULL;
 	if (Sounds[0][0] == UNINITIALIZED_BYTE) {
 		memset( Sounds, 0, sizeof( Sounds ) );
-		AutoTable at("defsound");
-		if (at.ok()) {
+		ResourceHolder<TableMgr> at("defsound");
+		if (at) {
 			for (int i = 0; i < DEF_COUNT; i++) {
 				strncpy( Sounds[i], at->QueryField( i, 0 ), 8 );
 				if(Sounds[i][0]=='*') {

@@ -20,8 +20,6 @@
 
 #include "TableMgr.h"
 
-#include "GameData.h"
-
 const TypeID TableMgr::ID = { "TableMgr" };
 
 TableMgr::TableMgr()
@@ -30,56 +28,3 @@ TableMgr::TableMgr()
 TableMgr::~TableMgr()
 {
 }
-
-
-AutoTable::AutoTable()
-{
-}
-
-AutoTable::AutoTable(const char* ResRef)
-{
-	load(ResRef);
-}
-
-AutoTable::AutoTable(const AutoTable& other)
-{
-	*this = other;
-}
-
-AutoTable& AutoTable::operator=(const AutoTable& other)
-{
-	if (other.table) {
-		tableref = other.tableref;
-		table = gamedata->GetTable(tableref);
-	} else {
-		table.release();
-	}
-	return *this;
-}
-
-bool AutoTable::load(const char* ResRef)
-{
-	release();
-
-	int ref = gamedata->LoadTable(ResRef);
-	if (ref == -1)
-		return false;
-
-	tableref = (unsigned int)ref;
-	table = gamedata->GetTable(tableref);
-	return true;
-}
-
-AutoTable::~AutoTable()
-{
-	release();
-}
-
-void AutoTable::release()
-{
-	if (table) {
-		gamedata->DelTable(tableref);
-		table.release();
-	}
-}
-

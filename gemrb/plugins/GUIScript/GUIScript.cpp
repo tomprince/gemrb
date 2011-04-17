@@ -2498,7 +2498,7 @@ static PyObject* GemRB_AddNewArea(PyObject * /*self*/, PyObject* args)
 		return AttributeError( GemRB_AddNewArea__doc );
 	}
 
-	AutoTable newarea(resref);
+	ResourceHolder<TableMgr> newarea(resref);
 	if (!newarea) {
 		return RuntimeError( "2da not found!\n");
 	}
@@ -2539,7 +2539,7 @@ static PyObject* GemRB_AddNewArea(PyObject * /*self*/, PyObject* args)
 		}
 		unsigned int total = linksto+local;
 
-		AutoTable newlinks(ltab);
+		ResourceHolder<TableMgr> newlinks(ltab);
 		if (!newlinks || total != newlinks->GetRowCount() ) {
 			return RuntimeError( "invalid links 2da!");
 		}

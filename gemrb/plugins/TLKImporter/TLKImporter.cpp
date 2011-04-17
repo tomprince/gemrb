@@ -26,6 +26,7 @@
 #include "Calendar.h"
 #include "DialogHandler.h"
 #include "Game.h"
+#include "GameData.h"
 #include "Interface.h"
 #include "GUI/GameControl.h"
 
@@ -55,7 +56,7 @@ TLKImporter::TLKImporter(void)
 	override = NULL;
 	autoFree = false;
 
-	AutoTable tm("gender");
+	ResourceHolder<TableMgr> tm("gender");
 	if (tm) {
 		gtcount = tm->GetRowCount();
 	} else {
@@ -199,7 +200,7 @@ int TLKImporter::RaceStrRef(int slot)
 		race=0;
 	}
 
-	AutoTable tab("races");
+	ResourceHolder<TableMgr> tab("races");
 	if (!tab) {
 		return -1;
 	}
@@ -270,7 +271,7 @@ int TLKImporter::BuiltinToken(char* Token, char* dest)
 		ieDword row = 0; //default value is 0 (generalist)
 		//this is subject to change, the row number in magesch.2da
 		core->GetDictionary()->Lookup( "MAGESCHOOL", row ); 
-		AutoTable tm("magesch");
+		ResourceHolder<TableMgr> tm("magesch");
 		if (tm) {
 			const char* value = tm->QueryField( row, 2 );
 			Decoded = GetString( atoi( value ), 0 );

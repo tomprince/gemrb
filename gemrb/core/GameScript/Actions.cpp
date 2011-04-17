@@ -3096,7 +3096,7 @@ void GameScript::AddXPObject(Scriptable* Sender, Action* parameters)
 
 void GameScript::AddXP2DA(Scriptable* /*Sender*/, Action* parameters)
 {
-	AutoTable xptable;
+	ResourceHolder<TableMgr> xptable;
 
 	if (core->HasFeature(GF_HAS_EXPTABLE) ) {
 		xptable.load("exptable");
@@ -3220,7 +3220,7 @@ void GameScript::JoinParty(Scriptable* Sender, Action* parameters)
 		act->SetScript( "", SCR_GENERAL, true );
 		act->SetScript( "DPLAYER2", SCR_DEFAULT, false );
 	}
-	AutoTable pdtable("pdialog");
+	ResourceHolder<TableMgr> pdtable("pdialog");
 	if (pdtable) {
 		const char* scriptname = act->GetScriptName();
 		ieResRef resref;
@@ -3756,7 +3756,7 @@ void GameScript::SetLeavePartyDialogFile(Scriptable* Sender, Action* /*parameter
 	if (Sender->Type != ST_ACTOR) {
 		return;
 	}
-	AutoTable pdtable("pdialog");
+	ResourceHolder<TableMgr> pdtable("pdialog");
 	Actor* act = ( Actor* ) Sender;
 	const char* scriptingname = act->GetScriptName();
 	act->SetDialog( pdtable->QueryField( scriptingname, "POST_DIALOG_FILE" ) );
@@ -4659,7 +4659,7 @@ void GameScript::TakeItemList(Scriptable * Sender, Action* parameters)
 	if (!tar || tar->Type!=ST_ACTOR) {
 		return;
 	}
-	AutoTable tab(parameters->string0Parameter);
+	ResourceHolder<TableMgr> tab(parameters->string0Parameter);
 	if (!tab) {
 		return;
 	}
@@ -4672,7 +4672,7 @@ void GameScript::TakeItemList(Scriptable * Sender, Action* parameters)
 
 void GameScript::TakeItemListParty(Scriptable * Sender, Action* parameters)
 {
-	AutoTable tab(parameters->string0Parameter);
+	ResourceHolder<TableMgr> tab(parameters->string0Parameter);
 	if (!tab) {
 		return;
 	}
@@ -4689,7 +4689,7 @@ void GameScript::TakeItemListParty(Scriptable * Sender, Action* parameters)
 
 void GameScript::TakeItemListPartyNum(Scriptable * Sender, Action* parameters)
 {
-	AutoTable tab(parameters->string0Parameter);
+	ResourceHolder<TableMgr> tab(parameters->string0Parameter);
 	if (!tab) {
 		return;
 	}
@@ -5846,7 +5846,7 @@ void GameScript::SaveGame(Scriptable* /*Sender*/, Action* parameters)
 {
 	if (core->HasFeature(GF_STRREF_SAVEGAME)) {
 		const char *basename = "Auto-Save";
-		AutoTable tab("savegame");
+		ResourceHolder<TableMgr> tab("savegame");
 		if (tab) {
 			basename = tab->QueryDefault();
 		}
@@ -6905,7 +6905,7 @@ void GameScript::TransformPartyItemAll(Scriptable* /*Sender*/, Action* parameter
 
 void GameScript::GeneratePartyMember(Scriptable* /*Sender*/, Action* parameters)
 {
-	AutoTable pcs("bios");
+	ResourceHolder<TableMgr> pcs("bios");
 	if (!pcs) {
 		return;
 	}
@@ -7147,7 +7147,7 @@ void GameScript::SetToken2DA(Scriptable* /*Sender*/, Action* parameters)
 	int i,j;
 	ieVariable tokenname;
 
-	AutoTable tm(parameters->string0Parameter);
+	ResourceHolder<TableMgr> tm(parameters->string0Parameter);
 	if (!tm) {
 		printStatus( "ERROR", LIGHT_RED );
 		print( "Cannot find %s.2da.\n", parameters->string0Parameter);

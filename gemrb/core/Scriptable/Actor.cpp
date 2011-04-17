@@ -620,7 +620,7 @@ void Actor::SetCircleSize()
 
 static void ApplyClab_internal(Actor *actor, const char *clab, int level, bool remove)
 {
-	AutoTable table(clab);
+	ResourceHolder<TableMgr> table(clab);
 	if (table) {
 		int row = table->GetRowCount();
 		for(int i=0;i<level;i++) {
@@ -1374,7 +1374,7 @@ static void InitActorTables()
 	DeathOnZeroStat = core->HasFeature(GF_DEATH_ON_ZERO_STAT);
 
 	//this table lists various level based xp bonuses
-	AutoTable tm("xpbonus");
+	ResourceHolder<TableMgr> tm("xpbonus");
 	if (tm) {
 		xpbonustypes = tm->GetRowCount();
 		if (xpbonustypes == 0) {
@@ -1632,7 +1632,7 @@ static void InitActorTables()
 	}
 	tm.load("classes");
 	if (tm && !core->HasFeature(GF_LEVELSLOT_PER_CLASS)) {
-		AutoTable hptm;
+		ResourceHolder<TableMgr> hptm;
 		//iwd2 just uses levelslotsiwd2 instead
 		print("Examining classes.2da\n");
 
@@ -2520,7 +2520,7 @@ void Actor::Response(int type)
 
 void Actor::ReactToDeath(const char * deadname)
 {
-	AutoTable tm("death");
+	ResourceHolder<TableMgr> tm("death");
 	if (!tm) return;
 	// lookup value based on died's scriptingname and ours
 	// if value is 0 - use reactdeath
@@ -5587,7 +5587,7 @@ void Actor::GetSoundFrom2DA(ieResRef Sound, unsigned int index) const
 {
 	if (!anims) return;
 
-	AutoTable tab(anims->ResRef);
+	ResourceHolder<TableMgr> tab(anims->ResRef);
 	if (!tab)
 		return;
 
@@ -6233,7 +6233,7 @@ void Actor::SetupFistData()
 {
 	if (FistRows<0) {
 		FistRows=0;
-		AutoTable fist("fistweap");
+		ResourceHolder<TableMgr> fist("fistweap");
 		if (fist) {
 			//default value
 			strnlwrcpy( DefaultFist, fist->QueryField( (unsigned int) -1), 8);
@@ -6517,7 +6517,7 @@ void Actor::CreateDerivedStatsBG()
 		if ((BaseStats[IE_KIT]&0xfff) == 12) {
 			backstabdamagemultiplier = 1;
 		} else {
-			AutoTable tm("backstab");
+			ResourceHolder<TableMgr> tm("backstab");
 			//fallback to a general algorithm (bg2 backstab.2da version) if we can't find backstab.2da
 			//TODO: AP_SPCL332 (increase backstab by one) seems to not be effecting this at all
 			//for assassins perhaps the effect is being called prior to this, and this overwrites it;
@@ -6558,7 +6558,7 @@ void Actor::CreateDerivedStatsIWD2()
 
 	ieDword backstabdamagemultiplier=GetThiefLevel();
 	if (backstabdamagemultiplier) {
-		AutoTable tm("backstab");
+		ResourceHolder<TableMgr> tm("backstab");
 		if (tm)	{
 			ieDword cols = tm->GetColumnCount();
 			if (backstabdamagemultiplier >= cols) backstabdamagemultiplier = cols;
@@ -6595,7 +6595,7 @@ void Actor::CreateDerivedStatsIWD2()
 void Actor::CreateDerivedStats()
 {
 	//we have to calculate multiclass for further code
-	AutoTable tm("classes");
+	ResourceHolder<TableMgr> tm("classes");
 	if (tm) {
 		// currently we need only the MULTI value
 		char tmpmulti[8];

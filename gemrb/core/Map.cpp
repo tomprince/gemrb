@@ -164,7 +164,7 @@ void InitSpawnGroups()
 	ieResRef GroupName;
 	int i;
 
-	AutoTable tab("spawngrp");
+	ResourceHolder<TableMgr> tab("spawngrp");
 
 	Spawns.RemoveAll(NULL);
 	Spawns.SetType( GEM_VARIABLES_POINTER );
@@ -197,7 +197,7 @@ void InitPathFinder()
 {
 	PathFinderInited = true;
 	tsndcount = 0;
-	AutoTable tm("pathfind");
+	ResourceHolder<TableMgr> tm("pathfind");
 
 	if (!tm) {
 		return;

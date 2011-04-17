@@ -23,6 +23,7 @@
 #include "win32def.h"
 
 #include "EffectMgr.h"
+#include "GameData.h"
 #include "Interface.h"
 #include "TableMgr.h" //needed for autotable
 
@@ -37,7 +38,7 @@ void Initializer()
 		cgsounds = NULL;
 	}
 	cgcount = 0;
-	AutoTable tm("cgtable");
+	ResourceHolder<TableMgr> tm("cgtable");
 	if (!tm) {
 		printStatus( "ERROR", LIGHT_RED );
 		print( "Cannot find cgtable.2da.\n");

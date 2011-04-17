@@ -184,7 +184,7 @@ int ProjectileServer::InitExplosion()
 		return explosioncount;
 	}
 
-	AutoTable explist("areapro");
+	ResourceHolder<TableMgr> explist("areapro");
 	if (explist) {
 		explosioncount = 0;
 

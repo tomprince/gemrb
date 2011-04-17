@@ -404,7 +404,7 @@ static void ReadSpellProtTable(const ieResRef tablename)
 	}
 	spellres = NULL;
 	spellrescnt = 0;
-	AutoTable tab(tablename);
+	ResourceHolder<TableMgr> tab(tablename);
 	if (!tab) {
 		return;
 	}
@@ -1378,7 +1378,7 @@ int fx_summon_pomab (Scriptable* Owner, Actor* target, Effect* fx)
 		memcpy(tableResRef,"pomab",6);
 	}
 
-	AutoTable tab(tableResRef);
+	ResourceHolder<TableMgr> tab(tableResRef);
 	if (!tab) {
 		return FX_NOT_APPLIED;
 	}

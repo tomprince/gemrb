@@ -23,6 +23,7 @@
 #include "win32def.h"
 
 #include "Game.h"
+#include "GameData.h"
 #include "Interface.h"
 #include "Video.h"
 
@@ -511,7 +512,7 @@ void WorldMap::SetAreaStatus(const ieResRef AreaName, int Bits, int Op)
 
 void WorldMap::UpdateReachableAreas()
 {
-	AutoTable tab("worlde");
+	ResourceHolder<TableMgr> tab("worlde");
 	if (!tab) {
 		return;
 	}

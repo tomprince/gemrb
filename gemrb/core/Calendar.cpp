@@ -22,6 +22,7 @@
 
 #include "win32def.h"
 
+#include "GameData.h"
 #include "Interface.h"
 #include "TableMgr.h"
 #include "Variables.h"
@@ -29,7 +30,7 @@
 Calendar::Calendar(void)
 {
 	int i;
-	AutoTable tab("months");
+	ResourceHolder<TableMgr> tab("months");
 	if (!tab) {
 		monthnamecount=-1;
 		monthnames = NULL;

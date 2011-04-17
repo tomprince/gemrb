@@ -279,7 +279,7 @@ void ReleaseMemoryCRE()
 static ieResRef *GetSpellTable(const ieResRef tableresref, int &count)
 {
 	count = 0;
-	AutoTable tab(tableresref);
+	ResourceHolder<TableMgr> tab(tableresref);
 	if (!tab)
 		return 0;
 
@@ -299,7 +299,7 @@ static ieResRef *GetSpellTable(const ieResRef tableresref, int &count)
 static SpellEntry *GetKitSpell(const ieResRef tableresref, int &count)
 {
 	count = 0;
-	AutoTable tab(tableresref);
+	ResourceHolder<TableMgr> tab(tableresref);
 	if (!tab)
 		return 0;
 
@@ -654,7 +654,7 @@ void CREImporter::SetupColor(ieDword &stat)
 	if (RandColor==-1) {
 		RandColor=0;
 		RandRows=0;
-		AutoTable rndcol("randcolr");
+		ResourceHolder<TableMgr> rndcol("randcolr");
 		if (rndcol) {
 			RandColor = rndcol->GetColumnCount();
 			RandRows = rndcol->GetRowCount();

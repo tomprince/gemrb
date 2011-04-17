@@ -520,7 +520,7 @@ static void CreateSavePath(char *Path, int index, const char *slotname)
 
 int SaveGameIterator::CreateSaveGame(int index, bool mqs)
 {
-	AutoTable tab("savegame");
+	ResourceHolder<TableMgr> tab("savegame");
 	const char *slotname = NULL;
 	int qsave = 0;
 

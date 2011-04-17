@@ -22,6 +22,7 @@
 
 #include "strrefs.h"
 
+#include "GameData.h"
 #include "Interface.h"
 #include "TableMgr.h"
 #include "GUI/Label.h"
@@ -47,7 +48,7 @@ bool DisplayMessage::ReadStrrefs()
 {
 	int i;
 	memset(strref_table,-1,sizeof(strref_table) );
-	AutoTable tab("strings");
+	ResourceHolder<TableMgr> tab("strings");
 	if (!tab) {
 		return false;
 	}

@@ -165,7 +165,7 @@ GameControl::GameControl(void)
 void GameControl::ReadFormations()
 {
 	unsigned int i,j;
-	AutoTable tab("formatio");
+	ResourceHolder<TableMgr> tab("formatio");
 	if (!tab) {
 		// fallback
 		formationcount = 1;

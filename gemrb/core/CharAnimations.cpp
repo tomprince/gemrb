@@ -446,7 +446,7 @@ static int compare_avatars(const void *a, const void *b)
 
 void CharAnimations::InitAvatarsTable()
 {
-	AutoTable Avatars("avatars");
+	ResourceHolder<TableMgr> Avatars("avatars");
 	if (!Avatars) {
 		printMessage("CharAnimations", "A critical animation file is missing!\n", LIGHT_RED);
 		abort();
@@ -499,7 +499,7 @@ void CharAnimations::InitAvatarsTable()
 	qsort(AvatarTable, AvatarsCount, sizeof(AvatarStruct), compare_avatars);
 
 
-	AutoTable blood("bloodclr");
+	ResourceHolder<TableMgr> blood("bloodclr");
 	if (blood) {
 		int rows = blood->GetRowCount();
 		for(int i=0;i<rows;i++) {
@@ -524,7 +524,7 @@ void CharAnimations::InitAvatarsTable()
 		}
 	}
 
-	AutoTable walk("walksnd");
+	ResourceHolder<TableMgr> walk("walksnd");
 	if (walk) {
 		int rows = walk->GetRowCount();
 		for(int i=0;i<rows;i++) {

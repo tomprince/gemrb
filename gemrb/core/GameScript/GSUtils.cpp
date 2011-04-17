@@ -79,7 +79,7 @@ void InitScriptTables()
 {
 	//initializing the happiness table
 	{
-	AutoTable tab("happy");
+	ResourceHolder<TableMgr> tab("happy");
 	if (tab) {
 		for (int alignment=0;alignment<3;alignment++) {
 			for (int reputation=0;reputation<20;reputation++) {
@@ -90,7 +90,7 @@ void InitScriptTables()
 	}
 
 	//initializing the reaction mod. reputation table
-	AutoTable rmr("rmodrep");
+	ResourceHolder<TableMgr> rmr("rmodrep");
 	if (rmr) {
 		for (int reputation=0; reputation<20; reputation++) {
 			rmodrep[reputation] = strtol(rmr->QueryField(0, reputation), NULL, 0);
@@ -98,7 +98,7 @@ void InitScriptTables()
 	}
 
 	//initializing the reaction mod. charisma table
-	AutoTable rmc("rmodchr");
+	ResourceHolder<TableMgr> rmc("rmodchr");
 	if (rmc) {
 		for (int charisma=0; charisma<25; charisma++) {
 			rmodchr[charisma] = strtol(rmc->QueryField(0, charisma), NULL, 0);
@@ -799,7 +799,7 @@ void GetPositionFromScriptable(Scriptable* scr, Point &position, bool dest)
 
 int CheckInteract(const char *talker, const char *target)
 {
-	AutoTable interact("interact");
+	ResourceHolder<TableMgr> interact("interact");
 	if(!interact)
 		return 0;
 	const char *value = interact->QueryField(talker, target);
@@ -943,7 +943,7 @@ void BeginDialog(Scriptable* Sender, Action* parameters, int Flags)
 	core->SetCutSceneMode(false);
 
 	const char* Dialog = NULL;
-	AutoTable pdtable;
+	ResourceHolder<TableMgr> pdtable;
 
 	switch (Flags & BD_LOCMASK) {
 		case BD_STRING0:
@@ -2149,7 +2149,7 @@ Point GetEntryPoint(const char *areaname, const char *entryname)
 {
 	Point p;
 
-	AutoTable tab("entries");
+	ResourceHolder<TableMgr> tab("entries");
 	if (!tab) {
 		return p;
 	}
@@ -2217,7 +2217,7 @@ void SetupWishCore(Scriptable *Sender, int column, int picks)
 	//FIXME: find out what the original really used the picks parameter for
 	if (picks == 1) picks = 5;
 
-	AutoTable tm("wish");
+	ResourceHolder<TableMgr> tm("wish");
 	if (!tm) {
 		printStatus( "ERROR", LIGHT_RED );
 		print( "Cannot find wish.2da.\n");
@@ -2282,7 +2282,7 @@ Gem_Polygon *GetPolygon2DA(ieDword index)
 		return polygons[index];
 	}
 	snprintf(resref, sizeof(ieResRef), "ISLAND%02d", index);
-	AutoTable tm(resref);
+	ResourceHolder<TableMgr> tm(resref);
 	if (!tm) {
 		return NULL;
 	}

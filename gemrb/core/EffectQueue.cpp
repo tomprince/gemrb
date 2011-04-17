@@ -23,6 +23,7 @@
 #include "DisplayMessage.h"
 #include "Effect.h"
 #include "Game.h"
+#include "GameData.h"
 #include "Interface.h"
 #include "Map.h"
 #include "SymbolMgr.h"
@@ -215,7 +216,7 @@ bool Init_EffectQueue()
 
 	initialized = 1;
 
-	AutoTable efftextTable("efftext");
+	ResourceHolder<TableMgr> efftextTable("efftext");
 
 	int eT = core->LoadSymbol( "effects" );
 	if( eT < 0) {
