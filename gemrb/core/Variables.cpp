@@ -1,5 +1,5 @@
 /* GemRB - Infinity Engine Emulator
- * Copyright (C) 2003 The GemRB Project
+ * Copyright (C) 2003 |Avenger|
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -8,7 +8,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
 
 #include "Variables.h"
 
-#include "Interface.h" // for LoadInitialValues
 #include "System/FileStream.h" // for LoadInitialValues
 
 /////////////////////////////////////////////////////////////////////////////
@@ -471,36 +470,4 @@ void Variables::Remove(const char* key)
 	}
 	pAssoc->pNext = 0;
 	FreeAssoc(pAssoc);
-}
-
-void Variables::LoadInitialValues(const char* name)
-{
-	char nPath[_MAX_PATH];
-	// we only support PST's var.var for now
-	PathJoin( nPath, core->GamePath, "var.var", NULL );
-	FileStream fs;
-	if (!fs.Open(nPath)) {
-		return;
-	}
-
-	char buffer[41];
-	ieDword value;
-	buffer[40] = 0;
-	ieVariable varname;
-	
-	// first value is useless
-	if (!fs.Read(buffer, 40)) return;
-	if (fs.ReadDword(&value) != 4) return;
-	
-	while (fs.Remains()) {
-		// read data
-		if (!fs.Read(buffer, 40)) return;
-		if (fs.ReadDword(&value) != 4) return;
-		// is it the type we want? if not, skip
-		if (strnicmp(buffer, name, 6)) continue;
-		// copy variable (types got 2 extra spaces, and the name is padded too)
-		// (true = uppercase, needed for original engine save compat, see 315b8f2e)
-		strnspccpy(varname,buffer+8,32, true);
-		SetAt(varname, value);
-	}  
 }

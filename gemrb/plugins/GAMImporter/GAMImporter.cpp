@@ -27,6 +27,7 @@
 #include "GameData.h"
 #include "Interface.h"
 #include "MapMgr.h"
+#include "VarFile.h"
 #include "System/SlicedStream.h"
 
 #include <cassert>
@@ -216,7 +217,7 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 	newGame->locals->SetAt("CHAPTER", (ieDword) -1, core->HasFeature(GF_NO_NEW_VARIABLES));
 
 	// load initial values from var.var
-	newGame->locals->LoadInitialValues("GLOBAL");
+	LoadInitialValues(newGame->locals, "GLOBAL");
 
 	//Loading Global Variables
 	ieVariable Name;
@@ -235,7 +236,7 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 		newGame->kaputz->SetType( GEM_VARIABLES_INT );
 		newGame->kaputz->ParseKey( 1 );
 		// load initial values from var.var
-		newGame->kaputz->LoadInitialValues("KAPUTZ");
+		LoadInitialValues(newGame->kaputz, "KAPUTZ");
 		str->Seek( KillVarsOffset, GEM_STREAM_START );
 		for (i = 0; i < KillVarsCount; i++) {
 			ieDword Value;

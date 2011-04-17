@@ -35,6 +35,7 @@
 #include "Palette.h"
 #include "ProjectileServer.h"
 #include "TileMapMgr.h"
+#include "VarFile.h"
 #include "Video.h"
 #include "GameScript/GameScript.h"
 #include "Scriptable/Container.h"
@@ -1037,7 +1038,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	}
 
 	print( "Loading variables\n" );
-	map->locals->LoadInitialValues(ResRef);
+	LoadInitialValues(map->locals, ResRef);
 	//Loading Variables
 	str->Seek( VariablesOffset, GEM_STREAM_START );
 	for (i = 0; i < VariablesCount; i++) {
