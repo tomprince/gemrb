@@ -30,14 +30,16 @@
 
 #include "globals.h"
 
-#include "Plugin.h"
+#include "Resource.h"
 
 /**
  * @class TableMgr
  * Abstract loader for Table objects (.2DA files)
  */
 
-class GEM_EXPORT TableMgr : public Plugin {
+class GEM_EXPORT TableMgr : public Resource {
+public:
+	static const TypeID ID;
 public: 
 	TableMgr();
 	virtual ~TableMgr();
@@ -63,9 +65,6 @@ public:
 	virtual const char* GetRowName(unsigned int index) const = 0;
 	virtual int FindTableValue(unsigned int column, long value, int start = 0) const = 0;
 	virtual int FindTableValue(unsigned int column, const char* value, int start = 0) const = 0;
-
-	/** Opens a Table File */
-	virtual bool Open(DataStream* stream, bool autoFree = true) = 0;
 };
 
 /**

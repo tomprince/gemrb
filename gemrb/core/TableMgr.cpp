@@ -21,7 +21,8 @@
 #include "TableMgr.h"
 
 #include "GameData.h"
-#include "Interface.h"
+
+const TypeID TableMgr::ID = { "TableMgr" };
 
 TableMgr::TableMgr()
 {

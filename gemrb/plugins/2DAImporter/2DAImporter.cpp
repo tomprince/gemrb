@@ -30,30 +30,24 @@
 
 p2DAImporter::p2DAImporter(void)
 {
-	str = NULL;
-	autoFree = false;
 }
 
 p2DAImporter::~p2DAImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
 	for (unsigned int i = 0; i < ptrs.size(); i++) {
 		free( ptrs[i] );
 	}
 }
 
-bool p2DAImporter::Open(DataStream* stream, bool autoFree)
+bool p2DAImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
+	if (str) {
 		delete( str );
 	}
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[SIGNLENGTH];
 	str->CheckEncrypted();
 
@@ -117,4 +111,5 @@ bool p2DAImporter::Open(DataStream* stream, bool autoFree)
 
 GEMRB_PLUGIN(0xB22F938, "2DA File Importer")
 PLUGIN_CLASS(IE_2DA_CLASS_ID, p2DAImporter)
+PLUGIN_IE_RESOURCE(p2DAImporter, "2da", (ieWord)IE_2DA_CLASS_ID)
 END_PLUGIN()

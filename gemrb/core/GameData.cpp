@@ -159,7 +159,7 @@ int GameData::LoadTable(const ieResRef ResRef)
 		delete str;
 		return -1;
 	}
-	if (!tm->Open( str, true )) {
+	if (!tm->Open( str )) {
 		return -1;
 	}
 	Table t;
