@@ -10550,7 +10550,7 @@ PyObject *GUIScript::CallbackFunction(const char* fname, PyObject* pArgs)
 	return pValue;
 }
 
-bool GUIScript::RunFunction(const char *ModuleName, const char* FunctionName, bool error, int intparam)
+bool GUIScript::RunFunction(const char *ModuleName, const char* FunctionName, bool report_error, int intparam)
 {
 	if (!Py_IsInitialized()) {
 		return false;
@@ -10572,7 +10572,7 @@ bool GUIScript::RunFunction(const char *ModuleName, const char* FunctionName, bo
 	PyObject *pFunc = PyDict_GetItemString( dict, const_cast<char*>(FunctionName) );
 	/* pFunc: Borrowed reference */
 	if (( !pFunc ) || ( !PyCallable_Check( pFunc ) )) {
-		if (error) {
+		if (report_error) {
 			printMessage("GUIScript", "Missing function:%s\n", LIGHT_RED, FunctionName);
 		}
 		Py_DECREF(module);

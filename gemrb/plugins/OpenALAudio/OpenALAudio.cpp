@@ -26,10 +26,10 @@
 #include <cstdio>
 
 bool checkALError(const char* msg, const char* status) {
-	int error = alGetError();
-	if (error != AL_NO_ERROR) {
+	int al_error = alGetError();
+	if (al_error != AL_NO_ERROR) {
 		printMessage("OpenAL", "%s", WHITE, msg);
-		print (": 0x%x ", error);
+		print (": 0x%x ", al_error);
 		printStatus(status, YELLOW);
 		return true;
 	}
@@ -37,10 +37,10 @@ bool checkALError(const char* msg, const char* status) {
 }
 
 void showALCError(const char* msg, const char* status, ALCdevice *device) {
-	int error = alcGetError(device);
+	int al_error = alcGetError(device);
 	printMessage("OpenAL", "%s", WHITE, msg );
-	if (error != AL_NO_ERROR) {
-		print (": 0x%x ", error);
+	if (al_error != AL_NO_ERROR) {
+		print (": 0x%x ", al_error);
 	}
 	printStatus(status, YELLOW);
 }
