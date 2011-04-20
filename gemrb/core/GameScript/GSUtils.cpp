@@ -1457,8 +1457,7 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 
 			case 'o': //Object
 				if (objectCount==3) {
-					print("Invalid object count!\n");
-					//abort();
+					error("GameScript", "Invalid object count!\n");
 					delete newAction;
 					return NULL;
 				}
@@ -1511,8 +1510,7 @@ Action* GenerateActionCore(const char *src, const char *str, unsigned short acti
 				if (mergestrings) {
 					str++;
 					if (*str!='s') {
-						print("Invalid mergestrings:%s\n",str);
-						//abort();
+						error("GameScript", "Invalid mergestrings:%s\n",str);
 						delete newAction;
 						return NULL;
 					}
@@ -1828,8 +1826,7 @@ Trigger *GenerateTriggerCore(const char *src, const char *str, int trIndex, int 
 				if (mergestrings) {
 					str++;
 					if (*str!='s') {
-						print("Invalid mergestrings:%s\n",str);
-						//abort();
+						error("GameScript", "Invalid mergestrings:%s\n",str);
 						delete newTrigger;
 						return NULL;
 					}
