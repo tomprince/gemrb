@@ -76,11 +76,20 @@ GEM_EXPORT void printMessage(const char* owner, const char* message, log_color c
 #endif
 	;
 
-GEM_EXPORT void error(const char* owner, const char* message, ...)
+/// Internal error reporting function. Exits GemRB
+struct GEM_EXPORT gemrb_error {
+	const char *file;
+	unsigned line;
+	gemrb_error(const char *file, unsigned line)
+		: file(file), line(line)
+	{}
+	void operator()(const char* owner, const char* message, ...)
 #if defined(__GNUC__)
-	__attribute__ ((format(printf, 2, 3), noreturn))
+		__attribute__ ((format(printf, 3, 4), noreturn))
 #endif
-	;
+		;
+};
+#define error (gemrb_error(__FILE__, __LINE__))
 
 // poison printf
 #if (__GNUC__ >= 4 && (__GNUC_MINOR__ >= 5 || __GNUC__ > 4))

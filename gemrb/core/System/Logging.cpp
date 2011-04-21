@@ -142,11 +142,11 @@ void printMessage(const char* owner, const char* message, log_color color, ...)
 	va_end(ap);
 }
 
-void error(const char* owner, const char* message, ...)
+void gemrb_error::operator()(const char* owner, const char* message, ...)
 {
 	// FIXME: Merge with printMessage?
 	printBracket(owner, LIGHT_WHITE);
-	print(": ");
+	print(": %s:%u: ", file, line);
 	textcolor(LIGHT_RED);
 	va_list ap;
 
@@ -175,9 +175,9 @@ void printMessage(const char* owner, const char* message, log_color color, ...)
 	va_end(ap);
 }
 
-void error(const char* owner, const char* message, ...)
+void gemrb_error::operator()(const char* owner, const char* message, ...)
 {
-	// FIXME: We drop owner on the floor.
+	// FIXME: We drop owner and file/line on the floor.
 	va_list ap;
 	va_start(ap, message);
 	__android_log_vprint(ANDROID_LOG_INFO, "GemRB", message, ap);
