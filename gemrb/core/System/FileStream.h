@@ -48,11 +48,11 @@ public:
 	~FileStream(void);
 	DataStream* Clone();
 
-	bool Open(const char* filename);
-	bool Modify(const char* filename);
-	bool Create(const char* folder, const char* filename, SClass_ID ClassID);
-	bool Create(const char* filename, SClass_ID ClassID);
-	bool Create(const char* filename);
+	bool Open(const char* filename) WARN_UNUSED;
+	bool Modify(const char* filename) WARN_UNUSED;
+	bool Create(const char* folder, const char* filename, SClass_ID ClassID) WARN_UNUSED;
+	bool Create(const char* filename, SClass_ID ClassID) WARN_UNUSED;
+	bool Create(const char* filename) WARN_UNUSED;
 	int Read(void* dest, unsigned int length);
 	int Write(const void* src, unsigned int length);
 	int Seek(int pos, int startpos);

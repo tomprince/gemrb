@@ -43,7 +43,7 @@ public:
 	virtual bool Open(DataStream* stream1, DataStream* stream2) = 0;
 	virtual WorldMapArray* GetWorldMapArray() = 0;
 
-	virtual bool PutWorldMap(DataStream* stream1, DataStream* stream2, WorldMapArray *wmap) = 0;
+	virtual bool PutWorldMap(DataStream* stream1, DataStream* stream2, WorldMapArray *wmap) WARN_UNUSED = 0;
 };
 
 #endif

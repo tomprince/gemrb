@@ -37,7 +37,7 @@ class GEM_EXPORT SymbolMgr : public Plugin {
 public:
 	SymbolMgr(void);
 	virtual ~SymbolMgr(void);
-	virtual bool Open(DataStream* stream) = 0;
+	virtual bool Open(DataStream* stream) WARN_UNUSED = 0;
 	/// Returns -1 if string isn't found.
 	virtual int GetValue(const char* text) const = 0;
 	virtual char* GetValue(int val) const = 0;

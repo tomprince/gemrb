@@ -41,7 +41,7 @@ class GEM_EXPORT StoreMgr : public Plugin {
 public:
 	StoreMgr(void);
 	virtual ~StoreMgr(void);
-	virtual bool Open(DataStream* stream) = 0;
+	virtual bool Open(DataStream* stream) WARN_UNUSED = 0;
 	virtual Store* GetStore(Store *s) = 0;
 
 	virtual bool PutStore(DataStream* stream, Store *s) = 0;

@@ -51,7 +51,7 @@ public:
 	 * @retval true stream contains the given resource.
 	 * @retval false stream does not contain valid resource.
 	 */
-	virtual bool Open(DataStream* stream) = 0;
+	virtual bool Open(DataStream* stream) WARN_UNUSED = 0;
 };
 
 #endif
