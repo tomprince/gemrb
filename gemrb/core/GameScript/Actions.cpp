@@ -6069,29 +6069,13 @@ item_is_gold: //we take gold!
 
 void GameScript::ChangeStoreMarkup(Scriptable* /*Sender*/, Action* parameters)
 {
-	bool has_current = false;
-	ieResRef current;
-	ieDword owner;
 
-	Store *store = core->GetCurrentStore();
-	if (!store) {
-		store = core->SetCurrentStore(parameters->string0Parameter, 0);
-	} else {
-		if (strnicmp(store->Name, parameters->string0Parameter, 8) ) {
-			//not the current store, we need some dirty hack
-			has_current = true;
-			strnlwrcpy(current, store->Name, 8);
-			owner = store->GetOwnerID();
-		}
-	}
+	Store* store = gamedata->GetStore(parameters->string0Parameter);
 	store->BuyMarkup = parameters->int0Parameter;
 	store->SellMarkup = parameters->int1Parameter;
 	//additional markup, is this depreciation???
 	store->DepreciationRate = parameters->int2Parameter;
-	if (has_current) {
-		//setting back old store (this will save our current store)
-		core->SetCurrentStore(current, owner);
-	}
+	gamedata->SaveStore(store);
 }
 
 void GameScript::SetEncounterProbability(Scriptable* /*Sender*/, Action* parameters)
