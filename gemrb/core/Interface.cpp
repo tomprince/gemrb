@@ -124,8 +124,8 @@ Interface::Interface(int iargc, char* iargv[])
 
 	unsigned int i;
 	for(i=0;i<256;i++) {
-		pl_uppercase[i]=(ieByte) toupper(i);
-		pl_lowercase[i]=(ieByte) tolower(i);
+		pl_uppercase[i]=(char) toupper((int)i);
+		pl_lowercase[i]=(char) tolower((int)i);
 	}
 
 	projserv = NULL;

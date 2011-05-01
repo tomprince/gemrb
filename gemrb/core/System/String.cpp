@@ -29,8 +29,8 @@
 #endif
 #endif
 
-unsigned char pl_uppercase[256];
-unsigned char pl_lowercase[256];
+char pl_uppercase[256];
+char pl_lowercase[256];
 
 // these 3 functions will copy a string to a zero terminated string with a maximum length
 void strnlwrcpy(char *dest, const char *source, int count, bool pad)

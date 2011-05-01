@@ -34,8 +34,18 @@
 
 /* this function will work with pl/cz special characters */
 
-extern unsigned char pl_uppercase[256];
-extern unsigned char pl_lowercase[256];
+GEM_EXPORT extern char pl_uppercase[256];
+GEM_EXPORT extern char pl_lowercase[256];
+
+// WARNING: These functions overload libc touppper/tolower, which takes an int.
+static inline char tolower(char c)
+{
+	return pl_lowercase[(unsigned char)c];
+}
+static inline char toupper(char c)
+{
+	return pl_uppercase[(unsigned char)c];
+}
 
 GEM_EXPORT void strnlwrcpy(char* d, const char *s, int l, bool pad = true);
 GEM_EXPORT void strnuprcpy(char* d, const char *s, int l);
