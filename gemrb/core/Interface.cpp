@@ -133,6 +133,8 @@ Interface::Interface(int iargc, char* iargv[])
 		pl_lowercase[i]=(ieByte) tolower(i);
 	}
 
+	plugin_loader = new PluginLoader();
+
 	projserv = NULL;
 	VideoDriverName = "sdl";
 	AudioDriverName = "openal";
@@ -1436,7 +1438,7 @@ int Interface::Init()
 	}
 	printMessage( "Core", "Starting Plugin Manager...\n", WHITE );
 	PluginMgr *plugin = PluginMgr::Get();
-	LoadPlugins(PluginsPath);
+	plugin_loader->LoadPlugins(PluginsPath);
 	if (plugin && plugin->GetPluginCount()) {
 		printMessage( "Core", "Plugin Loading Complete...", WHITE );
 		printStatus( "OK", LIGHT_GREEN );

@@ -44,6 +44,7 @@
 #include "Audio.h"
 #include "DataFileMgr.h"
 #include "MusicMgr.h"
+#include "PluginLoader.h"
 #include "SaveGame.h"
 #include "ScriptEngine.h"
 #include "StringMgr.h"
@@ -76,6 +77,7 @@ class Label;
 class Map;
 class MusicMgr;
 class Palette;
+class PluginLoader;
 class ProjectileServer;
 class Resource;
 class SPLExtHeader;
@@ -278,6 +280,8 @@ enum PluginFlagsType {
 class GEM_EXPORT Interface
 {
 private:
+	// This is first because we unload plugins in the destructor.
+	Holder<PluginLoader> plugin_loader;
 	Holder<Video> video;
 	Holder<Audio> AudioDriver;
 	std::string VideoDriverName;

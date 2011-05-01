@@ -21,12 +21,44 @@
 #ifndef PLUGINLOADER_H
 #define PLUGINLOADER_H
 
+#include "SClassID.h" // For PluginID
+#include "exports.h"
+#include "globals.h"
+#include "win32def.h"
+
+#include "Holder.h"
+
+#include <map>
+
+#ifdef WIN32
+typedef HMODULE LibHandle;
+#else
+typedef void *LibHandle;
+#endif
+
+class PluginMgr;
+
 /**
- * Loads GemRB plugins from shared libraries or DLLs.
- *
+ * @class PluginLoader
+ * Class for loading GemRB plugins from shared libraries or DLLs.
  * It goes over all appropriately named files in PluginPath directory
  * and tries to load them one after another.
  */
-void LoadPlugins(char* pluginpath);
+
+class GEM_EXPORT PluginLoader : public Held<PluginLoader> {
+private:
+	struct PluginDesc {
+		LibHandle handle;
+		PluginID ID;
+		const char *Description;
+		bool (*Register)(PluginMgr*);
+	};
+	std::map<PluginID, PluginDesc> libs;
+public:
+	PluginLoader();
+	~PluginLoader();
+
+	void LoadPlugins(char* pluginpath);
+};
 
 #endif

@@ -18,7 +18,6 @@
 
 #include "PluginLoader.h"
 
-#include "SClassID.h" // For PluginID
 #include "win32def.h"
 
 #include "Variables.h"
@@ -28,7 +27,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <list>
-#include <set>
 
 #ifdef WIN32
 #include <io.h>
@@ -40,20 +38,7 @@
 #include <dlfcn.h>
 #endif
 
-#ifdef WIN32
-typedef HMODULE LibHandle;
-#else
-typedef void *LibHandle;
-#endif
-
 class PluginMgr;
-
-struct PluginDesc {
-	LibHandle handle;
-	PluginID ID;
-	const char *Description;
-	bool (*Register)(PluginMgr*);
-};
 
 typedef const char* (*Version_t)(void);
 typedef const char* (*Description_t)(void);
@@ -84,6 +69,24 @@ inline voidvoid my_dlsym(void *handle, const char *symbol)
 #define GET_PLUGIN_SYMBOL( handle, name )  my_dlsym( handle, name )
 #define PRINT_DLERROR print( "%s\n", dlerror() )
 #endif
+
+PluginLoader::PluginLoader()
+{
+}
+
+PluginLoader::~PluginLoader()
+{
+//don't free the shared libraries in debug mode, so valgrind can resolve the stack trace
+#ifndef _DEBUG
+	for (std::map<PluginID, PluginDesc>::iterator i = libs.begin(); i != libs.end(); i++) {
+#ifdef WIN32
+		FreeLibrary(i->second.handle);
+#else
+		// dlclose(i->second.handle);
+#endif
+	}
+#endif
+}
 
 /** Return names of all *.so or *.dll files in the given directory */
 #ifdef WIN32
@@ -123,10 +126,8 @@ bool static FindFiles( char* path, std::list<char*> &files )
 }
 #endif  // ! WIN32
 
-void LoadPlugins(char* pluginpath)
+void PluginLoader::LoadPlugins(char* pluginpath)
 {
-	std::set<PluginID> libs;
-
 	printMessage("PluginMgr", "Loading Plugins from %s\n", WHITE, pluginpath);
 
 	char path[_MAX_PATH];
@@ -234,6 +235,6 @@ void LoadPlugins(char* pluginpath)
 				FREE_PLUGIN( hMod );
 			}
 		}
-		libs.insert(desc.ID);
+		libs[desc.ID] = desc;
 	}
 }
