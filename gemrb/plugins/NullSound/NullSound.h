@@ -28,10 +28,12 @@ public:
 	NullSound(void);
 	~NullSound(void);
 	bool Init(void);
-	unsigned int Play(const char* ResRef, int XPos = 0, int YPos = 0,  unsigned int flags = GEM_SND_RELATIVE);
-	int StreamFile(const char* filename);
+	Holder<SoundHandle> Play(const char* ResRef, int XPos, int YPos,  unsigned int flags = 0, unsigned int *length = 0);
+	int CreateStream(Holder<SoundMgr>);
 	bool Play();
 	bool Stop();
+	bool Pause();
+	bool Resume();
 	bool CanPlay();
 	bool IsSpeaking();
 	void ResetMusics();
@@ -44,14 +46,7 @@ public:
 	bool ReleaseStream(int stream, bool hardstop);
 	void SetAmbientStreamVolume(int stream, int gain);
 	void QueueBuffer(int stream, unsigned short bits, int channels,
-                short* memory, int size, int samplerate);
-
-
-public:
-	void release(void)
-	{
-		delete this;
-	}
+				short* memory, int size, int samplerate);
 
 private:
 	int XPos, YPos;

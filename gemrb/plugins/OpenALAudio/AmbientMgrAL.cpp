@@ -18,17 +18,20 @@
  *
  */
 
-#include <limits.h>
-#include <cmath>
-#include <cassert>
-#include <cstdio>
-#include "Ambient.h"
-#include "Interface.h"
-#include "Game.h"
-#include "OpenALAudio.h"
 #include "AmbientMgrAL.h"
 
-#include "SDL.h"
+#include "OpenALAudio.h"
+
+#include "Ambient.h"
+#include "Game.h"
+#include "Interface.h"
+
+#include <cassert>
+#include <climits>
+#include <cmath>
+#include <cstdio>
+
+#include <SDL.h>
 
 // TODO: remove last dependencies on OpenAL, and then rename and move it?
 
@@ -266,7 +269,7 @@ int AmbientMgrAL::AmbientSource::enqueue()
 	if (soundrefs.empty()) return -1;
 	if (stream < 0) return -1;
 	int index = rand() % soundrefs.size();
-	//printf("Playing ambient %p, %s, %d/%ld on stream %d\n", (void*)this, soundrefs[index], index, soundrefs.size(), stream);
+	//print("Playing ambient %p, %s, %d/%ld on stream %d\n", (void*)this, soundrefs[index], index, soundrefs.size(), stream);
 	return core->GetAudioDrv()->QueueAmbient(stream, soundrefs[index]);
 }
 

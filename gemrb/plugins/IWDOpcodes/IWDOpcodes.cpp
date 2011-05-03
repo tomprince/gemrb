@@ -18,31 +18,33 @@
  *
  */
 
-#include "win32def.h"
-#include "overlays.h"
-#include "opcode_params.h"
 #include "ie_feats.h" //cannot avoid declaring these
-#include "Actor.h"
+#include "opcode_params.h"
+#include "overlays.h"
+#include "win32def.h"
+
+#include "Audio.h"  //needs for a playsound call
+#include "DisplayMessage.h"
 #include "EffectQueue.h"
-#include "Interface.h"
 #include "Game.h"
+#include "GameData.h"
+#include "Interface.h"
+#include "ProjectileServer.h" //needs for alter_animation
 #include "Spell.h"
 #include "damages.h"
-#include "GSUtils.h" //needs for displaystringcore
-#include "ProjectileServer.h" //needs for alter_animation
+#include "Scriptable/Actor.h"
+#include "GameScript/GSUtils.h" //needs for displaystringcore
 
 static const ieResRef SevenEyes[7]={"spin126","spin127","spin128","spin129","spin130","spin131","spin132"};
 
 static bool enhanced_effects = false;
 //a scripting object for enemy (used for enemy in line of sight check)
 static Trigger *Enemy = NULL;
-//a list of projectiles Entropy Shield protects against
-static ieDword *EntropyProjectileList = NULL;
 
-#define PI_CONFUSION    3
 #define PI_PROTFROMEVIL 9
 #define PI_FREEACTION   19
 #define PI_BARKSKIN     20
+#define PI_BANE         35
 #define PI_PANIC        36
 #define PI_NAUSEA       43
 #define PI_HOPELESSNESS 44
@@ -80,6 +82,7 @@ static ieDword *EntropyProjectileList = NULL;
 #define PI_EMPTYBODY    145
 
 static int fx_ac_vs_damage_type_modifier_iwd2 (Scriptable* Owner, Actor* target, Effect* fx);//0
+static int fx_damage_bonus_modifier (Scriptable* Owner, Actor* target, Effect* fx);//49
 static int fx_draw_upon_holy_might (Scriptable* Owner, Actor* target, Effect* fx);//84 (iwd2)
 static int fx_ironskins (Scriptable* Owner, Actor* target, Effect* fx);//da (iwd2)
 static int fx_fade_rgb (Scriptable* Owner, Actor* target, Effect* fx);//e8
@@ -112,14 +115,14 @@ static int fx_umberhulk_gaze (Scriptable* Owner, Actor* target, Effect* fx); //1
 static int fx_zombielord_aura (Scriptable* Owner, Actor* target, Effect* fx); //101, duff in iwd2
 static int fx_resist_spell (Scriptable* Owner, Actor* target, Effect* fx); //102
 static int fx_summon_creature2 (Scriptable* Owner, Actor* target, Effect* fx); //103
-//int fx_avatar_removal (Scriptable* Owner, Actor* target, Effect* fx); //104
+static int fx_avatar_removal (Scriptable* Owner, Actor* target, Effect* fx); //104
 //int fx_immunity_effect2 (Scriptable* Owner, Actor* target, Effect* fx); //105
 static int fx_summon_pomab (Scriptable* Owner, Actor* target, Effect* fx); //106
 static int fx_control_undead (Scriptable* Owner, Actor* target, Effect* fx); //107
 static int fx_static_charge (Scriptable* Owner, Actor* target, Effect* fx); //108
 static int fx_cloak_of_fear (Scriptable* Owner, Actor* target, Effect* fx); //109
 //int fx_movement_modifier (Scriptable* Owner, Actor* target, Effect* fx); //10a
-static int fx_remove_confusion (Scriptable* Owner, Actor* target, Effect* fx);//10b
+//int fx_remove_confusion (Scriptable* Owner, Actor* target, Effect* fx);//10b
 static int fx_eye_of_the_mind (Scriptable* Owner, Actor* target, Effect* fx);//10c
 static int fx_eye_of_the_sword (Scriptable* Owner, Actor* target, Effect* fx);//10d
 static int fx_eye_of_the_mage (Scriptable* Owner, Actor* target, Effect* fx);//10e
@@ -219,124 +222,126 @@ static int fx_hamstring (Scriptable* Owner, Actor* target, Effect* fx); //456
 static int fx_rapid_shot (Scriptable* Owner, Actor* target, Effect* fx); //457
 
 //No need to make these ordered, they will be ordered by EffectQueue
-static EffectRef effectnames[] = {
-	{ "ACVsDamageTypeModifierIWD2", fx_ac_vs_damage_type_modifier_iwd2, -1}, //0
-	{ "DrawUponHolyMight", fx_draw_upon_holy_might, -1},//84 (iwd2)
-	{ "IronSkins", fx_ironskins, -1}, //da (iwd2)
-	{ "Color:FadeRGB", fx_fade_rgb, -1}, //e8
-	{ "IWDVisualSpellHit", fx_iwd_visual_spell_hit, -1}, //e9
-	{ "ColdDamage", fx_cold_damage, -1}, //ea
-	{ "ChillTouch", fx_chill_touch, -1}, //ec (how)
-	{ "ChillTouchPanic", fx_chill_touch_panic, -1}, //ec (iwd2)
-	{ "CrushingDamage", fx_crushing_damage, -1}, //ed
-	{ "SaveBonus", fx_save_bonus, -1}, //ee
-	{ "SlowPoison", fx_slow_poison, -1}, //ef
-	{ "IWDMonsterSummoning", fx_iwd_monster_summoning, -1}, //f0
-	{ "VampiricTouch", fx_vampiric_touch, -1}, //f1
-	{ "AnimateDead", fx_animate_dead, -1}, //f3
-	{ "Prayer2", fx_prayer, -1}, //f4
-	{ "Curse2", fx_curse, -1}, //f5
-	{ "SummonMonster2", fx_summon_monster2, -1}, //f6
-	{ "BurningBlood", fx_burning_blood, -1}, //f7
-	{ "BurningBlood2", fx_burning_blood2, -1}, //f7
-	{ "SummonShadowMonster", fx_summon_shadow_monster, -1}, //f8
-	{ "Recitation", fx_recitation, -1}, //f9
-	{ "RecitationBad", fx_recitation_bad, -1},//fa
-	{ "LichTouch", fx_lich_touch, -1},//fb
-	{ "BlindingOrb", fx_blinding_orb, -1}, //fc
-	{ "RemoveEffects", fx_remove_effects, -1}, //fe
-	{ "SalamanderAura", fx_salamander_aura, -1}, //ff
-	{ "UmberHulkGaze", fx_umberhulk_gaze, -1}, //100
-	{ "ZombieLordAura", fx_zombielord_aura, -1},//101, duff in iwd2
-	{ "SummonCreature2", fx_summon_creature2, -1}, //103
-	{ "SummonPomab", fx_summon_pomab, -1}, //106
-	{ "ControlUndead", fx_control_undead, -1}, //107
-	{ "StaticCharge", fx_static_charge, -1}, //108
-	{ "CloakOfFear", fx_cloak_of_fear, -1}, //109 how/iwd2
-	{ "RemoveConfusion", fx_remove_confusion, -1},//10b
-	{ "EyeOfTheMind", fx_eye_of_the_mind, -1}, //10c
-	{ "EyeOfTheSword", fx_eye_of_the_sword, -1}, //10d
-	{ "EyeOfTheMage", fx_eye_of_the_mage, -1}, //10e
-	{ "EyeOfVenom", fx_eye_of_venom, -1}, //10f
-	{ "EyeOfTheSpirit", fx_eye_of_the_spirit, -1}, //110
-	{ "EyeOfFortitude", fx_eye_of_fortitude, -1}, //111
-	{ "EyeOfStone", fx_eye_of_stone, -1}, //112
-	{ "RemoveSevenEyes", fx_remove_seven_eyes, -1}, //113
-	{ "RemoveEffect", fx_remove_effect, -1}, //114
-	{ "SoulEater", fx_soul_eater, -1}, //115
-	{ "ShroudOfFlame", fx_shroud_of_flame, -1},//116
-	{ "ShroudOfFlame2", fx_shroud_of_flame2, -1},//116
-	{ "AnimalRage", fx_animal_rage, -1}, //117 - berserk?
-	{ "TurnUndead", fx_turn_undead, -1}, //118 how
-	{ "TurnUndead2", fx_turn_undead2, -1}, //118 iwd2
-	{ "VitriolicSphere", fx_vitriolic_sphere, -1}, //119
-	{ "SuppressHP", fx_suppress_hp, -1}, //11a -- some stat???
-	{ "FloatText", fx_floattext, -1}, //11b
-	{ "MaceOfDisruption", fx_mace_of_disruption, -1}, //11c
-	{ "State:Set", fx_set_state, -1}, //120
-	{ "CutScene", fx_cutscene, -1}, //121
-	{ "Protection:Spell2", fx_resist_spell, -1}, //ce
-	{ "Protection:Spell3", fx_resist_spell_and_message, -1}, //122
-	{ "RodOfSmithing", fx_rod_of_smithing, -1}, //123
-	{ "BeholderDispelMagic", fx_beholder_dispel_magic, -1},//125
-	{ "HarpyWail", fx_harpy_wail, -1}, //126
-	{ "JackalWereGaze", fx_jackalwere_gaze, -1}, //127
-	{ "UseMagicDeviceModifier", fx_use_magic_device_modifier, -1}, //12a
+static EffectDesc effectnames[] = {
+	{ "ACVsDamageTypeModifierIWD2", fx_ac_vs_damage_type_modifier_iwd2, 0, -1 }, //0
+	{ "DamageBonusModifier", fx_damage_bonus_modifier, 0, -1 }, //49
+	{ "DrawUponHolyMight", fx_draw_upon_holy_might, 0, -1 },//84 (iwd2)
+	{ "RetreatFrom", fx_turn_undead, 0, -1 },//6e
+	{ "IronSkins", fx_ironskins, 0, -1 }, //da (iwd2)
+	{ "Color:FadeRGB", fx_fade_rgb, 0, -1 }, //e8
+	{ "IWDVisualSpellHit", fx_iwd_visual_spell_hit, 0, -1 }, //e9
+	{ "ColdDamage", fx_cold_damage, EFFECT_DICED, -1 }, //ea
+	{ "ChillTouch", fx_chill_touch, 0, -1 }, //ec (how)
+	{ "ChillTouchPanic", fx_chill_touch_panic, 0, -1 }, //ec (iwd2)
+	{ "CrushingDamage", fx_crushing_damage, EFFECT_DICED, -1 }, //ed
+	{ "SaveBonus", fx_save_bonus, 0, -1 }, //ee
+	{ "SlowPoison", fx_slow_poison, 0, -1 }, //ef
+	{ "IWDMonsterSummoning", fx_iwd_monster_summoning, EFFECT_NO_ACTOR, -1 }, //f0
+	{ "VampiricTouch", fx_vampiric_touch, EFFECT_DICED, -1 }, //f1
+	{ "AnimateDead", fx_animate_dead, 0, -1 }, //f3
+	{ "Prayer2", fx_prayer, 0, -1 }, //f4
+	{ "Curse2", fx_curse, 0, -1 }, //f5
+	{ "SummonMonster2", fx_summon_monster2, EFFECT_NO_ACTOR, -1 }, //f6
+	{ "BurningBlood", fx_burning_blood, EFFECT_DICED, -1 }, //f7
+	{ "BurningBlood2", fx_burning_blood2, EFFECT_NO_LEVEL_CHECK, -1 }, //f7
+	{ "SummonShadowMonster", fx_summon_shadow_monster, EFFECT_NO_ACTOR, -1 }, //f8
+	{ "Recitation", fx_recitation, 0, -1 }, //f9
+	{ "RecitationBad", fx_recitation_bad, 0, -1 },//fa
+	{ "LichTouch", fx_lich_touch, EFFECT_NO_LEVEL_CHECK, -1 },//fb
+	{ "BlindingOrb", fx_blinding_orb, 0, -1 }, //fc
+	{ "RemoveEffects", fx_remove_effects, 0, -1 }, //fe
+	{ "SalamanderAura", fx_salamander_aura, 0, -1 }, //ff
+	{ "UmberHulkGaze", fx_umberhulk_gaze, 0, -1 }, //100
+	{ "ZombieLordAura", fx_zombielord_aura, 0, -1 },//101, duff in iwd2
+	{ "SummonCreature2", fx_summon_creature2, 0, -1 }, //103
+	{ "AvatarRemoval", fx_avatar_removal, 0, -1 }, //104
+	{ "SummonPomab", fx_summon_pomab, 0, -1 }, //106
+	{ "ControlUndead", fx_control_undead, 0, -1 }, //107
+	{ "StaticCharge", fx_static_charge, EFFECT_NO_LEVEL_CHECK, -1 }, //108
+	{ "CloakOfFear", fx_cloak_of_fear, 0, -1 }, //109 how/iwd2
+	{ "EyeOfTheMind", fx_eye_of_the_mind, 0, -1 }, //10c
+	{ "EyeOfTheSword", fx_eye_of_the_sword, 0, -1 }, //10d
+	{ "EyeOfTheMage", fx_eye_of_the_mage, 0, -1 }, //10e
+	{ "EyeOfVenom", fx_eye_of_venom, 0, -1 }, //10f
+	{ "EyeOfTheSpirit", fx_eye_of_the_spirit, 0, -1 }, //110
+	{ "EyeOfFortitude", fx_eye_of_fortitude, 0, -1 }, //111
+	{ "EyeOfStone", fx_eye_of_stone, 0, -1 }, //112
+	{ "RemoveSevenEyes", fx_remove_seven_eyes, 0, -1 }, //113
+	{ "RemoveEffect", fx_remove_effect, 0, -1 }, //114
+	{ "SoulEater", fx_soul_eater, EFFECT_NO_LEVEL_CHECK, -1 }, //115
+	{ "ShroudOfFlame", fx_shroud_of_flame, 0, -1 },//116
+	{ "ShroudOfFlame2", fx_shroud_of_flame2, 0, -1 },//116
+	{ "AnimalRage", fx_animal_rage, 0, -1 }, //117 - berserk?
+	{ "TurnUndead", fx_turn_undead, 0, -1 }, //118 how
+	{ "TurnUndead2", fx_turn_undead2, 0, -1 }, //118 iwd2
+	{ "VitriolicSphere", fx_vitriolic_sphere, EFFECT_DICED, -1 }, //119
+	{ "SuppressHP", fx_suppress_hp, 0, -1 }, //11a -- some stat???
+	{ "FloatText", fx_floattext, 0, -1 }, //11b
+	{ "MaceOfDisruption", fx_mace_of_disruption, 0, -1 }, //11c
+	{ "State:Set", fx_set_state, 0, -1 }, //120
+	{ "CutScene", fx_cutscene, EFFECT_NO_ACTOR, -1 }, //121
+	{ "Protection:Spell2", fx_resist_spell, 0, -1 }, //ce
+	{ "Protection:Spell3", fx_resist_spell_and_message, 0, -1 }, //122
+	{ "RodOfSmithing", fx_rod_of_smithing, 0, -1 }, //123
+	{ "BeholderDispelMagic", fx_beholder_dispel_magic, 0, -1 },//125
+	{ "HarpyWail", fx_harpy_wail, 0, -1 }, //126
+	{ "JackalWereGaze", fx_jackalwere_gaze, 0, -1 }, //127
+	{ "UseMagicDeviceModifier", fx_use_magic_device_modifier, 0, -1 }, //12a
 	//unhardcoded hacks for IWD
-	{ "AlterAnimation", fx_alter_animation, -1}, //399
+	{ "AlterAnimation", fx_alter_animation, EFFECT_NO_ACTOR, -1 }, //399
 	//iwd2 effects
-	{ "Hopelessness", fx_hopelessness, -1}, //400
-	{ "ProtectionFromEvil", fx_protection_from_evil, -1}, //401
-	{ "AddEffectsList", fx_add_effects_list, -1}, //402
-	{ "ArmorOfFaith", fx_armor_of_faith, -1}, //403
-	{ "Nausea", fx_nausea, -1}, //404
-	{ "Enfeeblement", fx_enfeeblement, -1}, //405
-	{ "FireShield", fx_fireshield, -1}, //406
-	{ "DeathWard", fx_death_ward, -1}, //407
-	{ "HolyPower", fx_holy_power, -1}, //408
-	{ "RighteousWrath", fx_righteous_wrath, -1}, //409
-	{ "SummonAlly", fx_summon_ally, -1}, //410
-	{ "SummonEnemy", fx_summon_enemy, -1}, //411
-	{ "Control2", fx_control, -1}, //412
-	{ "VisualEffectIWD2", fx_visual_effect_iwd2, -1}, //413
-	{ "ResilientSphere", fx_resilient_sphere, -1}, //414
-	{ "BarkSkin", fx_barkskin, -1}, //415
-	{ "BleedingWounds", fx_bleeding_wounds, -1},//416
-	{ "AreaEffect", fx_area_effect, -1}, //417
-	{ "FreeAction2", fx_free_action_iwd2, -1}, //418
-	{ "Unconsciousness", fx_unconsciousness, -1}, //419
-	{ "EntropyShield", fx_entropy_shield, -1}, //421
-	{ "StormShell", fx_storm_shell, -1}, //422
-	{ "ProtectionFromElements", fx_protection_from_elements, -1}, //423
-	{ "ControlUndead2", fx_control_undead, -1}, //425
-	{ "Aegis", fx_aegis, -1}, //426
-	{ "ExecutionerEyes", fx_executioner_eyes, -1}, //427
-	{ "ProjectileUseEffectList", fx_projectile_use_effect_list, -1}, //430
-	{ "EnergyDrain", fx_energy_drain, -1}, //431
-	{ "TortoiseShell", fx_tortoise_shell, -1}, //432
-	{ "Blink", fx_blink, -1},//433
-	{ "PersistentUseEffectList", fx_persistent_use_effect_list, -1}, //434
-	{ "DayBlindness", fx_day_blindness, -1}, //435
-	{ "DamageReduction", fx_damage_reduction, -1}, //436
-	{ "Disguise", fx_disguise, -1}, //437
-	{ "HeroicInspiration", fx_heroic_inspiration, -1},//438
-	//{ "PreventAISlowDown", fx_prevent_ai_slowdown, -1}, //439 same as bg2
-	{ "BarbarianRage", fx_barbarian_rage, -1}, //440
-	{ "MissileDamageReduction", fx_missile_damage_reduction, -1}, //443
-	{ "TensersTransformation", fx_tenser_transformation, -1}, //444
-	{ "SmiteEvil", fx_smite_evil, -1}, //446
-	{ "Restoration", fx_restoration, -1}, //447
-	{ "AlicornLance", fx_alicorn_lance, -1}, //448
-	{ "CallLightning", fx_call_lightning, -1}, //449
-	{ "GlobeInvulnerability", fx_globe_invulnerability, -1}, //450
-	{ "LowerResistance", fx_lower_resistance, -1}, //451
-	{ "Bane", fx_bane, -1}, //452
-	{ "PowerAttack", fx_power_attack, -1}, //453
-	{ "Expertise", fx_expertise, -1}, //454
-	{ "ArterialStrike", fx_arterial_strike, -1}, //455
-	{ "HamString", fx_hamstring, -1}, //456
-	{ "RapidShot", fx_rapid_shot, -1}, //457
-	{ NULL, NULL, 0 },
+	{ "Hopelessness", fx_hopelessness, 0, -1 }, //400
+	{ "ProtectionFromEvil", fx_protection_from_evil, 0, -1 }, //401
+	{ "AddEffectsList", fx_add_effects_list, 0, -1 }, //402
+	{ "ArmorOfFaith", fx_armor_of_faith, 0, -1 }, //403
+	{ "Nausea", fx_nausea, 0, -1 }, //404
+	{ "Enfeeblement", fx_enfeeblement, 0, -1 }, //405
+	{ "FireShield", fx_fireshield, 0, -1 }, //406
+	{ "DeathWard", fx_death_ward, 0, -1 }, //407
+	{ "HolyPower", fx_holy_power, 0, -1 }, //408
+	{ "RighteousWrath", fx_righteous_wrath, 0, -1 }, //409
+	{ "SummonAlly", fx_summon_ally, EFFECT_NO_ACTOR, -1 }, //410
+	{ "SummonEnemy", fx_summon_enemy, EFFECT_NO_ACTOR, -1 }, //411
+	{ "Control2", fx_control, 0, -1 }, //412
+	{ "VisualEffectIWD2", fx_visual_effect_iwd2, 0, -1 }, //413
+	{ "ResilientSphere", fx_resilient_sphere, 0, -1 }, //414
+	{ "BarkSkin", fx_barkskin, 0, -1 }, //415
+	{ "BleedingWounds", fx_bleeding_wounds, 0, -1 },//416
+	{ "AreaEffect", fx_area_effect, EFFECT_NO_ACTOR, -1 }, //417
+	{ "FreeAction2", fx_free_action_iwd2, 0, -1 }, //418
+	{ "Unconsciousness", fx_unconsciousness, 0, -1 }, //419
+	{ "EntropyShield", fx_entropy_shield, 0, -1 }, //421
+	{ "StormShell", fx_storm_shell, 0, -1 }, //422
+	{ "ProtectionFromElements", fx_protection_from_elements, 0, -1 }, //423
+	{ "ControlUndead2", fx_control_undead, 0, -1 }, //425
+	{ "Aegis", fx_aegis, 0, -1 }, //426
+	{ "ExecutionerEyes", fx_executioner_eyes, 0, -1 }, //427
+	{ "ProjectileUseEffectList", fx_projectile_use_effect_list, 0, -1 }, //430
+	{ "EnergyDrain", fx_energy_drain, 0, -1 }, //431
+	{ "TortoiseShell", fx_tortoise_shell, 0, -1 }, //432
+	{ "Blink", fx_blink, 0, -1 },//433
+	{ "PersistentUseEffectList", fx_persistent_use_effect_list, 0, -1 }, //434
+	{ "DayBlindness", fx_day_blindness, 0, -1 }, //435
+	{ "DamageReduction", fx_damage_reduction, 0, -1 }, //436
+	{ "Disguise", fx_disguise, 0, -1 }, //437
+	{ "HeroicInspiration", fx_heroic_inspiration, 0, -1 },//438
+	//{ "PreventAISlowDown", fx_prevent_ai_slowdown, 0, -1 }, //439 same as bg2
+	{ "BarbarianRage", fx_barbarian_rage, 0, -1 }, //440
+	{ "MissileDamageReduction", fx_missile_damage_reduction, 0, -1 }, //443
+	{ "TensersTransformation", fx_tenser_transformation, 0, -1 }, //444
+	{ "SmiteEvil", fx_smite_evil, 0, -1 }, //446
+	{ "Restoration", fx_restoration, 0, -1 }, //447
+	{ "AlicornLance", fx_alicorn_lance, 0, -1 }, //448
+	{ "CallLightning", fx_call_lightning, 0, -1 }, //449
+	{ "GlobeInvulnerability", fx_globe_invulnerability, 0, -1 }, //450
+	{ "LowerResistance", fx_lower_resistance, 0, -1 }, //451
+	{ "Bane", fx_bane, 0, -1 }, //452
+	{ "PowerAttack", fx_power_attack, 0, -1 }, //453
+	{ "Expertise", fx_expertise, 0, -1 }, //454
+	{ "ArterialStrike", fx_arterial_strike, 0, -1 }, //455
+	{ "HamString", fx_hamstring, 0, -1 }, //456
+	{ "RapidShot", fx_rapid_shot, 0, -1 }, //457
+	{ NULL, NULL, 0, 0 },
 };
 
 struct IWDIDSEntry {
@@ -347,6 +352,7 @@ struct IWDIDSEntry {
 
 static int spellrescnt = -1;
 static IWDIDSEntry *spellres = NULL;
+static Variables tables;
 
 static void Cleanup()
 {
@@ -355,10 +361,6 @@ static void Cleanup()
 	}
 	Enemy=NULL;
 
-	if (EntropyProjectileList) {
-		free (EntropyProjectileList);
-	}
-	EntropyProjectileList = NULL;
 	if (spellres) {
 		free (spellres);
 	}
@@ -366,7 +368,7 @@ static void Cleanup()
 
 void RegisterIWDOpcodes()
 {
-	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectRef ) - 1, effectnames );
+	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
 	enhanced_effects=!!core->HasFeature(GF_ENHANCED_EFFECTS);
 	//create enemy trigger object for enemy in line of sight check
 	if (!Enemy) {
@@ -375,7 +377,6 @@ void RegisterIWDOpcodes()
 		Enemy->objectParameter = o;
 		o->objectFields[0]=EA_ENEMY;
 	}
-	core->RegisterCleanup(Cleanup);
 }
 
 //iwd got a weird targeting system
@@ -435,6 +436,7 @@ static void ReadSpellProtTable(const ieResRef tablename)
 #define STI_INVALID           0xffff
 
 //returns true if iwd ids targeting resists the spell
+//FIXME: the constant return values do not match the rest
 static int check_iwd_targeting(Scriptable* Owner, Actor* target, ieDword value, ieDword type)
 {
 	if (spellrescnt==-1) {
@@ -461,18 +463,20 @@ static int check_iwd_targeting(Scriptable* Owner, Actor* target, ieDword value, 
 		return DiffCore((ieDword) target->GetCurrentArea()->AreaType, val, spellres[type].relation);
 	case STI_MORAL_ALIGNMENT:
 		if(Owner && Owner->Type==ST_ACTOR) {
-			return DiffCore( ((Actor *) Owner)->GetStat(IE_ALIGNMENT)&0x3,STAT_GET(IE_ALIGNMENT)&0x3, spellres[type].relation);
+			return DiffCore( ((Actor *) Owner)->GetStat(IE_ALIGNMENT)&AL_GE_MASK,STAT_GET(IE_ALIGNMENT)&AL_GE_MASK, spellres[type].relation);
 		} else {
-			return DiffCore(AL_TRUE_NEUTRAL,STAT_GET(IE_ALIGNMENT)&0x3, spellres[type].relation);
+			return DiffCore(AL_TRUE_NEUTRAL,STAT_GET(IE_ALIGNMENT)&AL_GE_MASK, spellres[type].relation);
 		}
 	case STI_TWO_ROWS:
-		if (check_iwd_targeting(Owner, target, value, idx)) return 0;
-		if (check_iwd_targeting(Owner, target, value, val)) return 0;
-		return 1;
-	case STI_NOT_TWO_ROWS:
+		//used in checks where any of two matches are ok (golem or undead etc)
 		if (check_iwd_targeting(Owner, target, value, idx)) return 1;
 		if (check_iwd_targeting(Owner, target, value, val)) return 1;
 		return 0;
+	case STI_NOT_TWO_ROWS:
+		//this should be the opposite as above
+		if (check_iwd_targeting(Owner, target, value, idx)) return 0;
+		if (check_iwd_targeting(Owner, target, value, val)) return 0;
+		return 1;
 	case STI_SOURCE_TARGET:
 		if (Owner==target) {
 			return 0;
@@ -501,7 +505,7 @@ static int check_iwd_targeting(Scriptable* Owner, Actor* target, ieDword value, 
 
 //iwd got a hardcoded 'fireshield' system
 //this effect applies damage on ALL nearby actors, except the center
-static EffectRef fx_damage_opcode_ref={"Damage",NULL,-1};
+static EffectRef fx_damage_opcode_ref = { "Damage", -1 };
 
 static void ApplyDamageNearby(Scriptable* Owner, Actor* target, Effect *fx, ieDword damagetype)
 {
@@ -547,7 +551,7 @@ static inline void HandleBonus(Actor *target, int stat, int mod, int mode)
 // fx_ac_vs_damage_type_modifier_iwd2
 int fx_ac_vs_damage_type_modifier_iwd2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_ac_vs_damage_type_modifier_iwd2 (%2d): AC Modif: %d ; Type: %d ; MinLevel: %d ; MaxLevel: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2, (int) fx->DiceSides, (int) fx->DiceThrown );
+	if (0) print( "fx_ac_vs_damage_type_modifier_iwd2 (%2d): AC Modif: %d ; Type: %d ; MinLevel: %d ; MaxLevel: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2, (int) fx->DiceSides, (int) fx->DiceThrown );
 	//check level was pulled outside as a common functionality
 	//CHECK_LEVEL();
 
@@ -592,13 +596,42 @@ int fx_ac_vs_damage_type_modifier_iwd2 (Scriptable* /*Owner*/, Actor* target, Ef
 	return FX_PERMANENT;
 }
 
+// 0x49 DamageBonusModifier
+// iwd/iwd2 supports different damage types, but only flat and percentage boni
+// only the special type of 0 means a flat bonus
+int fx_damage_bonus_modifier (Scriptable* /*Owner*/, Actor* target, Effect* fx)
+{
+	if (0) print( "fx_damage_bonus_modifier (%2d): Mod: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+
+	switch (fx->Parameter2) {
+		case 0:
+			STAT_MOD(IE_DAMAGEBONUS);
+			break;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+			// no stat to save to, so we handle it when dealing damage
+			break;
+		default:
+			return FX_NOT_APPLIED;
+	}
+	return FX_APPLIED;
+}
+
 // 0x84 DrawUponHolyMight
 // this effect differs from bg2 because it doesn't use the actor state field
 // it uses the spell state field
 // in bg2 the effect is called: HolyNonCumulative
 int fx_draw_upon_holy_might (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_draw_upon_holy_might (%2d): Mod: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_draw_upon_holy_might (%2d): Mod: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 
 	if (target->SetSpellState( SS_HOLYMIGHT)) return FX_NOT_APPLIED;
 	STAT_ADD( IE_STR, fx->Parameter1);
@@ -643,7 +676,7 @@ int fx_ironskins (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0xe8 Colour:FadeRGB
 int fx_fade_rgb (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_fade_rgb (%2d): RGB:%x\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_fade_rgb (%2d): RGB:%x\n", fx->Opcode, fx->Parameter1 );
 
 	int speed = (fx->Parameter2 >> 16) & 0xFF;
 	target->SetColorMod(0xff, RGBModifier::ADD, speed,
@@ -656,7 +689,7 @@ int fx_fade_rgb (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0xe9 IWDVisualSpellHit
 int fx_iwd_visual_spell_hit (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_iwd_visual_spell_hit (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_iwd_visual_spell_hit (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	if (!Owner) {
 		return FX_NOT_APPLIED;
 	}
@@ -667,9 +700,10 @@ int fx_iwd_visual_spell_hit (Scriptable* Owner, Actor* target, Effect* fx)
 	}
 	Point pos(fx->PosX,fx->PosY);
 	Projectile *pro = core->GetProjectileServer()->GetProjectileByIndex(0x1001+fx->Parameter2);
-	pro->SetCaster(Owner->GetGlobalID());
+	pro->SetCaster(fx->CasterID, fx->CasterLevel);
 	if (target) {
-		map->AddProjectile( pro, pos, target->GetGlobalID());
+		//i believe the spell hit projectiles don't follow anyone
+		map->AddProjectile( pro, pos, target->GetGlobalID(), true);
 	} else {
 		map->AddProjectile( pro, pos, pos);
 	}
@@ -679,7 +713,7 @@ int fx_iwd_visual_spell_hit (Scriptable* Owner, Actor* target, Effect* fx)
 //0xea ColdDamage (how)
 int fx_cold_damage (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_cold_damage (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_cold_damage (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
 	target->Damage(fx->Parameter1, DAMAGE_COLD, Owner);
 	return FX_NOT_APPLIED;
 }
@@ -691,10 +725,10 @@ int fx_cold_damage (Scriptable* Owner, Actor* target, Effect* fx)
 //it is the usual iwd/how style hack
 int fx_chill_touch (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_chill_touch (%2d)\n", fx->Opcode);
+	if (0) print( "fx_chill_touch (%2d)\n", fx->Opcode);
 	target->Damage(fx->Parameter1, DAMAGE_COLD, Owner);
 	if (STAT_GET(IE_GENERAL)==GEN_UNDEAD) {
-		target->Panic();
+		target->Panic(Owner, PANIC_RUNAWAY);
 	}
 	return FX_NOT_APPLIED;
 }
@@ -703,7 +737,7 @@ int fx_chill_touch (Scriptable* Owner, Actor* target, Effect* fx)
 //the undead check is made by IDS targeting as it should be
 int fx_chill_touch_panic (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_chill_touch_panic (%2d)\n", fx->Opcode);
+	if (0) print( "fx_chill_touch_panic (%2d)\n", fx->Opcode);
 	ieDword state;
 
 	if (fx->Parameter2) {
@@ -726,7 +760,7 @@ int fx_chill_touch_panic (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0xed CrushingDamage (how)
 int fx_crushing_damage (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_crushing_damage (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_crushing_damage (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
 	target->Damage(fx->Parameter1, DAMAGE_CRUSHING, Owner);
 	return FX_NOT_APPLIED;
 }
@@ -734,7 +768,7 @@ int fx_crushing_damage (Scriptable* Owner, Actor* target, Effect* fx)
 //0xee SaveBonus
 int fx_save_bonus (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_save_bonus (%2d): Bonus %d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_save_bonus (%2d): Bonus %d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 	STAT_MOD( IE_SAVEVSDEATH );
 	STAT_MOD( IE_SAVEVSWANDS );
 	STAT_MOD( IE_SAVEVSPOLY );
@@ -745,15 +779,15 @@ int fx_save_bonus (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 
 //0xef SlowPoison
 //gemrb extension: can slow bleeding wounds (like bandage)
-static EffectRef fx_poison_ref={"Poison",NULL,-1};
-static EffectRef fx_wound_ref={"BleedingWounds",NULL,-1};
+static EffectRef fx_poison_ref = { "Poison", -1 };
+static EffectRef fx_wound_ref = { "BleedingWounds", -1 };
 
 int fx_slow_poison (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
 	ieDword my_opcode;
 	if (fx->Parameter2) my_opcode = EffectQueue::ResolveEffect(fx_wound_ref);
 	else my_opcode = EffectQueue::ResolveEffect(fx_poison_ref);
-	if (0) printf( "fx_slow_poison (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_slow_poison (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
 	std::list< Effect* >::const_iterator f=target->fxqueue.GetFirstEffect();
 	Effect *poison;
 	//this is intentionally an assignment
@@ -793,15 +827,8 @@ ieResRef iwd_monster_2da[IWD_MSC]={"MSUMMO1","MSUMMO2","MSUMMO3","MSUMMO4",
 //0xf0 IWDMonsterSummoning
 int fx_iwd_monster_summoning (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_iwd_monster_summoning (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
+	if (0) print( "fx_iwd_monster_summoning (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
 
-	if (!target) {
-		return FX_NOT_APPLIED;
-	}
-
-	if (!target->GetCurrentArea()) {
-		return FX_APPLIED;
-	}
 	//check the summoning limit?
 
 	ieResRef monster;
@@ -824,7 +851,7 @@ int fx_iwd_monster_summoning (Scriptable* Owner, Actor* target, Effect* fx)
 //0xf1 VampiricTouch
 int fx_vampiric_touch (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_vampiric_touch (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
+	if (0) print( "fx_vampiric_touch (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 	if (Owner->Type!=ST_ACTOR) {
 		return FX_NOT_APPLIED;
 	}
@@ -855,7 +882,7 @@ ieResRef animate_dead_2da[IWD_AD]={"ADEAD","ADEADL"};
 //0xf3 AnimateDead
 int fx_animate_dead (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_animate_dead (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
+	if (0) print( "fx_animate_dead (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 	//check the summoning limit?
 	if (!target) {
 		return FX_NOT_APPLIED;
@@ -884,7 +911,7 @@ int fx_animate_dead (Scriptable* Owner, Actor* target, Effect* fx)
 //f4 Prayer
 int fx_prayer (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_prayer (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_prayer (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	ieDword value;
 
 	if (fx->Parameter2)
@@ -912,7 +939,7 @@ int fx_prayer (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0xf5
 int fx_curse (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_curse (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_curse (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	if (target->SetSpellState(SS_BADPRAYER)) return FX_NOT_APPLIED;
 	EXTSTATE_SET(EXTSTATE_PRAYER_BAD);
 	STAT_ADD( IE_TOHIT, -1);
@@ -932,15 +959,7 @@ ieResRef summon_monster_2da[IWD_SM2]={"SLIZARD","STROLLS","SSHADOW","ISTALKE",
 
 int fx_summon_monster2 (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_summon_monster2 (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
-	//check the summoning limit?
-	if (!target) {
-		return FX_NOT_APPLIED;
-	}
-
-	if (!target->GetCurrentArea()) {
-		return FX_APPLIED;
-	}
+	if (0) print( "fx_summon_monster2 (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 
 	ieResRef monster;
 	ieResRef hit;
@@ -962,10 +981,10 @@ int fx_summon_monster2 (Scriptable* Owner, Actor* target, Effect* fx)
 //0xf7 BurningBlood (iwd)
 int fx_burning_blood (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_burning_blood (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_burning_blood (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 
 	//if the target is dead, this effect ceases to exist
-	if (STATE_GET(STATE_DEAD)) {
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
@@ -977,17 +996,17 @@ int fx_burning_blood (Scriptable* Owner, Actor* target, Effect* fx)
 		damage = DAMAGE_COLD;
 	}
 
-	target->Damage(fx->Parameter1, DAMAGE_FIRE, Owner);
+	target->Damage(fx->Parameter1, damage, Owner);
 	STAT_SET(IE_CHECKFORBERSERK,1);
 	return FX_NOT_APPLIED;
 }
 //0xf7 BurningBlood2 (how, iwd2)
 int fx_burning_blood2 (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_burning_blood2 (%2d): Count: %d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_burning_blood2 (%2d): Count: %d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 
 	//if the target is dead, this effect ceases to exist
-	if (STATE_GET(STATE_DEAD)) {
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
@@ -1008,7 +1027,7 @@ int fx_burning_blood2 (Scriptable* Owner, Actor* target, Effect* fx)
 	}
 
 	//this effect doesn't use Parameter1 to modify damage, it is a counter instead
-	target->Damage(DICE_ROLL(0), DAMAGE_FIRE, Owner);
+	target->Damage(DICE_ROLL(0), damage, Owner);
 	STAT_SET(IE_CHECKFORBERSERK,1);
 	return FX_APPLIED;
 }
@@ -1020,15 +1039,7 @@ ieResRef summon_shadow_monster_2da[IWD_SM2]={"SMONSTE","DSMONST","SHADES" };
 
 int fx_summon_shadow_monster (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_summon_shadow_monster (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
-	//check the summoning limit?
-	if (!target) {
-		return FX_NOT_APPLIED;
-	}
-
-	if (!target->GetCurrentArea()) {
-		return FX_APPLIED;
-	}
+	if (0) print( "fx_summon_shadow_monster (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 
 	ieResRef monster;
 	ieResRef hit;
@@ -1046,10 +1057,10 @@ int fx_summon_shadow_monster (Scriptable* Owner, Actor* target, Effect* fx)
 	delete newfx;
 	return FX_NOT_APPLIED;
 }
-//f9 Recitation
+//0xf9 Recitation
 int fx_recitation (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_recitation (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_recitation (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	ieDword value;
 
 	if (fx->Parameter2)
@@ -1074,10 +1085,10 @@ int fx_recitation (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 	STAT_ADD( IE_SAVEVSSPELL, value);
 	return FX_APPLIED;
 }
-//fa RecitationBad
+//0xfa RecitationBad
 int fx_recitation_bad (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_recitation (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_recitation (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	if (target->SetSpellState(SS_BADRECIT)) return FX_NOT_APPLIED;
 	EXTSTATE_SET(EXTSTATE_REC_BAD);
 	STAT_ADD( IE_TOHIT, -2);
@@ -1089,13 +1100,13 @@ int fx_recitation_bad (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 	STAT_ADD( IE_SAVEVSSPELL, -2);
 	return FX_APPLIED;
 }
-//fb LichTouch (how)
-//fb State:Hold4 (iwd2)
-static EffectRef fx_hold_creature_ref={"State:Hold",NULL,-1};
+//0xfb LichTouch (how)
+//0xfb State:Hold4 (iwd2)
+static EffectRef fx_hold_creature_ref = { "State:Hold", -1 };
 
 int fx_lich_touch (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_lich_touch (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_lich_touch (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	if (STAT_GET(IE_GENERAL)==GEN_UNDEAD) {
 		return FX_NOT_APPLIED;
 	}
@@ -1111,8 +1122,8 @@ int fx_lich_touch (Scriptable* Owner, Actor* target, Effect* fx)
 	return FX_APPLIED;
 }
 
-//fc BlindingOrb (how)
-static EffectRef fx_state_blind_ref={"State:Blind",NULL,-1};
+//0xfc BlindingOrb (how)
+static EffectRef fx_state_blind_ref = { "State:Blind", -1 };
 
 int fx_blinding_orb (Scriptable* Owner, Actor* target, Effect* fx)
 {
@@ -1142,7 +1153,7 @@ int fx_blinding_orb (Scriptable* Owner, Actor* target, Effect* fx)
 //0xfe RemoveEffects
 int fx_remove_effects (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_remove_effects (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
+	if (0) print( "fx_remove_effects (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 
 	switch(fx->Parameter2) {
 		case 1:
@@ -1160,14 +1171,21 @@ int fx_remove_effects (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0xff SalamanderAura
 int fx_salamander_aura (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_salamander_aura (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
+	if (0) print( "fx_salamander_aura (%2d): ResRef:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Parameter2 );
 	//inflicts damage calculated by dice values+parameter1
 	//creates damage opcode on everyone around. fx->Parameter2 - 0 fire, 1 - ice
 
 	//if the target is dead, this effect ceases to exist
-	if (STATE_GET(STATE_DEAD)) {
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
+
+	//timing
+	ieDword time = core->GetGame()->GameTime;
+	if ((fx->Parameter4==time) || (time%6) ) {
+		return FX_APPLIED;
+	}
+	fx->Parameter4=time;
 
 	ieDword damage = DAMAGE_FIRE;
 
@@ -1182,13 +1200,14 @@ int fx_salamander_aura (Scriptable* Owner, Actor* target, Effect* fx)
 //0x100 UmberHulkGaze (causes confusion)
 //it is a specially hacked effect to ignore certain races
 //from the confusion effect
-static EffectRef fx_confusion_ref={"State:Confused",NULL,-1};
-static EffectRef fx_display_portrait_icon_ref={"Icon:Display",NULL,-1};
-static EffectRef fx_immunity_resource_ref={"Protection:Spell",NULL,-1};
+static EffectRef fx_confusion_ref = { "State:Confused", -1 };
+static EffectRef fx_immunity_resource_ref = { "Protection:Spell", -1 };
 
 int fx_umberhulk_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_umberhulk_gaze (%2d): Duration: %d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_umberhulk_gaze (%2d): Duration: %d\n", fx->Opcode, fx->Parameter1);
+
+	//if the target is dead, this effect ceases to exist
 	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
@@ -1213,7 +1232,7 @@ int fx_umberhulk_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 	while(i--) {
 		Actor *victim = area->GetActor(i,true);
 		if (target==victim) continue;
-		if (PersonalDistance(target, victim)>20) continue;
+		if (PersonalDistance(target, victim)>300) continue;
 
 		//check if target is golem/umber hulk/minotaur, the effect is not working
 		if (check_iwd_targeting(Owner, victim, 0, 17)) { //umber hulk
@@ -1242,11 +1261,13 @@ int fx_umberhulk_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 }
 
 //0x101 ZombieLordAura (causes Panic) unused in all games
-static EffectRef fx_fear_ref={"State:Panic",NULL,-1};
+static EffectRef fx_fear_ref = { "State:Panic", -1 };
 
 int fx_zombielord_aura (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_zombie_lord_aura (%2d): Duration: %d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_zombie_lord_aura (%2d): Duration: %d\n", fx->Opcode, fx->Parameter1);
+
+	//if the target is dead, this effect ceases to exist
 	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
@@ -1300,7 +1321,7 @@ static int eamods[]={EAM_DEFAULT,EAM_SOURCEALLY,EAM_SOURCEENEMY};
 
 int fx_summon_creature2 (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_summon_creature2 (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
+	if (0) print( "fx_summon_creature2 (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
 
 	if (!target) {
 		return FX_NOT_APPLIED;
@@ -1327,13 +1348,19 @@ int fx_summon_creature2 (Scriptable* Owner, Actor* target, Effect* fx)
 	return FX_NOT_APPLIED;
 }
 
-//0x104 AvatarRemovalModifier (same as bg2)
+//0x104 AvatarRemoval
+int fx_avatar_removal (Scriptable* /*Owner*/, Actor* target, Effect* /*fx*/)
+{
+	BASE_SET(IE_AVATARREMOVAL, 1);
+	return FX_NOT_APPLIED;
+}
+
 //0x105 immunity to effect (same as bg2?)
 //0x106 SummonPomab
 
 int fx_summon_pomab (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_summon_pomab (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
+	if (0) print( "fx_summon_pomab (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
 
 	if (!target) {
 		return FX_NOT_APPLIED;
@@ -1363,11 +1390,11 @@ int fx_summon_pomab (Scriptable* Owner, Actor* target, Effect* fx)
 
 	int real = core->Roll(1,cnt,-1);
 	const char *resrefs[2]={tab->QueryField((unsigned int) 0,0), tab->QueryField((int) 0,1) };
-	
+
 	for (int i=0;i<cnt;i++) {
 		Point p(strtol(tab->QueryField(i+1,0),NULL,0), strtol(tab->QueryField(i+1,1), NULL, 0));
 		core->SummonCreature(resrefs[real!=i], fx->Resource2, Owner,
-			target, p, EAM_DEFAULT, 0, NULL);
+			target, p, EAM_DEFAULT, 0, NULL, 0);
 	}
 	return FX_NOT_APPLIED;
 }
@@ -1376,34 +1403,39 @@ int fx_summon_pomab (Scriptable* Owner, Actor* target, Effect* fx)
 //425 ControlUndead2
 int fx_control_undead (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_control_undead (%2d): General: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_control_undead (%2d): General: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 	if (fx->Parameter1 && (STAT_GET(IE_GENERAL)!=fx->Parameter1)) {
 		return FX_NOT_APPLIED;
 	}
 	bool enemyally = true;
-	if (Owner->Type==ST_ACTOR) {
-		enemyally = ((Actor *) Owner)->GetStat(IE_EA)>EA_GOODCUTOFF; //or evilcutoff?
+	Scriptable *caster = target->GetCurrentArea()->GetActorByGlobalID(fx->CasterID);
+	if (caster && caster->Type==ST_ACTOR) {
+		enemyally = ((Actor *) caster)->GetStat(IE_EA) > EA_GOODCUTOFF; //or evilcutoff?
 	}
 
+	//do this only on first use
 	if (fx->FirstApply) {
-		//do this only on first use
+		if (Owner->Type == ST_ACTOR) {
+			fx->CasterID = Owner->GetGlobalID();
+			enemyally = ((Actor *) Owner)->GetStat(IE_EA) > EA_GOODCUTOFF; //or evilcutoff?
+		}
 		switch (fx->Parameter2) {
 		case 0: //charmed (target neutral after charm)
-			core->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+			displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 			break;
 		case 1: //charmed (target hostile after charm)
-			core->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+			displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			break;
 		case 2: //controlled by cleric
-			core->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			break;
 		case 3: //controlled by cleric (hostile after charm)
-			core->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			break;
 		case 4: //turn undead
-			core->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+			displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 			target->SetBase(IE_EA, EA_ENEMY);
 			target->SetStat(IE_MORALE, 0, 0);
 			break;
@@ -1411,7 +1443,7 @@ int fx_control_undead (Scriptable* Owner, Actor* target, Effect* fx)
 	}
 
 	STATE_SET( STATE_CHARMED );
-	STAT_SET( IE_EA, enemyally?EA_ENEMY:EA_CHARMED );
+	STAT_SET_PCF( IE_EA, enemyally?EA_ENEMY:EA_CHARMED );
 	//don't stick if permanent
 	return FX_PERMANENT;
 }
@@ -1419,10 +1451,10 @@ int fx_control_undead (Scriptable* Owner, Actor* target, Effect* fx)
 //0x108 StaticCharge
 int fx_static_charge(Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_static_charge (%2d): Count: %d \n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_static_charge (%2d): Count: %d \n", fx->Opcode, fx->Parameter1 );
 
 	//if the target is dead, this effect ceases to exist
-	if (STATE_GET(STATE_DEAD)) {
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
@@ -1451,14 +1483,14 @@ int fx_static_charge(Scriptable* Owner, Actor* target, Effect* fx)
 //0x109 CloakOfFear (HoW/IWD2)
 //if the resource is not specified, it will work like in HoW
 
-static EffectRef fx_umberhulk_gaze_ref={"UmberHulkGaze",NULL,-1};
+static EffectRef fx_umberhulk_gaze_ref = { "UmberHulkGaze", -1 };
 
 int fx_cloak_of_fear(Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_cloak_of_fear (%2d): Count: %d \n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_cloak_of_fear (%2d): Count: %d \n", fx->Opcode, fx->Parameter1 );
 
 	//if the target is dead, this effect ceases to exist
-	if (STATE_GET(STATE_DEAD)) {
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
@@ -1478,7 +1510,7 @@ int fx_cloak_of_fear(Scriptable* Owner, Actor* target, Effect* fx)
 	}
 
 	//how style (probably better would be to provide effcof.spl)
- 	Effect *newfx = EffectQueue::CreateEffect(fx_umberhulk_gaze_ref, 0,
+	Effect *newfx = EffectQueue::CreateEffect(fx_umberhulk_gaze_ref, 0,
 		8, FX_DURATION_INSTANT_PERMANENT);
 	newfx->Power = fx->Power;
 
@@ -1498,20 +1530,12 @@ int fx_cloak_of_fear(Scriptable* Owner, Actor* target, Effect* fx)
 }
 
 //0x10a MovementRateModifier3 (Like bg2)
-//0x10b RemoveConfusion
-int fx_remove_confusion (Scriptable* /*Owner*/, Actor* target, Effect* fx)
-{
-	if (0) printf( "fx_remove_confusion (%2d)\n", fx->Opcode );
-	BASE_STATE_CURE(STATE_CONFUSED);
-	target->fxqueue.RemoveAllEffects(fx_confusion_ref);
-	target->fxqueue.RemoveAllEffects(fx_umberhulk_gaze_ref);
-	target->fxqueue.RemoveAllEffectsWithParam(fx_display_portrait_icon_ref,PI_CONFUSION);
-	return FX_APPLIED;
-}
+//0x10b Cure:Confusion (Like bg2)
+
 //0x10c EyeOfTheMind
 int fx_eye_of_the_mind (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_the_mind (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_the_mind (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYEMIND)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_MIND);
 
@@ -1523,7 +1547,7 @@ int fx_eye_of_the_mind (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x10d EyeOfTheSword
 int fx_eye_of_the_sword (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_the_sword (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_the_sword (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYESWORD)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_SWORD);
 
@@ -1536,7 +1560,7 @@ int fx_eye_of_the_sword (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x10e EyeOfTheMage
 int fx_eye_of_the_mage (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_the_mage (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_the_mage (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYEMAGE)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_MAGE);
 
@@ -1549,7 +1573,7 @@ int fx_eye_of_the_mage (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x10f EyeOfVenom
 int fx_eye_of_venom (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_venom (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_venom (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYEVENOM)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_VENOM);
 
@@ -1562,7 +1586,7 @@ int fx_eye_of_venom (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x110 EyeOfTheSpirit
 int fx_eye_of_the_spirit (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_the_spirit (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_the_spirit (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYESPIRIT)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_SPIRIT);
 
@@ -1575,7 +1599,7 @@ int fx_eye_of_the_spirit (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x111 EyeOfFortitude
 int fx_eye_of_fortitude (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_fortitude (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_fortitude (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYEFORTITUDE)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_FORT);
 
@@ -1588,7 +1612,7 @@ int fx_eye_of_fortitude (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x112 EyeOfStone
 int fx_eye_of_stone (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_eye_of_stone (%2d)\n", fx->Opcode );
+	if (0) print( "fx_eye_of_stone (%2d)\n", fx->Opcode );
 	if (target->SetSpellState( SS_EYESTONE)) return FX_APPLIED;
 	EXTSTATE_SET(EXTSTATE_EYE_STONE);
 
@@ -1602,7 +1626,7 @@ int fx_eye_of_stone (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 
 int fx_remove_seven_eyes (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_remove_seven_eyes (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_remove_seven_eyes (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	target->spellbook.RemoveSpell(SevenEyes[EYE_MIND]);
 	target->spellbook.RemoveSpell(SevenEyes[EYE_SWORD]);
 	target->spellbook.RemoveSpell(SevenEyes[EYE_MAGE]);
@@ -1616,7 +1640,7 @@ int fx_remove_seven_eyes (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x114 RemoveEffect
 int fx_remove_effect (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_remove_effect (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_remove_effect (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	if (fx->Resource[0])
 	{
 		target->fxqueue.RemoveAllEffectsWithResource(fx->Parameter2, fx->Resource);
@@ -1628,22 +1652,48 @@ int fx_remove_effect (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 	return FX_NOT_APPLIED;
 }
 
+static EffectRef fx_str_ref = { "StrengthModifier", -1 };
+static EffectRef fx_con_ref = { "ConstitutionModifier", -1 };
+static EffectRef fx_dex_ref = { "DexterityModifier", -1 };
+
 //0x115 SoulEater
 int fx_soul_eater (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_soul_eater (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
-	target->Damage(fx->Parameter1, DAMAGE_SOULEATER, Owner);
-	if (STATE_GET(STATE_DEAD) ) {
+	if (0) print( "fx_soul_eater (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
+	// Soul Eater has no effect on undead, constructs, and elemental creatures,
+	// but this is handled in the spells via fx_resist_spell_and_message
+	int damage = fx->Parameter1;
+	// the how spell has it set to 0, so use the damage from the description
+	if (!damage) {
+		damage = core->Roll(3, 8, 0);
+	}
+
+	target->Damage(damage, DAMAGE_SOULEATER, Owner);
+	//the state is not set soon enough!
+	//if (STATE_GET(STATE_DEAD) ) {
+	if (target->GetInternalFlag() & IF_REALLYDIED) {
 		ieResRef monster;
 		ieResRef hit;
 		ieResRef areahit;
 
-		//todo: supply the souleatr.2da file
 		core->GetResRefFrom2DA("souleatr", monster, hit, areahit);
 		//the monster should appear near the effect position
 		Point p(fx->PosX, fx->PosY);
 		Effect *newfx = EffectQueue::CreateUnsummonEffect(fx);
 		core->SummonCreature(monster, areahit, Owner, target, p, EAM_SOURCEALLY, fx->Parameter1, newfx);
+
+		// for each kill the caster receives a +1 bonus to Str, Dex and Con for 1 turn
+		if (Owner->Type == ST_ACTOR) {
+			newfx = EffectQueue::CreateEffect(fx_str_ref, 1, MOD_ADDITIVE, FX_DURATION_INSTANT_LIMITED);
+			newfx->Duration = core->Time.turn_sec;
+			core->ApplyEffect(newfx, (Actor *)Owner, Owner);
+			newfx = EffectQueue::CreateEffect(fx_dex_ref, 1, MOD_ADDITIVE, FX_DURATION_INSTANT_LIMITED);
+			newfx->Duration = core->Time.turn_sec;
+			core->ApplyEffect(newfx, (Actor *)Owner, Owner);
+			newfx = EffectQueue::CreateEffect(fx_con_ref, 1, MOD_ADDITIVE, FX_DURATION_INSTANT_LIMITED);
+			newfx->Duration = core->Time.turn_sec;
+			core->ApplyEffect(newfx, (Actor *)Owner, Owner);
+		}
 		delete newfx;
 	}
 	return FX_NOT_APPLIED;
@@ -1653,16 +1703,33 @@ int fx_soul_eater (Scriptable* Owner, Actor* target, Effect* fx)
 //FIXME: maybe it is cheaper to port effsof1/2 to how than having an alternate effect
 int fx_shroud_of_flame (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_shroud_of_flame (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_shroud_of_flame (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 
-	if ( STATE_GET(STATE_DEAD) ) {
+	//if the target is dead, this effect ceases to exist
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
-	//timing
-	if (core->GetGame()->GameTime%6) {
+	//don't apply it twice in a round
+	if (EXTSTATE_GET(EXTSTATE_SHROUD)) {
 		return FX_APPLIED;
 	}
+	EXTSTATE_SET(EXTSTATE_SHROUD);
+	//directly modifying the color of the target
+	if (fx->Parameter2==1) {
+		target->SetColorMod(0xff, RGBModifier::ADD, -1, 0, 0, 0x96);
+	}
+	else {
+		target->SetColorMod(0xff, RGBModifier::ADD, -1, 0x96, 0, 0);
+	}
+
+	//timing
+	ieDword time = core->GetGame()->GameTime;
+	if ((fx->Parameter4==time) || (time%6) ) {
+		return FX_APPLIED;
+	}
+	fx->Parameter4=time;
+
 	//inflicts damage calculated by dice values+parameter1
 	//creates damage opcode on everyone around. fx->Parameter2 - 0 fire, 1 - ice
 	ieDword damage = DAMAGE_FIRE;
@@ -1671,48 +1738,69 @@ int fx_shroud_of_flame (Scriptable* Owner, Actor* target, Effect* fx)
 		damage = DAMAGE_COLD;
 	}
 
-	target->Damage(fx->Parameter1, DAMAGE_FIRE, Owner);
-	ApplyDamageNearby(Owner, target, fx, DAMAGE_FIRE);
+	target->Damage(fx->Parameter1, damage, Owner);
+	ApplyDamageNearby(Owner, target, fx, damage);
 	return FX_APPLIED;
 }
 
-//0x116 ShroudOfFlame (iwd2)
-int fx_shroud_of_flame2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
-{
-	if (0) printf( "fx_shroud_of_flame2 (%2d)\n", fx->Opcode );
+static ieResRef resref_sof1={"effsof1"};
+static ieResRef resref_sof2={"effsof2"};
 
-	if ( STATE_GET(STATE_DEAD) ) {
+//0x116 ShroudOfFlame (iwd2)
+int fx_shroud_of_flame2 (Scriptable* Owner, Actor* target, Effect* fx)
+{
+	if (0) print( "fx_shroud_of_flame2 (%2d)\n", fx->Opcode );
+
+	//if the target is dead, this effect ceases to exist
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
 
 	if (target->SetSpellState( SS_FLAMESHROUD)) return FX_APPLIED;
+	EXTSTATE_SET(EXTSTATE_SHROUD); //just for compatibility
 
 	if(enhanced_effects) {
 		target->SetColorMod(0xff, RGBModifier::ADD, 1, 0xa0, 0, 0);
 	}
 
-	//timing
-	//if (core->GetGame()->GameTime%6) {
-	//	return FX_APPLIED;
-	//}
-
 	//apply resource on hitter
-	memcpy(target->applyWhenBeingHit,fx->Resource,sizeof(ieResRef));
+	//actually, this should be a list of triggers
+	if (fx->Resource[0]) {
+		memcpy(target->applyWhenBeingHit,fx->Resource,sizeof(ieResRef));
+	} else {
+		memcpy(target->applyWhenBeingHit,resref_sof1,sizeof(ieResRef));
+	}
+
+	//timing
+	ieDword time = core->GetGame()->GameTime;
+	if ((fx->Parameter4==time) || (time%6) ) {
+		return FX_APPLIED;
+	}
+	fx->Parameter4=time;
+
+	if (fx->Resource2[0]) {
+		core->ApplySpell(fx->Resource2, target, Owner, fx->Power);
+	} else {
+		core->ApplySpell(resref_sof2, target, Owner, fx->Power);
+	}
 	return FX_APPLIED;
 }
 
 //0x117 AnimalRage
 int fx_animal_rage (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_animal_rage (%2d): Mode: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_animal_rage (%2d): Mode: %d\n", fx->Opcode, fx->Parameter2 );
 
-	if ( STATE_GET(STATE_DEAD) ) {
-		return FX_NOT_APPLIED;
-	}
 	//param2==1 sets only the spell state
 	if (fx->Parameter2) {
 		target->SetSpellState( SS_ANIMALRAGE);
 		return FX_APPLIED;
+	}
+
+	//the state check is done after the parameter differentiation
+	//it might be a bug but i cannot decide (going with the original)
+	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
+		return FX_NOT_APPLIED;
 	}
 
 	//param2==0 doesn't set the spell state
@@ -1756,7 +1844,7 @@ int fx_animal_rage (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //0x118 TurnUndead how
 int fx_turn_undead (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_turn_undead (%2d): Level %d\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_turn_undead (%2d): Level %d\n", fx->Opcode, fx->Parameter1 );
 	if (fx->Parameter1) {
 		target->Turn(Owner, fx->Parameter1);
 	} else {
@@ -1771,23 +1859,27 @@ int fx_turn_undead (Scriptable* Owner, Actor* target, Effect* fx)
 //0x118 TurnUndead2 iwd2
 int fx_turn_undead2 (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_turn_undead2 (%2d): Level: %d Type %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_turn_undead2 (%2d): Level: %d Type %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 	switch (fx->Parameter2)
 	{
 	case 0: //command
-		target->Panic();
+		target->AddTrigger(TriggerEntry(trigger_turnedby, Owner->GetGlobalID()));
+		target->Panic(Owner, PANIC_RUNAWAY);
 		break;
 	case 1://rebuke
+		target->AddTrigger(TriggerEntry(trigger_turnedby, Owner->GetGlobalID()));
 		if (target->SetSpellState(SS_REBUKED)) {
 			//display string rebuked
 		}
 		STAT_SUB(IE_ARMORCLASS,4);
 		break;
 	case 2://destroy
+		target->AddTrigger(TriggerEntry(trigger_turnedby, Owner->GetGlobalID()));
 		target->Die(Owner);
 		break;
 	case 3://panic
-		target->Panic();
+		target->AddTrigger(TriggerEntry(trigger_turnedby, Owner->GetGlobalID()));
+		target->Panic(Owner, PANIC_RUNAWAY);
 		break;
 	default://depends on caster
 		if (fx->Parameter1) {
@@ -1806,7 +1898,7 @@ int fx_turn_undead2 (Scriptable* Owner, Actor* target, Effect* fx)
 //0x119 VitriolicSphere
 int fx_vitriolic_sphere (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_vitriolic_sphere (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
+	if (0) print( "fx_vitriolic_sphere (%2d): Damage %d\n", fx->Opcode, fx->Parameter1 );
 	//timing
 	if (core->GetGame()->GameTime%6) {
 		return FX_APPLIED;
@@ -1824,26 +1916,46 @@ int fx_vitriolic_sphere (Scriptable* Owner, Actor* target, Effect* fx)
 //0x11a SuppressHP
 int fx_suppress_hp (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_suppress_hp (%2d)\n", fx->Opcode);
+	if (0) print( "fx_suppress_hp (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_NOHPINFO)) return FX_APPLIED;
-	EXTSTATE_SET(0x00001000);
+	EXTSTATE_SET(EXTSTATE_NO_HP);
 	return FX_APPLIED;
 }
 
 //0x11b FloatText
 int fx_floattext (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_floattext (%2d): StrRef:%d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_floattext (%2d): StrRef:%d Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 	switch (fx->Parameter2)
 	{
+	case 1:
+		//in the original game this signified that a specific weapon is equipped
+		if (EXTSTATE_GET(EXTSTATE_FLOATTEXTS))
+			return FX_APPLIED;
+
+		EXTSTATE_SET(EXTSTATE_FLOATTEXTS);
+		if (!fx->Resource[0]) {
+			strnuprcpy(fx->Resource,"cynicism",sizeof(ieResRef)-1);
+		}
+		if (fx->Parameter1) {
+			fx->Parameter1--;
+			return FX_APPLIED;
+		} else {
+			fx->Parameter1=core->Roll(1,500,500);
+		}
+	case 2:
+		if (EXTSTATE_GET(EXTSTATE_FLOATTEXTS)) {
+			ieDword *CynicismList = core->GetListFrom2DA(fx->Resource);
+			ieDword i = CynicismList[0];
+			if (i) {
+				DisplayStringCore(target, CynicismList[core->Roll(1,i,0)], DS_HEAD);
+			}
+		}
+		return FX_APPLIED;
 	default:
 		DisplayStringCore(target, fx->Parameter1, DS_HEAD);
 		break;
-	case 1:
-		//in the original game this signified that a specific weapon is equipped
-		EXTSTATE_SET(0x00008000);
-		return FX_APPLIED;
-	case 2: //gemrb extension, displays verbalconstant
+	case 3: //gemrb extension, displays verbalconstant
 		DisplayStringCore(target, fx->Parameter1, DS_CONST|DS_HEAD);
 		break;
 	}
@@ -1852,11 +1964,12 @@ int fx_floattext (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 
 //0x11c MaceOfDisruption
 //death with chance based on race and level
-static EffectRef fx_death_ref={"Death",NULL,-1};
+static EffectRef fx_death_ref = { "Death", -1 };
+static EffectRef fx_iwd_visual_spell_hit_ref = { "IWDVisualSpellHit", -1 };
 
 int fx_mace_of_disruption (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_mace_of_disruption (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
+	if (0) print( "fx_mace_of_disruption (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
 	ieDword race = STAT_GET(IE_RACE);
 	//golem / outer planar gets hit
 	int chance = 0;
@@ -1891,13 +2004,20 @@ int fx_mace_of_disruption (Scriptable* Owner, Actor* target, Effect* fx)
 			break;
 		default:;
 	}
-	if (chance>core->Roll(1,100,0)) {
+	if (chance < core->Roll(1,100,0)) {
 		return FX_NOT_APPLIED;
 	}
 
-
-	Effect *newfx = EffectQueue::CreateEffect(fx_death_ref, 0,
+	Effect *newfx = EffectQueue::CreateEffect(fx_iwd_visual_spell_hit_ref, 0,
 			8, FX_DURATION_INSTANT_PERMANENT);
+	newfx->Target=FX_TARGET_PRESET;
+	newfx->Power=fx->Power;
+	core->ApplyEffect(newfx, target, Owner);
+
+	newfx = EffectQueue::CreateEffect(fx_death_ref, 0,
+			8, FX_DURATION_INSTANT_PERMANENT);
+	newfx->Target=FX_TARGET_PRESET;
+	newfx->Power=fx->Power;
 	core->ApplyEffect(newfx, target, Owner);
 
 	delete newfx;
@@ -1911,7 +2031,7 @@ int fx_mace_of_disruption (Scriptable* Owner, Actor* target, Effect* fx)
 //0x120 State:Set
 int fx_set_state (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_set_state (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
+	if (0) print( "fx_set_state (%2d): Type: %d\n", fx->Opcode, fx->Parameter2 );
 	//in IWD2 we have 176 states (original had 256)
 	target->SetSpellState(fx->Parameter2);
 	//in HoW this sets only the 10 last bits of extstate (until it runs out of bits)
@@ -1927,7 +2047,7 @@ int fx_set_state (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //ToB has an effect which actually runs a hardcoded cutscene
 int fx_cutscene (Scriptable* /*Owner*/, Actor* /*target*/, Effect* fx)
 {
-	if (0) printf( "fx_cutscene (%2d)\n", fx->Opcode );
+	if (0) print( "fx_cutscene (%2d)\n", fx->Opcode );
 	Game *game = core->GetGame();
 	game->locals->SetAt("GEM_ACTIVE", 1);
 	return FX_NOT_APPLIED;
@@ -1937,7 +2057,8 @@ int fx_cutscene (Scriptable* /*Owner*/, Actor* /*target*/, Effect* fx)
 int fx_resist_spell (Scriptable* Owner, Actor* target, Effect *fx)
 {
 	//check iwd ids targeting
-	if (check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
+	//changed this to the opposite (cure light wounds resisted by undead)
+	if (!check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
 		return FX_NOT_APPLIED;
 	}
 
@@ -1948,22 +2069,39 @@ int fx_resist_spell (Scriptable* Owner, Actor* target, Effect *fx)
 	return FX_ABORT;
 }
 
-static EffectRef fx_resist_spell_ref={"ResistSpell2",NULL,-1};
+static EffectRef fx_resist_spell_ref = { "Protection:Spell2", -1 };
 
 //0x122 Protection:Spell3 ??? IWD ids targeting
 // this is a variant of resist spell, used in iwd2
 int fx_resist_spell_and_message (Scriptable* Owner, Actor* target, Effect *fx)
 {
 	//check iwd ids targeting
-	if (check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
+	//changed this to the opposite (cure light wounds resisted by undead)
+	if (!check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
 		return FX_NOT_APPLIED;
 	}
 
+	//convert effect to the normal resist spell effect (without text)
+	//in case it lingers
 	fx->Opcode=EffectQueue::ResolveEffect(fx_resist_spell_ref);
-	//display message too
 
 	if (strnicmp(fx->Resource,fx->Source,sizeof(fx->Resource)) ) {
 		return FX_APPLIED;
+	}
+	//display message too
+	int spellname = -1;
+
+	if(gamedata->Exists(fx->Resource, IE_ITM_CLASS_ID) ) {
+		spellname = gamedata->GetItem(fx->Resource)->ItemName;
+	} else if (gamedata->Exists(fx->Resource, IE_SPL_CLASS_ID) ) {
+		spellname = gamedata->GetSpell(fx->Resource, true)->SpellName;
+	}
+
+	if (spellname>=0) {
+		char *tmpstr = core->GetString(spellname, 0);
+		core->GetTokenDictionary()->SetAtCopy("RESOURCE", tmpstr);
+		core->FreeString(tmpstr);
+		displaymsg->DisplayConstantStringName(STR_RES_RESISTED, 0xf0f0f0, target);
 	}
 	//this has effect only on first apply, it will stop applying the spell
 	return FX_ABORT;
@@ -1975,42 +2113,35 @@ int fx_resist_spell_and_message (Scriptable* Owner, Actor* target, Effect *fx)
 //otherwise: nothing
 int fx_rod_of_smithing (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_rod_of_smithing (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
-	ieDword race = STAT_GET(IE_RACE);
-	//golem / outer planar gets hit
-	int damage;
+	if (0) print( "fx_rod_of_smithing (%2d): ResRef:%s Anim:%s Type: %d\n", fx->Opcode, fx->Resource, fx->Resource2, fx->Parameter2 );
+	int damage = 0;
+	int five_percent = core->Roll(1,100,0)<5;
 
-	switch (race) {
-		case 144: // golem
-			if (core->Roll(1,100,0)>5) {
-				damage = core->Roll(1,8,3);
-			} else {
+	if (check_iwd_targeting(Owner, target, 0, 27)) { //golem
+			if(five_percent) {
+				//instant death
 				damage = -1;
+			} else {
+				damage = core->Roll(1,8,3);
 			}
-			break;
-		case 156: //outsider
-			if (core->Roll(1,100,0)>5) {
-				return FX_NOT_APPLIED;
+	} else if (check_iwd_targeting(Owner, target, 0, 92)) { //outsider
+			if (five_percent) {
+				damage = core->Roll(8,3,0);
 			}
-			damage = core->Roll(8,3,0);
-			break;
-		default:;
-			return FX_NOT_APPLIED;
 	}
-
-	Effect *newfx;
-	if (damage<0) {
-		//create death effect (chunked death)
-		newfx = EffectQueue::CreateEffect(fx_death_ref, 0,
-			8, FX_DURATION_INSTANT_PERMANENT);
-	} else {
-		//create damage effect (blunt)
-		newfx = EffectQueue::CreateEffect(fx_damage_opcode_ref, (ieDword) damage,
-			0, FX_DURATION_INSTANT_PERMANENT);
+	if (damage) {
+		Effect *newfx;
+		if (damage<0) {
+			//create death effect (chunked death)
+			newfx = EffectQueue::CreateEffect(fx_death_ref, 0, 8, FX_DURATION_INSTANT_PERMANENT);
+		} else {
+			//create damage effect (blunt)
+			newfx = EffectQueue::CreateEffect(fx_damage_opcode_ref, (ieDword) damage,
+				0, FX_DURATION_INSTANT_PERMANENT);
+		}
+		core->ApplyEffect(newfx, target, Owner);
+		delete newfx;
 	}
-	core->ApplyEffect(newfx, target, Owner);
-
-	delete newfx;
 
 	return FX_NOT_APPLIED;
 }
@@ -2021,10 +2152,12 @@ int fx_rod_of_smithing (Scriptable* Owner, Actor* target, Effect* fx)
 //TODO: range, affected actors
 int fx_beholder_dispel_magic (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_beholder_dispel_magic (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
+	if (0) print( "fx_beholder_dispel_magic (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
 	if (!fx->Resource[0]) {
 		strcpy(fx->Resource,"SPIN164");
 	}
+
+	//if the target is dead, this effect ceases to exist
 	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
@@ -2034,7 +2167,7 @@ int fx_beholder_dispel_magic (Scriptable* Owner, Actor* target, Effect* fx)
 	while(i--) {
 		Actor *victim = area->GetActor(i,true);
 		if (target==victim) continue;
-		if (PersonalDistance(target, victim)<20) {
+		if (PersonalDistance(target, victim)<300) {
 			//this function deletes tmp
 			core->ApplySpell(fx->Resource, victim, Owner, fx->Power);
 		}
@@ -2047,20 +2180,26 @@ int fx_beholder_dispel_magic (Scriptable* Owner, Actor* target, Effect* fx)
 //TODO: range, affected actors, sound effect
 int fx_harpy_wail (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_harpy_wail (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
+	if (0) print( "fx_harpy_wail (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
 	if (!fx->Resource[0]) {
 		strcpy(fx->Resource,"SPIN166");
 	}
+	if (!fx->Resource2[0]) {
+		strcpy(fx->Resource2,"EFF_P111");
+	}
+
+	//if the target is dead, this effect ceases to exist
 	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
+	core->GetAudioDrv()->Play(fx->Resource2, target->Pos.x, target->Pos.y);
 
 	Map *area = target->GetCurrentArea();
 	int i = area->GetActorCount(true);
 	while(i--) {
 		Actor *victim = area->GetActor(i,true);
 		if (target==victim) continue;
-		if (PersonalDistance(target, victim)<20) {
+		if (PersonalDistance(target, victim)<300) {
 			//this function deletes tmp
 			core->ApplySpell(fx->Resource, victim, Owner, fx->Power);
 		}
@@ -2073,10 +2212,12 @@ int fx_harpy_wail (Scriptable* Owner, Actor* target, Effect* fx)
 //TODO: range, affected actors
 int fx_jackalwere_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_jackalwere_gaze (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
+	if (0) print( "fx_jackalwere_gaze (%2d): Spell: %s\n", fx->Opcode, fx->Resource );
 	if (!fx->Resource[0]) {
 		strcpy(fx->Resource,"SPIN179");
 	}
+
+	//if the target is dead, this effect ceases to exist
 	if (STATE_GET(STATE_DEAD|STATE_PETRIFIED|STATE_FROZEN) ) {
 		return FX_NOT_APPLIED;
 	}
@@ -2086,7 +2227,7 @@ int fx_jackalwere_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 	while(i--) {
 		Actor *victim = area->GetActor(i,true);
 		if (target==victim) continue;
-		if (PersonalDistance(target, victim)<20) {
+		if (PersonalDistance(target, victim)<300) {
 			//this function deletes tmp
 			core->ApplySpell(fx->Resource, victim, Owner, fx->Power);
 		}
@@ -2100,7 +2241,7 @@ int fx_jackalwere_gaze (Scriptable* Owner, Actor* target, Effect* fx)
 //0x12a UseMagicDevice
 int fx_use_magic_device_modifier (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_use_magic_device_modifier (%2d): Mod: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_use_magic_device_modifier (%2d): Mod: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 	STAT_MOD( IE_MAGICDEVICE );
 	return FX_APPLIED;
 }
@@ -2122,7 +2263,7 @@ int fx_use_magic_device_modifier (Scriptable* /*Owner*/, Actor* target, Effect* 
 //Create the effect which will contain the spell hit projectile and the cycle change command
 int fx_alter_animation (Scriptable* Owner, Actor* /*target*/, Effect* fx)
 {
-	if (0) printf( "fx_alter_animation (%2d)\n", fx->Opcode);
+	if (0) print( "fx_alter_animation (%2d)\n", fx->Opcode);
 	Map *map = Owner->GetCurrentArea();
 	if (!map) {
 		return FX_NOT_APPLIED;
@@ -2134,7 +2275,7 @@ int fx_alter_animation (Scriptable* Owner, Actor* /*target*/, Effect* fx)
 		if (!strnicmp (an->Name, fx->Resource, 8) ) {
 			//play spell hit animation
 			Projectile *pro=core->GetProjectileServer()->GetProjectileByIndex(fx->Parameter2);
-			pro->SetCaster(Owner->GetGlobalID());
+			pro->SetCaster(fx->CasterID, fx->CasterLevel);
 			map->AddProjectile(pro, an->Pos, an->Pos);
 			//alter animation, we need only this for the original, but in the
 			//spirit of unhardcoding, i provided the standard modifier codeset
@@ -2167,7 +2308,7 @@ int fx_alter_animation (Scriptable* Owner, Actor* /*target*/, Effect* fx)
 //400 Hopelessness
 int fx_hopelessness (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_hopelessness (%2d)\n", fx->Opcode);
+	if (0) print( "fx_hopelessness (%2d)\n", fx->Opcode);
 
 	if (target->HasSpellState(SS_BLOODRAGE)) {
 		return FX_NOT_APPLIED;
@@ -2182,7 +2323,7 @@ int fx_hopelessness (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //401 ProtectionFromEvil
 int fx_protection_from_evil (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_protection_from_evil (%2d)\n", fx->Opcode);
+	if (0) print( "fx_protection_from_evil (%2d)\n", fx->Opcode);
 	//
 	if (target->SetSpellState( SS_PROTFROMEVIL)) return FX_APPLIED;
 	target->AddPortraitIcon(PI_PROTFROMEVIL);
@@ -2201,7 +2342,7 @@ int fx_protection_from_evil (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 int fx_add_effects_list (Scriptable* Owner, Actor* target, Effect* fx)
 {
 	//after iwd2 style ids targeting, apply the spell named in the resource field
-	if (check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
+	if (!check_iwd_targeting(Owner, target, fx->Parameter1, fx->Parameter2) ) {
 		return FX_NOT_APPLIED;
 	}
 	core->ApplySpell(fx->Resource, target, Owner, fx->Power);
@@ -2211,7 +2352,7 @@ int fx_add_effects_list (Scriptable* Owner, Actor* target, Effect* fx)
 //403 ArmorOfFaith
 static int fx_armor_of_faith (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_armor_of_faith (%2d) Amount: %d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_armor_of_faith (%2d) Amount: %d\n", fx->Opcode, fx->Parameter1);
 	if (target->SetSpellState( SS_ARMOROFFAITH)) return FX_APPLIED;
 	if (!fx->Parameter1) {
 		fx->Parameter1=1;
@@ -2233,16 +2374,16 @@ static int fx_armor_of_faith (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 }
 
 //404 Nausea
-static EffectRef fx_unconscious_state_ref={"State:Helpless",NULL,-1};
+static EffectRef fx_unconscious_state_ref = { "State:Helpless", -1 };
 
 int fx_nausea (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_nausea (%2d)\n", fx->Opcode);
+	if (0) print( "fx_nausea (%2d)\n", fx->Opcode);
 	//FIXME: i'm not sure if this part is there
 	//create the sleep effect only once?
-	if (!fx->Parameter3) {
+	if (!fx->Parameter3 && Owner) {
 		Effect *newfx = EffectQueue::CreateEffect(fx_unconscious_state_ref,
-			fx->Parameter1, 1, fx->Duration);
+			fx->Parameter1, 1, fx->TimingMode);
 		newfx->Power = fx->Power;
 		core->ApplyEffect(newfx, target, Owner);
 
@@ -2260,7 +2401,7 @@ int fx_nausea (Scriptable* Owner, Actor* target, Effect* fx)
 //minimum stats in 3rd ed are 1, so this effect won't kill the target
 int fx_enfeeblement (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_enfeeblement (%2d)\n", fx->Opcode);
+	if (0) print( "fx_enfeeblement (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_ENFEEBLED)) return FX_APPLIED;
 	target->AddPortraitIcon(PI_ENFEEBLEMENT);
 	STAT_ADD(IE_STR, -15);
@@ -2270,7 +2411,7 @@ int fx_enfeeblement (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //406 FireShield
 int fx_fireshield (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_fireshield (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_fireshield (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
 	if (fx->Parameter2) {
 		if (target->SetSpellState( SS_ICESHIELD)) return FX_APPLIED;
 		target->AddPortraitIcon(PI_ICESHIELD);
@@ -2285,7 +2426,7 @@ int fx_fireshield (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //407 DeathWard
 int fx_death_ward (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_death_ward (%2d)\n", fx->Opcode);
+	if (0) print( "fx_death_ward (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_DEATHWARD)) return FX_APPLIED;
 	target->AddPortraitIcon(PI_DEATHWARD); // is it ok?
 
@@ -2295,7 +2436,7 @@ int fx_death_ward (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //408 HolyPower
 int fx_holy_power (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_holy_power (%2d)\n", fx->Opcode);
+	if (0) print( "fx_holy_power (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_HOLYPOWER)) return FX_APPLIED;
 
 	if (enhanced_effects) {
@@ -2308,7 +2449,7 @@ int fx_holy_power (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //409 RighteousWrath
 int fx_righteous_wrath (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_righteous_wrath (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_righteous_wrath (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
 	if (fx->Parameter2)
 	{
 		if (target->SetSpellState( SS_RIGHTEOUS2)) return FX_APPLIED;
@@ -2329,13 +2470,6 @@ int fx_righteous_wrath (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //410 SummonAllyIWD2
 int fx_summon_ally (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (!target) {
-		return FX_NOT_APPLIED;
-	}
-
-	if (!target->GetCurrentArea()) {
-		return FX_APPLIED;
-	}
 	Point p(fx->PosX, fx->PosY);
 	Effect *newfx = EffectQueue::CreateUnsummonEffect(fx);
 	core->SummonCreature(fx->Resource, fx->Resource2, Owner, target, p, EAM_ALLY, 0, newfx);
@@ -2346,13 +2480,6 @@ int fx_summon_ally (Scriptable* Owner, Actor* target, Effect* fx)
 //411 SummonEnemyIWD2
 int fx_summon_enemy (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (!target) {
-		return FX_NOT_APPLIED;
-	}
-
-	if (!target->GetCurrentArea()) {
-		return FX_APPLIED;
-	}
 	Point p(fx->PosX, fx->PosY);
 	Effect *newfx = EffectQueue::CreateUnsummonEffect(fx);
 	core->SummonCreature(fx->Resource, fx->Resource2, Owner, target, p, EAM_ENEMY, 0, newfx);
@@ -2362,14 +2489,14 @@ int fx_summon_enemy (Scriptable* Owner, Actor* target, Effect* fx)
 
 //412 Control2
 
-static EffectRef fx_protection_from_evil_ref={"ProtectionFromEvil",NULL,-1};
+static EffectRef fx_protection_from_evil_ref = { "ProtectionFromEvil", -1 };
 
 int fx_control (Scriptable* Owner, Actor* target, Effect* fx)
 {
 	//prot from evil deflects it
 	if (target->fxqueue.HasEffect(fx_protection_from_evil_ref)) return FX_NOT_APPLIED;
 
-	if (0) printf( "fx_control (%2d)\n", fx->Opcode);
+	if (0) print( "fx_control (%2d)\n", fx->Opcode);
 	bool enemyally = true;
 	if (Owner->Type==ST_ACTOR) {
 		enemyally = ((Actor *) Owner)->GetStat(IE_EA)>EA_GOODCUTOFF; //or evilcutoff?
@@ -2378,14 +2505,14 @@ int fx_control (Scriptable* Owner, Actor* target, Effect* fx)
 	switch(fx->Parameter2)
 	{
 	case 0:
-		core->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
+		displaymsg->DisplayConstantStringName(STR_CHARMED, 0xf0f0f0, target);
 		break;
 	case 1:
-		core->DisplayConstantStringName(STR_DIRECHARMED, 0xf0f0f0, target)
+		displaymsg->DisplayConstantStringName(STR_DIRECHARMED, 0xf0f0f0, target)
 ;
 		break;
 	default:
-		core->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
+		displaymsg->DisplayConstantStringName(STR_CONTROLLED, 0xf0f0f0, target);
 
 		break;
 	}
@@ -2400,7 +2527,7 @@ int fx_control (Scriptable* Owner, Actor* target, Effect* fx)
 int fx_visual_effect_iwd2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
 	//
-	if (0) printf( "fx_visual_effect_iwd2 (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_visual_effect_iwd2 (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
 	unsigned int type = fx->Parameter2;
 	if (type<32) {
 		switch(type) {
@@ -2433,7 +2560,7 @@ int fx_visual_effect_iwd2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //414 ResilientSphere
 int fx_resilient_sphere (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_resilient_sphere (%2d)\n", fx->Opcode);
+	if (0) print( "fx_resilient_sphere (%2d)\n", fx->Opcode);
 	target->SetSpellState(SS_HELD|SS_RESILIENT);
 	STATE_SET(STATE_HELPLESS);
 	if (enhanced_effects) {
@@ -2446,7 +2573,7 @@ int fx_resilient_sphere (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //415 Barkskin
 int fx_barkskin (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_barkskin (%2d)\n", fx->Opcode);
+	if (0) print( "fx_barkskin (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_BARKSKIN)) return FX_APPLIED;
 
 	int bonus;
@@ -2470,7 +2597,7 @@ int fx_barkskin (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //416 BleedingWounds
 int fx_bleeding_wounds (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_bleeding_wounds (%2d): Damage: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
+	if (0) print( "fx_bleeding_wounds (%2d): Damage: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2 );
 
 	//also this effect is executed every update
 	ieDword damage;
@@ -2506,14 +2633,41 @@ seconds:
 }
 
 //417 AreaEffect
-//move these flags to a header file if used by elsewhere
+//move these flags to a header file if used elsewhere
 #define AE_REPEAT     1
 #define AE_TARGETEXCL 2
 
 int fx_area_effect (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_area_effect (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_area_effect (%2d) Radius: %d, Type: %d\n", fx->Opcode, fx->Parameter1, fx->Parameter2);
 
+	//this effect ceases to affect dead targets (probably on frozen and stoned too)
+	Game *game = core->GetGame();
+	Map *map = NULL;
+
+	if (target) {
+		if (STATE_GET(STATE_DEAD) ) {
+			return FX_NOT_APPLIED;
+		}
+		map = target->GetCurrentArea();
+	} else {
+		map = game->GetCurrentArea();
+	}
+
+	if (fx->FirstApply) {
+		if (!fx->Parameter3) {
+			fx->Parameter3=AI_UPDATE_TIME;
+		} else {
+			fx->Parameter3*=AI_UPDATE_TIME;
+		}
+		fx->Parameter4 = 0;
+	}
+
+	if (fx->Parameter4>=game->GameTime) {
+		return FX_APPLIED;
+	}
+
+	fx->Parameter4 = game->GameTime+fx->Parameter3;
 	Point pos(fx->PosX, fx->PosY);
 
 	Spell *spell = gamedata->GetSpell(fx->Resource);
@@ -2521,10 +2675,10 @@ int fx_area_effect (Scriptable* Owner, Actor* target, Effect* fx)
 		return FX_NOT_APPLIED;
 	}
 
-	EffectQueue *fxqueue = spell->GetEffectBlock(Owner, pos, 0);
+	EffectQueue *fxqueue = spell->GetEffectBlock(Owner, pos, 0, fx->CasterLevel);
 	fxqueue->SetOwner(Owner);
 	//bit 2 original target is excluded or not excluded
-	fxqueue->AffectAllInRange(target->GetCurrentArea(), pos, 0, 0,fx->Parameter1, fx->Parameter2&AE_TARGETEXCL?target:NULL);
+	fxqueue->AffectAllInRange(map, pos, 0, 0,fx->Parameter1, fx->Parameter2&AE_TARGETEXCL?target:NULL);
 	delete fxqueue;
 
 	//bit 1 repeat or only once
@@ -2537,7 +2691,7 @@ int fx_area_effect (Scriptable* Owner, Actor* target, Effect* fx)
 //418 FreeAction2
 int fx_free_action_iwd2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_free_action_iwd2 (%2d)\n", fx->Opcode);
+	if (0) print( "fx_free_action_iwd2 (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_FREEACTION)) return FX_APPLIED;
 
 	// immunity to the following effects, coded in the effects:
@@ -2558,7 +2712,7 @@ int fx_free_action_iwd2 (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //same as the sleep effect, but different icon
 int fx_unconsciousness (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_unconsciousness (%2d): Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_unconsciousness (%2d): Type: %d\n", fx->Opcode, fx->Parameter2);
 	STATE_SET(STATE_HELPLESS|STATE_SLEEP);
 	if (fx->Parameter2) {
 		target->SetSpellState(SS_NOAWAKE);
@@ -2575,17 +2729,18 @@ int fx_unconsciousness (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //421 EntropyShield
 int fx_entropy_shield (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_entropy_shield (%2d)\n", fx->Opcode);
+	if (0) print( "fx_entropy_shield (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_ENTROPY)) return FX_APPLIED;
+	if (!fx->Resource[0]) {
+		strnuprcpy(fx->Resource, "entropy", sizeof(ieResRef)-1);
+	}
 	//immunity to certain projectiles
-	if (!EntropyProjectileList) {
-		EntropyProjectileList = core->GetListFrom2DA("entropy");
-		ieDword i = EntropyProjectileList[0];
-		//the index is handled differently because
-		//the list's first element is the element count
-		while(i) {
-			target->AddProjectileImmunity(EntropyProjectileList[i--]);
-		}
+	ieDword *EntropyProjectileList = core->GetListFrom2DA(fx->Resource);
+	ieDword i = EntropyProjectileList[0];
+	//the index is handled differently because
+	//the list's first element is the element count
+	while(i) {
+		target->AddProjectileImmunity(EntropyProjectileList[i--]);
 	}
 	if (enhanced_effects) {
 		target->AddPortraitIcon(PI_ENTROPY);
@@ -2599,7 +2754,7 @@ int fx_entropy_shield (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //422 StormShell
 int fx_storm_shell (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_storm_shell (%2d)\n", fx->Opcode);
+	if (0) print( "fx_storm_shell (%2d)\n", fx->Opcode);
 	if (target->SetSpellState(SS_STORMSHELL)) return FX_APPLIED;
 	STAT_ADD(IE_RESISTFIRE, 15);
 	STAT_ADD(IE_RESISTCOLD, 15);
@@ -2614,7 +2769,7 @@ int fx_storm_shell (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //423 ProtectionFromElements
 int fx_protection_from_elements (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_protection_from_elements (%2d)\n", fx->Opcode);
+	if (0) print( "fx_protection_from_elements (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_ELEMPROT)) return FX_APPLIED;
 	target->AddPortraitIcon(PI_ELEMPROT);
 	STAT_ADD(IE_RESISTFIRE, 15);
@@ -2638,7 +2793,7 @@ int fx_aegis (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
 	ieDword tmp;
 
-	if (0) printf( "fx_aegis (%2d)\n", fx->Opcode);
+	if (0) print( "fx_aegis (%2d)\n", fx->Opcode);
 	//gives immunity against:
 	//0xda stoneskin
 	//0x9a entangle
@@ -2689,7 +2844,7 @@ int fx_aegis (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //427 ExecutionerEyes
 int fx_executioner_eyes (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_executioner_eyes (%2d)\n", fx->Opcode);
+	if (0) print( "fx_executioner_eyes (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_EXECUTIONER)) return FX_APPLIED;
 
 	STAT_ADD(IE_CRITICALHITBONUS, 4);
@@ -2709,7 +2864,7 @@ int fx_executioner_eyes (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //430 ProjectileUseEffectList
 int fx_projectile_use_effect_list (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_projectile_use_effect_list (%2d) Type: %d Spell:%s\n", fx->Opcode, fx->Parameter2, fx->Resource);
+	if (0) print( "fx_projectile_use_effect_list (%2d) Type: %d Spell:%s\n", fx->Opcode, fx->Parameter2, fx->Resource);
 
 	if (!Owner) {
 		return FX_NOT_APPLIED;
@@ -2722,15 +2877,15 @@ int fx_projectile_use_effect_list (Scriptable* Owner, Actor* target, Effect* fx)
 	//create projectile from known spellheader
 	//cannot get the projectile from the spell
 	Projectile *pro = core->GetProjectileServer()->GetProjectileByIndex(fx->Parameter2);
-	
+
 	if (pro) {
 		Point p(fx->PosX, fx->PosY);
 
-		pro->SetEffects(spl->GetEffectBlock(Owner, p, 0, fx->Parameter2));
+		pro->SetEffects(spl->GetEffectBlock(Owner, p, 0, fx->CasterLevel, fx->Parameter2));
 		Point origin(fx->PosX, fx->PosY);
-		pro->SetCaster(Owner->GetGlobalID());
+		pro->SetCaster(fx->CasterID, fx->CasterLevel);
 		if (target) {
-			map->AddProjectile( pro, origin, target->GetGlobalID());
+			map->AddProjectile( pro, origin, target->GetGlobalID(), false);
 		} else {
 			map->AddProjectile( pro, origin, origin);
 		}
@@ -2742,7 +2897,7 @@ int fx_projectile_use_effect_list (Scriptable* Owner, Actor* target, Effect* fx)
 
 int fx_energy_drain (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_energy_drain (%2d) Type: %d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_energy_drain (%2d) Type: %d\n", fx->Opcode, fx->Parameter1);
 	if (!fx->Parameter1) {
 		return FX_NOT_APPLIED;
 	}
@@ -2767,7 +2922,7 @@ int fx_energy_drain (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //432 TortoiseShell
 int fx_tortoise_shell (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_tortoise_shell (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_tortoise_shell (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
 	if (target->SetSpellState( SS_TORTOISE)) return FX_NOT_APPLIED;
 	if (enhanced_effects) {
 		target->AddPortraitIcon(PI_TORTOISE);
@@ -2779,7 +2934,7 @@ int fx_tortoise_shell (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //433 Blink
 int fx_blink (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_blink (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_blink (%2d) Type: %d\n", fx->Opcode, fx->Parameter2);
 
 	if (target->SetSpellState( SS_BLINK)) return FX_APPLIED;
 
@@ -2813,7 +2968,7 @@ int fx_blink (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //434 PersistentUseEffectList
 int fx_persistent_use_effect_list (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_persistent_use_effect_list (%2d) Interval: %d Resource: %.8s\n", fx->Opcode, fx->Parameter1, fx->Resource);
+	if (0) print( "fx_persistent_use_effect_list (%2d) Interval: %d Resource: %.8s\n", fx->Opcode, fx->Parameter1, fx->Resource);
 	if (fx->Parameter3) {
 		fx->Parameter3--;
 	} else {
@@ -2826,7 +2981,7 @@ int fx_persistent_use_effect_list (Scriptable* Owner, Actor* target, Effect* fx)
 //435 DayBlindness
 int fx_day_blindness (Scriptable* Owner, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_day_blindness (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_day_blindness (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
 	if (target->SetSpellState(SS_DAYBLINDNESS)) return FX_NOT_APPLIED;
 	// medium hack (better than original)
 	// the original used explicit race/subrace values
@@ -2836,7 +2991,7 @@ int fx_day_blindness (Scriptable* Owner, Actor* target, Effect* fx)
 	else if (check_iwd_targeting(Owner, target, 0, 84)) penalty = 2; //duergar
 	else penalty = 0;
 
- 	STAT_ADD(IE_SAVEFORTITUDE, penalty);
+	STAT_ADD(IE_SAVEFORTITUDE, penalty);
 	STAT_ADD(IE_SAVEREFLEX, penalty);
 	STAT_ADD(IE_SAVEWILL, penalty);
 	//for compatibility reasons
@@ -2850,8 +3005,8 @@ int fx_day_blindness (Scriptable* Owner, Actor* target, Effect* fx)
 //436 DamageReduction
 int fx_damage_reduction (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_damage_reduction (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
- 	STAT_SET(IE_RESISTSLASHING, fx->Parameter2*5);
+	if (0) print( "fx_damage_reduction (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
+	STAT_SET(IE_RESISTSLASHING, fx->Parameter2*5);
 	STAT_SET(IE_RESISTCRUSHING, fx->Parameter2*5);
 	STAT_SET(IE_RESISTPIERCING, fx->Parameter2*5);
 	return FX_APPLIED;
@@ -2861,7 +3016,7 @@ int fx_damage_reduction (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //modifies character animations to look like clerics of same gender/race
 int fx_disguise (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_disguise (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
+	if (0) print( "fx_disguise (%2d) Amount: %d\n", fx->Opcode, fx->Parameter2);
 	ieDword anim = BASE_GET(IE_ANIMATION_ID);
 	if (anim>=0x6000 || anim<=0x6fff) {
 		STAT_SET(IE_ANIMATION_ID, anim&0x600f);
@@ -2879,7 +3034,7 @@ int fx_disguise (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //438 HeroicInspiration
 int fx_heroic_inspiration (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_heroic_inspiration (%2d)\n", fx->Opcode);
+	if (0) print( "fx_heroic_inspiration (%2d)\n", fx->Opcode);
 
 	//+1 to all saves
 	STAT_ADD( IE_SAVEFORTITUDE, 1);
@@ -2897,7 +3052,7 @@ int fx_heroic_inspiration (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //440 BarbarianRage
 int fx_barbarian_rage (Scriptable* /*Owner*/, Actor* /*target*/, Effect* fx)
 {
-	if (0) printf( "fx_barbarian_rage (%2d) Amount:%d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_barbarian_rage (%2d) Amount:%d\n", fx->Opcode, fx->Parameter1);
 	//TODO: implement this
 	return FX_APPLIED;
 }
@@ -2909,7 +3064,7 @@ int fx_barbarian_rage (Scriptable* /*Owner*/, Actor* /*target*/, Effect* fx)
 //443 MissileDamageReduction
 int fx_missile_damage_reduction (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_missile_damage_reduction (%2d) Amount:%d\n", fx->Opcode, fx->Parameter1);
+	if (0) print( "fx_missile_damage_reduction (%2d) Amount:%d\n", fx->Opcode, fx->Parameter1);
 	STAT_SET(IE_RESISTMISSILE, fx->Parameter1);
 	//TODO: didn't set the pluses
 	return FX_APPLIED;
@@ -2918,7 +3073,7 @@ int fx_missile_damage_reduction (Scriptable* /*Owner*/, Actor* target, Effect* f
 //444 TensersTransformation
 int fx_tenser_transformation (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_tenser_transformation (%2d)\n", fx->Opcode);
+	if (0) print( "fx_tenser_transformation (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_TENSER)) return FX_APPLIED;
 	STAT_SUB(IE_ARMORCLASS, 2);
 
@@ -2933,24 +3088,21 @@ int fx_tenser_transformation (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //446 SmiteEvil
 int fx_smite_evil (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_smite_evil (%2d)\n", fx->Opcode);
+	if (0) print( "fx_smite_evil (%2d)\n", fx->Opcode);
 	target->SetSpellState(SS_SMITEEVIL);
 	return FX_NOT_APPLIED;
 }
 
 //447 Restoration
 
-static EffectRef fx_disease_ref={"Disease",NULL,-1};
-static EffectRef fx_str_ref={"StrengthModifier",NULL,-1};
-static EffectRef fx_int_ref={"IntelligenceModifier",NULL,-1};
-static EffectRef fx_wis_ref={"WisdomModifier",NULL,-1};
-static EffectRef fx_con_ref={"ConstitutionModifier",NULL,-1};
-static EffectRef fx_dex_ref={"DexterityModifier",NULL,-1};
-static EffectRef fx_cha_ref={"CharismaModifier",NULL,-1};
+static EffectRef fx_disease_ref = { "Disease", -1 };
+static EffectRef fx_int_ref = { "IntelligenceModifier", -1 };
+static EffectRef fx_wis_ref = { "WisdomModifier", -1 };
+static EffectRef fx_cha_ref = { "CharismaModifier", -1 };
 
 int fx_restoration (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_restoration (%2d)\n", fx->Opcode);
+	if (0) print( "fx_restoration (%2d)\n", fx->Opcode);
 	target->fxqueue.RemoveAllEffectsWithParam(fx_disease_ref, 4);
 	target->fxqueue.RemoveAllEffectsWithParam(fx_disease_ref, 5);
 	target->fxqueue.RemoveAllEffectsWithParam(fx_disease_ref, 6);
@@ -2973,7 +3125,7 @@ int fx_restoration (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //448 AlicornLance
 int fx_alicorn_lance (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_alicorn_lance (%2d)\n", fx->Opcode);
+	if (0) print( "fx_alicorn_lance (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_ALICORNLANCE)) return FX_APPLIED;
 	////target->AddPortraitIcon(PI_ALICORN); //no portrait icon
 	STAT_SUB(IE_ARMORCLASS, 2);
@@ -3032,8 +3184,9 @@ Actor *GetRandomEnemySeen(Map *map, Actor *origin)
 
 int fx_call_lightning (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_call_lightning (%2d)\n", fx->Opcode);
+	if (0) print( "fx_call_lightning (%2d)\n", fx->Opcode);
 
+	//this effect ceases to affect dead targets (probably on frozen and stoned too)
 	if (STATE_GET(STATE_DEAD)) {
 		return FX_NOT_APPLIED;
 	}
@@ -3054,7 +3207,7 @@ int fx_call_lightning (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 	//calculate victim (an opponent of target)
 	Actor *victim = GetRandomEnemySeen(map, target);
 	if (!victim) {
-		core->DisplayConstantStringName(STR_LIGHTNING_DISS, 0xf0f0f0, target);
+		displaymsg->DisplayConstantStringName(STR_LIGHTNING_DISS, 0xf0f0f0, target);
 		return ret;
 	}
 
@@ -3072,7 +3225,7 @@ int fx_call_lightning (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //450 GlobeInvulnerability
 int fx_globe_invulnerability (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_globe_invulnerability (%2d)\n", fx->Opcode);
+	if (0) print( "fx_globe_invulnerability (%2d)\n", fx->Opcode);
 	int state;
 	int icon;
 	int value;
@@ -3102,7 +3255,7 @@ int fx_globe_invulnerability (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //451 LowerResistance
 int fx_lower_resistance (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_lower_resistance (%2d)\n", fx->Opcode);
+	if (0) print( "fx_lower_resistance (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_LOWERRESIST)) return FX_APPLIED;
 
 	STAT_SUB(IE_RESISTMAGIC, 15);
@@ -3110,27 +3263,31 @@ int fx_lower_resistance (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 }
 
 //452 Bane
-static EffectRef fx_bless_ref={"Bless",NULL,-1};
+static EffectRef fx_bless_ref = { "Bless", -1 };
 
 int fx_bane (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_bane (%2d)\n", fx->Opcode);
+	if (0) print( "fx_bane (%2d)\n", fx->Opcode);
 
 	if (target->SetSpellState( SS_BANE)) return FX_NOT_APPLIED;
 	//do this once
-	target->fxqueue.RemoveAllEffects(fx_bless_ref);
+	if (fx->FirstApply)
+		target->fxqueue.RemoveAllEffects(fx_bless_ref);
 	if (enhanced_effects) {
+		target->AddPortraitIcon(PI_BANE);
 		target->SetColorMod(0xff, RGBModifier::ADD, 20, 0, 0, 0x80);
 	}
+	STAT_ADD( IE_TOHIT, -fx->Parameter1);
+	STAT_ADD( IE_MORALEBREAK, -fx->Parameter1);
 	return FX_APPLIED;
 }
 
 //453 PowerAttack
-static EffectRef fx_expertise_ref={"Expertise",NULL,-1};
+static EffectRef fx_expertise_ref = { "Expertise", -1 };
 
 int fx_power_attack (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_power_attack (%2d)\n", fx->Opcode);
+	if (0) print( "fx_power_attack (%2d)\n", fx->Opcode);
 
 	if (fx->FirstApply) {
 		if (target->HasSpellState(SS_EXPERTISE)) {
@@ -3153,14 +3310,14 @@ int fx_power_attack (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 }
 
 //454 Expertise
-static EffectRef fx_powerattack_ref={"PowerAttack",NULL,-1};
+static EffectRef fx_powerattack_ref = { "PowerAttack", -1 };
 
 int fx_expertise (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
 //expertise feat:
 //convert positive base attack bonus into AC (dodge bonus)
 //up to feat_expertise count (player's choice)
-	if (0) printf( "fx_expertise (%2d)\n", fx->Opcode);
+	if (0) print( "fx_expertise (%2d)\n", fx->Opcode);
 	if (fx->FirstApply) {
 		if (target->HasSpellState(SS_POWERATTACK)) {
 			target->fxqueue.RemoveAllEffects(fx_powerattack_ref);
@@ -3182,11 +3339,11 @@ int fx_expertise (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 }
 
 //455 ArterialStrike
-static EffectRef fx_hamstring_ref={"HamString",NULL,-1};
+static EffectRef fx_hamstring_ref = { "HamString", -1 };
 
 int fx_arterial_strike (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_arterial_strike (%2d)\n", fx->Opcode);
+	if (0) print( "fx_arterial_strike (%2d)\n", fx->Opcode);
 	if (fx->FirstApply) {
 		if (target->HasSpellState(SS_HAMSTRING)) {
 			target->fxqueue.RemoveAllEffects(fx_hamstring_ref);
@@ -3200,11 +3357,11 @@ int fx_arterial_strike (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 }
 
 //456 HamString
-static EffectRef fx_arterialstrike_ref={"ArterialStrike",NULL,-1};
+static EffectRef fx_arterialstrike_ref = { "ArterialStrike", -1 };
 
 int fx_hamstring (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_hamstring (%2d)\n", fx->Opcode);
+	if (0) print( "fx_hamstring (%2d)\n", fx->Opcode);
 	if (fx->FirstApply) {
 		if (target->HasSpellState(SS_ARTERIAL)) {
 			target->fxqueue.RemoveAllEffects(fx_arterialstrike_ref);
@@ -3220,7 +3377,7 @@ int fx_hamstring (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 //457 RapidShot
 int fx_rapid_shot (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 {
-	if (0) printf( "fx_rapid_shot (%2d)\n", fx->Opcode);
+	if (0) print( "fx_rapid_shot (%2d)\n", fx->Opcode);
 	if (target->SetSpellState( SS_RAPIDSHOT)) return FX_APPLIED;
 	//TODO:
 	return FX_APPLIED;
@@ -3229,5 +3386,7 @@ int fx_rapid_shot (Scriptable* /*Owner*/, Actor* target, Effect* fx)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x4F172B2, "Effect opcodes for the icewind branch of the games")
-RegisterIWDOpcodes();
+PLUGIN_INITIALIZER(RegisterIWDOpcodes)
+PLUGIN_CLEANUP(Cleanup)
 END_PLUGIN()
+

@@ -1,44 +1,45 @@
 SUBDIRS = \
-	Core \
-	GUIScript \
-	SDLVideo \
-	OpenALAudio \
-	ZLibManager \
 	2DAImporter \
-	ACMImporter \
-	NullSound \
+	ACMReader \
 	AREImporter \
 	BAMImporter \
 	BIFImporter \
+	BIKPlayer \
 	BMPImporter \
 	BMPWriter \
-	PNGImporter \
-	JPEGImporter \
 	CHUImporter \
 	CREImporter \
 	DLGImporter \
+	DirectoryImporter \
 	EFFImporter \
 	FXOpcodes \
-	IWDOpcodes \
-	PSTOpcodes \
 	GAMImporter \
+	GUIScript \
 	IDSImporter \
 	INIImporter \
 	ITMImporter \
+	IWDOpcodes \
+	JPEGImporter \
 	KEYImporter \
-	DirectoryImporter \
 	MOSImporter \
 	MUSImporter \
 	MVEPlayer \
-	BIKPlayer \
+	NullSound \
+	OGGReader \
+	OpenALAudio \
 	PLTImporter \
+	PNGImporter \
 	PROImporter \
+	PSTOpcodes \
+	SDLVideo \
 	SPLImporter \
 	STOImporter \
 	TISImporter \
 	TLKImporter \
+	WAVReader \
 	WEDImporter \
-	WMPImporter
+	WMPImporter \
+	ZLibManager
 
 DISTCLEANFILES = *.so
 EXTRA_DIST = CMakeLists.txt */CMakeLists.txt

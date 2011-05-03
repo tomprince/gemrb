@@ -22,6 +22,7 @@
 #define GAMIMPORTER_H
 
 #include "SaveGameMgr.h"
+
 #include "ActorMgr.h"
 
 #define GAM_VER_GEMRB  0 
@@ -35,7 +36,6 @@
 class GAMImporter : public SaveGameMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	int version;
 	unsigned int PCSize;
 	ieDword PCOffset, PCCount;
@@ -50,20 +50,15 @@ private:
 public:
 	GAMImporter(void);
 	~GAMImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Game* LoadGame(Game *newGame, int ver_override = 0);
 
 	int GetStoredFileSize(Game *game);
 	/* stores a gane in the savegame folder */
 	int PutGame(DataStream *stream, Game *game);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 private:
-	Actor* GetActor( ActorMgr* aM, bool is_in_party );
-	void GetPCStats(PCStatsStruct* ps);
+	Actor* GetActor(Holder<ActorMgr> aM, bool is_in_party );
+	void GetPCStats(PCStatsStruct* ps, bool extended);
 	GAMJournalEntry* GetJournalEntry();
 
 	int PutHeader(DataStream *stream, Game *game);
@@ -73,6 +68,10 @@ private:
 	int PutJournals(DataStream *stream, Game *game);
 	int PutVariables( DataStream *stream, Game *game);
 	int PutKillVars(DataStream *stream, Game *game);
+	void GetMazeHeader(void *memory);
+	void GetMazeEntry(void *memory);
+	void PutMazeHeader(DataStream *stream, void *memory);
+	void PutMazeEntry(DataStream *stream, void *memory);
 	int PutMaze(DataStream *stream, Game *game);
 	int PutFamiliars(DataStream *stream, Game *game);
 	int PutSavedLocations(DataStream *stream, Game *game);

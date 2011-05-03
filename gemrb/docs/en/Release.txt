@@ -1,5 +1,3 @@
-
-
 How to make a release
 *********************
 
@@ -21,14 +19,17 @@ Preparing and testing GIT
 * Tag current GIT to version number e.g. v0.9.0
   i.e. in the gemrb root directory do
     git tag -a -m "GemRB 0.9.0" v0.9.0
+    git push origin v0.9.0
 * Update from GIT to the tagged version
     git checkout v0.9.0
+
+* After you're done, update the version with a -git suffix, so it will be
+  easier to tell if people are running release builds or not
 
 Source release
 ==============
 
 * on Unix/Linux: 
-  ./autogen.sh
   make dist
 
 
@@ -55,19 +56,23 @@ Windows binary release
 Release and Announcements
 =========================
 
+* Write the release notes if necessary. They are mainly for packagers, so
+create them if there are structural or build related changes. New config
+options should also be mentioned here if they're not part of the changelog.
+
 * Put the tarballs/binaries into Releases on SF
-  - create a new directory in the appropriate section by rightclicking
-  - mark it for upload
-  - upload the release notes
-  - upload the file
-  - mark the release notes as release notes (popup on leftclick)
-  - mark the file to have the release notes and default platforms (popup on leftclick)
+  - go to the Files section
+  - click on the sources subdir
+  - add a new similarly-named folder
+  - use "add file" to upload the sources and release notes
+  - change the file properties to set the default platforms (under "view details")
 
 * Test the downloads from sourceforge.net
 
-* Announce on homepage, SF, #GemRB in channel and title, Happypenguin and
+* Announce on homepage, SF, #GemRB in channel and title, Happypenguin, LGDB and
   Gibberlings3:
     - our forum
     - modding news (Avenger, Theacefes, Grim Squeaker, DavidW and cmorgan have access)
+  (a template is available in admin/announcement.template)
 
 * Run admin/restart_news.sh to restart the NEWS cycle

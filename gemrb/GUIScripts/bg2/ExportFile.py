@@ -27,7 +27,7 @@ def OnLoad():
 	global ImportWindow, TextAreaControl
 
 	GemRB.LoadWindowPack ("GUICG",640,480)
-	ImportWindow = GemRB.LoadWindowObject (21)
+	ImportWindow = GemRB.LoadWindow (21)
 
 	TextAreaControl = ImportWindow.GetControl (4)
 	TextAreaControl.SetText (10962)
@@ -45,9 +45,9 @@ def OnLoad():
 	CancelButton.SetText (15416)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
-	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "DonePress")
-	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CancelPress")
-	TextAreaControl.SetEvent (IE_GUI_TEXTAREA_ON_CHANGE, "SelectPress")
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DonePress)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CancelPress)
+	TextAreaControl.SetEvent (IE_GUI_TEXTAREA_ON_CHANGE, SelectPress)
 	ImportWindow.SetVisible (WINDOW_VISIBLE)
 	return
 

@@ -29,7 +29,7 @@
 #	endif
 #	define GEM_EXPORT_DLL extern "C" __declspec(dllexport)
 #else
-#	if (__GNUC__ >= 3) && (__GNUC_MINOR__ >=5 || __GNUC__ > 3)
+#	if (__GNUC__ >= 3) && (__GNUC_MINOR__ >=4 || __GNUC__ > 3)
 #		ifdef GEM_BUILD_DLL
 #			define GEM_EXPORT __attribute__ ((visibility("default")))
 #		endif
@@ -43,6 +43,14 @@
 
 #ifndef GEM_EXPORT_DLL
 #define GEM_EXPORT_DLL extern "C"
+#endif
+
+#ifdef __GNUC__
+#define WARN_UNUSED __attribute__ ((warn_unused_result))
+#define SENTINEL __attribute__ ((sentinel))
+#else
+#define WARN_UNUSED
+#define SENTINEL
 #endif
 
 #endif

@@ -18,35 +18,27 @@
  *
  */
 
-#include "win32def.h"
 #include "INIImporter.h"
+
+#include "win32def.h"
+
 #include "Interface.h"
 
 INIImporter::INIImporter(void)
 {
-	str = NULL;
-	autoFree = false;
 }
 
 INIImporter::~INIImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
 	for (unsigned int i = 0; i < tags.size(); i++)
 		delete( tags[i] );
 }
 
-bool INIImporter::Open(DataStream* stream, bool autoFree)
+bool INIImporter::Open(DataStream* str)
 {
-	if (stream == NULL) {
+	if (str == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
-	str = stream;
-	this->autoFree = autoFree;
 	int cnt = 0;
 	char* strbuf = ( char* ) malloc( 4097 );
 	INITag* lastTag = NULL;
@@ -77,16 +69,17 @@ bool INIImporter::Open(DataStream* stream, bool autoFree)
 		if (lastTag == NULL)
 			continue;
 		if (lastTag->AddLine( strbuf )) {
-			printMessage("INIImporter","", LIGHT_RED);
-			printf("Bad Line in file: %s, Section: [%s], Entry: '%s'\n", stream->filename, lastTag->GetTagName(), strbuf);
+			printMessage("INIImporter", "Bad Line in file: %s, Section: [%s], Entry: '%s'\n", LIGHT_RED,
+				str->filename, lastTag->GetTagName(), strbuf);
 		}
 
 	} while (true);
 	free( strbuf );
+	delete str;
 	return true;
 }
 
-int INIImporter::GetKeysCount(const char* Tag)
+int INIImporter::GetKeysCount(const char* Tag) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();
@@ -97,7 +90,7 @@ int INIImporter::GetKeysCount(const char* Tag)
 	return 0;
 }
 
-const char* INIImporter::GetKeyNameByIndex(const char* Tag, int index)
+const char* INIImporter::GetKeyNameByIndex(const char* Tag, int index) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();
@@ -109,7 +102,7 @@ const char* INIImporter::GetKeyNameByIndex(const char* Tag, int index)
 }
 
 const char* INIImporter::GetKeyAsString(const char* Tag, const char* Key,
-	const char* Default)
+	const char* Default) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();
@@ -121,7 +114,7 @@ const char* INIImporter::GetKeyAsString(const char* Tag, const char* Key,
 }
 
 int INIImporter::GetKeyAsInt(const char* Tag, const char* Key,
-	const int Default)
+	const int Default) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();
@@ -133,7 +126,7 @@ int INIImporter::GetKeyAsInt(const char* Tag, const char* Key,
 }
 
 float INIImporter::GetKeyAsFloat(const char* Tag, const char* Key,
-	const float Default)
+	const float Default) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();
@@ -145,7 +138,7 @@ float INIImporter::GetKeyAsFloat(const char* Tag, const char* Key,
 }
 
 bool INIImporter::GetKeyAsBool(const char* Tag, const char* Key,
-	const bool Default)
+	const bool Default) const
 {
 	for (unsigned int i = 0; i < tags.size(); i++) {
 		const char* TagName = tags[i]->GetTagName();

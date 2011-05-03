@@ -18,7 +18,7 @@
 #
 #instead of credits, you can listen the songs of the game :)
 import GemRB
-from GUICommon import HasTOB
+import GUICommon
 
 MovieWindow = 0
 TextAreaControl = 0
@@ -28,14 +28,14 @@ def OnLoad():
 	global MovieWindow, TextAreaControl, MoviesTable
 
 	GemRB.LoadWindowPack("GUIMOVIE", 640, 480)
-	MovieWindow = GemRB.LoadWindowObject(0)
+	MovieWindow = GemRB.LoadWindow(0)
 	MovieWindow.SetFrame ()
 	TextAreaControl = MovieWindow.GetControl(0)
 	TextAreaControl.SetFlags (IE_GUI_TEXTAREA_SELECTABLE)
 	PlayButton = MovieWindow.GetControl(2)
 	CreditsButton = MovieWindow.GetControl(3)
 	DoneButton = MovieWindow.GetControl(4)
-	MoviesTable = GemRB.LoadTableObject("SONGLIST")
+	MoviesTable = GemRB.LoadTable("SONGLIST")
 	for i in range(0, MoviesTable.GetRowCount() ):
 			s = MoviesTable.GetValue(i, 0)
 			TextAreaControl.Append(s,-1)
@@ -43,9 +43,9 @@ def OnLoad():
 	PlayButton.SetText(17318)
 	CreditsButton.SetText(15591)
 	DoneButton.SetText(11973)
-	PlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "PlayPress")
-	CreditsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CreditsPress")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "DonePress")
+	PlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, PlayPress)
+	CreditsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CreditsPress)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, DonePress)
 	MovieWindow.SetVisible(WINDOW_VISIBLE)
 	return
 	
@@ -62,8 +62,8 @@ def CreditsPress():
 def DonePress():
 	if MovieWindow:
 		MovieWindow.Unload()
-	if HasTOB():
-		GemRB.SetToken ("NextScript","Start2")
+	if GUICommon.HasTOB():
+		GemRB.SetNextScript ("Start2")
 	else:
-		GemRB.SetToken ("NextScript","Start")
+		GemRB.SetNextScript ("Start")
 	return

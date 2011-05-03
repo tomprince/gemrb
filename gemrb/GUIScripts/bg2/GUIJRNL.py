@@ -21,11 +21,8 @@
 # GUIJRNL.py - scripts to control journal/diary windows from GUIJRNL winpack
 
 import GemRB
-import GUICommonWindows
 from GUIDefines import *
-from GUICommon import CloseOtherWindow
-from GUICommon import GameIsTOB
-from GUICommonWindows import *
+import GUICommon
 
 ###################################################
 JournalWindow = None
@@ -42,12 +39,13 @@ StartYear = 0
 
 ###################################################
 def OpenJournalWindow ():
+	import GUICommonWindows
 	global JournalWindow, OptionsWindow, PortraitWindow
 	global OldPortraitWindow, OldOptionsWindow
 	global StartTime, StartYear
 	global Chapter
 
-	if CloseOtherWindow (OpenJournalWindow):
+	if GUICommon.CloseOtherWindow (OpenJournalWindow):
 		
 		if JournalWindow:
 			JournalWindow.Unload ()
@@ -58,41 +56,41 @@ def OpenJournalWindow ():
 
 		JournalWindow = None
 		GemRB.SetVar ("OtherWindow", -1)
-		GemRB.SetVisible (0, WINDOW_VISIBLE)
+		GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 		GemRB.UnhideGUI ()
 		GUICommonWindows.PortraitWindow = OldPortraitWindow
 		OldPortraitWindow = None
 		GUICommonWindows.OptionsWindow = OldOptionsWindow
 		OldOptionsWindow = None
-		SetSelectionChangeHandler (None)
+		GUICommonWindows.SetSelectionChangeHandler (None)
 		return
 		
-	Table = GemRB.LoadTableObject("YEARS")
+	Table = GemRB.LoadTable("YEARS")
 	StartTime = Table.GetValue("STARTTIME", "VALUE") / 4500
 	StartYear = Table.GetValue("STARTYEAR", "VALUE")
 
 	GemRB.HideGUI ()
-	GemRB.SetVisible (0, WINDOW_INVISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_INVISIBLE)
 
 	GemRB.LoadWindowPack ("GUIJRNL", 640, 480)
-	JournalWindow = Window = GemRB.LoadWindowObject (2)
+	JournalWindow = Window = GemRB.LoadWindow (2)
 	GemRB.SetVar ("OtherWindow", JournalWindow.ID)
 	#saving the original portrait window
 	OldOptionsWindow = GUICommonWindows.OptionsWindow
-	OptionsWindow = GemRB.LoadWindowObject (0)
-	MarkMenuButton (OptionsWindow)
-	SetupMenuWindowControls (OptionsWindow, 0, "OpenJournalWindow")
+	OptionsWindow = GemRB.LoadWindow (0)
+	GUICommonWindows.MarkMenuButton (OptionsWindow)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 0, OpenJournalWindow)
 	OptionsWindow.SetFrame ()
 	OldPortraitWindow = GUICommonWindows.PortraitWindow
-	PortraitWindow = OpenPortraitWindow (0)
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow (0)
 
 	# prev. chapter
 	Button = JournalWindow.GetControl (3)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "PrevChapterPress")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, PrevChapterPress)
 
 	# next chapter
 	Button = JournalWindow.GetControl (4)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "NextChapterPress")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, NextChapterPress)
 
 	GemRB.SetVar ("Section", Section)
 	# Quests
@@ -100,44 +98,44 @@ def OpenJournalWindow ():
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	Button.SetVarAssoc ("Section", 1)
 	Button.SetText (45485)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "UpdateLogWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateLogWindow)
 
 	# Quests completed
 	Button = JournalWindow.GetControl (7)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	Button.SetVarAssoc ("Section", 2)
 	Button.SetText (45486)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "UpdateLogWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateLogWindow)
 
 	# Journal
 	Button = JournalWindow.GetControl (8)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	Button.SetVarAssoc ("Section", 4)
 	Button.SetText (15333)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "UpdateLogWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateLogWindow)
 
 	# User
 	Button = JournalWindow.GetControl (9)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	Button.SetVarAssoc ("Section", 0)
 	Button.SetText (45487)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "UpdateLogWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateLogWindow)
 
 	# Order
 	Button = JournalWindow.GetControl (10)
 	Button.SetText (4627)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ToggleOrderWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, ToggleOrderWindow)
 
 	# Done
 	#Button = JournalWindow.GetControl (3)
 	#Button.SetText (20636)
-	#Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenJournalWindow")
+	#Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenJournalWindow)
 
 	Chapter = GemRB.GetGameVar("chapter")
 	if Chapter>65535:
 		Chapter=0
 
-	SetSelectionChangeHandler (UpdateLogWindow)
+	GUICommonWindows.SetSelectionChangeHandler (UpdateLogWindow)
 	UpdateLogWindow ()
 	OptionsWindow.SetVisible (WINDOW_VISIBLE)
 	Window.SetVisible (WINDOW_FRONT)
@@ -199,7 +197,7 @@ def UpdateLogWindow ():
 ###################################################
 def PrevChapterPress ():
 	global Chapter 
-	if GameIsTOB():
+	if GUICommon.GameIsTOB():
 		firstChapter = 0
 	else:
 		firstChapter = 1

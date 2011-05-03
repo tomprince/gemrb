@@ -21,30 +21,23 @@
 #ifndef SPLIMPORTER_H
 #define SPLIMPORTER_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "SpellMgr.h"
 
 #include "ie_types.h"
+
 #include "Spell.h"
-#include "SpellMgr.h"
 
 
 class SPLImporter : public SpellMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	int version;
 
 public:
 	SPLImporter(void);
 	~SPLImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Spell* GetSpell(Spell *spl, bool silent=false);
-	void release(void)
-	{
-		delete this;
-	}
 private:
 	void GetExtHeader(Spell *s, SPLExtHeader* eh);
 	void GetFeature(Spell *s, Effect *f);

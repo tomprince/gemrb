@@ -27,7 +27,15 @@
 dnl Initialize autoconf and automake
 
 AC_PREREQ([2.57])
-AC_INIT(gemrb, 0.6.0)
+AC_INIT(gemrb, 0.6.4-git)
+
+AC_MSG_WARN([
+
+
+The autotools build system is NO LONGER MAINTAINED and may be dropped in
+future versions! Please switch to using cmake instead.
+
+])
 
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_SRCDIR([gemrb/])
@@ -111,7 +119,6 @@ AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([strtoul])
 AC_CHECK_FUNCS([strndup])
 AC_CHECK_FUNCS([strnlen])
-AC_CHECK_FUNCS([snprintf])
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([stddef.h])
 AC_CHECK_HEADERS([sys/time.h])
@@ -167,9 +174,12 @@ AM_CHECK_PYTHON_LIBS([], [AC_MSG_ERROR([
 ])])
 
 
-AC_CHECK_LIB(vorbisfile, ov_info, 
-	AC_DEFINE( HAS_VORBIS_SUPPORT, 1, [Handling of .ogg soundfiles])
-	LIBS="$LIBS -lvorbis -lvorbisfile",, -lvorbis )
+AC_CHECK_HEADER([vorbis/vorbisfile.h],
+	[AC_CHECK_LIB(vorbisfile, ov_info,
+		[AC_DEFINE( HAS_VORBIS_SUPPORT, 1, [Handling of .ogg soundfiles])
+		vorbis_ok=yes],[vorbis_ok=no], -lvorbis )],
+	[vorbis_ok=no])
+AM_CONDITIONAL([VORBIS], [test x$vorbis_ok = xyes])
 
 AC_CHECK_HEADER([jpeglib.h],
 	[AC_CHECK_LIB(jpeg, jpeg_start_decompress,
@@ -203,8 +213,13 @@ AC_STRUCT_TM
 AC_TYPE_SIZE_T
 
 CPPFLAGS="$CPPFLAGS -DSYSCONFDIR=\\\"\$(sysconfdir)\\\" -DDATADIR=\\\"\$(moddir)\\\" -DPLUGINDIR=\\\"\$(plugindir)\\\""
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/gemrb/includes -I\$(top_srcdir)/gemrb/plugins/Core"
-CXXFLAGS="$CXXFLAGS -Werror -Wall -W -Wpointer-arith -Wcast-align -pedantic -Wno-format-y2k -Wno-long-long -fno-strict-aliasing"
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/gemrb/includes -I\$(top_srcdir)/gemrb/core"
+CXXFLAGS="$CXXFLAGS -Wall -W -Wpointer-arith -Wcast-align -pedantic -Wno-format-y2k -Wno-long-long -fno-strict-aliasing"
+
+AC_ARG_ENABLE(werror, AS_HELP_STRING(--disable-werror,Make compiler warning non-fatal.), enable_werror=$enableval, enable_werror=yes)
+if test "x$enable_werror" = "xyes" ; then
+  CXXFLAGS="$CXXFLAGS -Werror"
+fi
 
 # only export symbols explicitly marked to be exported
 CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
@@ -219,6 +234,7 @@ AC_SUBST(OPENAL_LIBS)
 AC_CONFIG_FILES([
 Makefile
 gemrb/Makefile 
+gemrb/core/Makefile
 gemrb/includes/Makefile 
 gemrb/override/Makefile
 gemrb/override/bg1/Makefile
@@ -228,18 +244,17 @@ gemrb/override/iwd/Makefile
 gemrb/override/iwd2/Makefile
 gemrb/override/pst/Makefile
 gemrb/override/shared/Makefile
-gemrb/override/test1/Makefile
 gemrb/GUIScripts/Makefile
 gemrb/GUIScripts/bg1/Makefile
 gemrb/GUIScripts/bg2/Makefile
 gemrb/GUIScripts/iwd/Makefile
 gemrb/GUIScripts/iwd2/Makefile
 gemrb/GUIScripts/pst/Makefile
-gemrb/GUIScripts/test1/Makefile
 gemrb/plugins/Makefile 
-gemrb/plugins/Core/Makefile
 gemrb/plugins/2DAImporter/Makefile 
-gemrb/plugins/ACMImporter/Makefile 
+gemrb/plugins/ACMReader/Makefile
+gemrb/plugins/OGGReader/Makefile
+gemrb/plugins/WAVReader/Makefile
 gemrb/plugins/AREImporter/Makefile 
 gemrb/plugins/BAMImporter/Makefile 
 gemrb/plugins/BIFImporter/Makefile 

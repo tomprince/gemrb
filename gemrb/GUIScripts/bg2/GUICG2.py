@@ -18,7 +18,11 @@
 #
 #character generation, class (GUICG2)
 import GemRB
-from LUCommon import *
+import GUICommon
+import CommonTables
+import LUCommon
+from ie_stats import *
+from GUIDefines import *
 
 ClassWindow = 0
 TextAreaControl = 0
@@ -29,18 +33,18 @@ def OnLoad():
 	global ClassWindow, TextAreaControl, DoneButton, MyChar
 	
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	ClassWindow = GemRB.LoadWindowObject(2)
+	ClassWindow = GemRB.LoadWindow(2)
 
 	MyChar = GemRB.GetVar ("Slot")
-	Race = RaceTable.FindValue (3, GemRB.GetPlayerStat (MyChar, IE_RACE) )
-	RaceName = RaceTable.GetRowName(Race)
+	Race = CommonTables.Races.FindValue (3, GemRB.GetPlayerStat (MyChar, IE_RACE) )
+	RaceName = CommonTables.Races.GetRowName(Race)
 
-	ClassCount = ClassTable.GetRowCount()+1
+	ClassCount = CommonTables.Classes.GetRowCount()+1
 
 	j = 0
 	#radiobutton groups must be set up before doing anything else to them
 	for i in range(1,ClassCount):
-		if ClassTable.GetValue(i-1,4):
+		if CommonTables.Classes.GetValue(i-1,4):
 			continue
 		if j>7:
 			Button = ClassWindow.GetControl(j+7)
@@ -54,9 +58,9 @@ def OnLoad():
 	GemRB.SetVar("MAGESCHOOL",0) 
 	HasMulti = 0
 	for i in range(1,ClassCount):
-		ClassName = ClassTable.GetRowName(i-1)
-		Allowed = ClassTable.GetValue(ClassName, RaceName)
-		if ClassTable.GetValue(i-1,4):
+		ClassName = CommonTables.Classes.GetRowName(i-1)
+		Allowed = CommonTables.Classes.GetValue(ClassName, RaceName)
+		if CommonTables.Classes.GetValue(i-1,4):
 			if Allowed!=0:
 				HasMulti = 1
 			continue
@@ -65,7 +69,7 @@ def OnLoad():
 		else:
 			Button = ClassWindow.GetControl(j+2)
 		j = j+1
-		t = ClassTable.GetValue(i-1, 0)
+		t = CommonTables.Classes.GetValue(i-1, 0)
 		Button.SetText(t )
 
 		if Allowed==0:
@@ -73,7 +77,7 @@ def OnLoad():
 		if Allowed==2:
 			GemRB.SetVar("MAGESCHOOL",5) #illusionist
 		Button.SetState(IE_GUI_BUTTON_ENABLED)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS,  "ClassPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, ClassPress)
 		Button.SetVarAssoc("Class", i)
 
 	MultiClassButton = ClassWindow.GetControl(10)
@@ -95,12 +99,12 @@ def OnLoad():
 		TextAreaControl.SetText(17242)
 		DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	else:
-		TextAreaControl.SetText(ClassTable.GetValue(Class,1) )
+		TextAreaControl.SetText(CommonTables.Classes.GetValue(Class,1) )
 		DoneButton.SetState(IE_GUI_BUTTON_ENABLED)
 
-	MultiClassButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"MultiClassPress")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	MultiClassButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, MultiClassPress)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	ClassWindow.SetVisible(WINDOW_VISIBLE)
 	return
 
@@ -114,21 +118,21 @@ def BackPress():
 def SetClass():
 	# find the class from the class table
 	ClassIndex = GemRB.GetVar ("Class") - 1
-	Class = ClassTable.GetValue (ClassIndex, 5)
+	Class = CommonTables.Classes.GetValue (ClassIndex, 5)
 	GemRB.SetPlayerStat (MyChar, IE_CLASS, Class)
-	ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, Class))
+	ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, Class))
 	# protect against barbarians; this stat will be overwritten later
 	GemRB.SetPlayerStat (MyChar, IE_HITPOINTS, ClassIndex)
 
 	#assign the correct XP
-	if GameIsTOB():
-		GemRB.SetPlayerStat (MyChar, IE_XP, ClassSkillsTable.GetValue (ClassName, "STARTXP2"))
+	if GUICommon.GameIsTOB():
+		GemRB.SetPlayerStat (MyChar, IE_XP, CommonTables.ClassSkills.GetValue (ClassName, "STARTXP2"))
 	else:
-		GemRB.SetPlayerStat (MyChar, IE_XP, ClassSkillsTable.GetValue (ClassName, "STARTXP"))
+		GemRB.SetPlayerStat (MyChar, IE_XP, CommonTables.ClassSkills.GetValue (ClassName, "STARTXP"))
 
 	#create an array to get all the classes from
 	NumClasses = 1
-	IsMulti = IsMultiClassed (MyChar, 1)
+	IsMulti = GUICommon.IsMultiClassed (MyChar, 1)
 	if IsMulti[0] > 1:
 		NumClasses = IsMulti[0]
 		Classes = [IsMulti[1], IsMulti[2], IsMulti[3]]
@@ -138,7 +142,7 @@ def SetClass():
 	#loop through each class and update it's level
 	xp = GemRB.GetPlayerStat (MyChar, IE_XP)/NumClasses
 	for i in range (NumClasses):
-		CurrentLevel = GetNextLevelFromExp (xp, Classes[i])
+		CurrentLevel = LUCommon.GetNextLevelFromExp (xp, Classes[i])
 		if i == 0:
 			GemRB.SetPlayerStat (MyChar, IE_LEVEL, CurrentLevel)
 		elif i <= 2:

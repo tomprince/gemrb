@@ -158,7 +158,7 @@ void GetBitContext::merge( uint8_t *dst, uint8_t *src, int size)
 
 void GetBitContext::debug(const char *prefix)
 {
-	printf("%s: %d\n", prefix, index);
+	print("%s: %d\n", prefix, index);
 }
 
 //VLC specific code from bitstream.c
@@ -173,22 +173,6 @@ int VLC::alloc_table(int size)
 	        abort(); //cant do anything, init_vlc() is used with too little memory
 	}
 	return index;
-}
-
-#define GET_DATA(v, table, i, wrap, size) \
-{\
-	const uint8_t *ptr = (const uint8_t *)table + i * wrap;\
-	switch(size) {\
-	case 1:\
-	    v = *(const uint8_t *)ptr;\
-	    break;\
-	case 2:\
-	    v = *(const uint16_t *)ptr;\
-	    break;\
-	default:\
-	    v = *(const uint32_t *)ptr;\
-	    break;\
-	}\
 }
 
 int VLC::build_table(int table_nb_bits, int nb_codes,
@@ -330,3 +314,4 @@ int VLC::init_vlc(int nb_bits, int nb_codes,
 	}
 	return 0;
 }
+

@@ -18,7 +18,9 @@
 #
 #character generation, racial enemy (GUICG15)
 import GemRB
-from GUICommon import *
+import CommonTables
+from GUIDefines import *
+from ie_stats import *
 
 RaceWindow = 0
 TextAreaControl = 0
@@ -43,7 +45,7 @@ def DisplayRaces():
 		else:
 			Button.SetText(Val)
 			Button.SetState(IE_GUI_BUTTON_ENABLED)
-			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS,"RacePress")
+			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RacePress)
 			Button.SetVarAssoc("HatedRace",RaceTable.GetValue(i+TopIndex,1) )
 	return
 
@@ -53,15 +55,15 @@ def OnLoad():
 
 	MyChar = GemRB.GetVar ("Slot")
 	Class = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-	Class = ClassTable.FindValue (5, Class)
-	ClassName = ClassTable.GetRowName(Class)
-	TableName = ClassSkillsTable.GetValue(ClassName, "HATERACE")
+	Class = CommonTables.Classes.FindValue (5, Class)
+	ClassName = CommonTables.Classes.GetRowName(Class)
+	TableName = CommonTables.ClassSkills.GetValue(ClassName, "HATERACE")
 	if TableName == "*":
 		GemRB.SetNextScript("GUICG7")
 		return
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	RaceWindow = GemRB.LoadWindowObject(15)
-	RaceTable = GemRB.LoadTableObject(TableName)
+	RaceWindow = GemRB.LoadWindow(15)
+	RaceTable = GemRB.LoadTable(TableName)
 	RaceCount = RaceTable.GetRowCount()-LISTSIZE+1
 	if RaceCount<0:
 		RaceCount=0
@@ -70,7 +72,7 @@ def OnLoad():
 	GemRB.SetVar("TopIndex", 0)
 	ScrollBarControl = RaceWindow.GetControl(1)
 	ScrollBarControl.SetVarAssoc("TopIndex", RaceCount)
-	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, "DisplayRaces")
+	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, DisplayRaces)
 	ScrollBarControl.SetDefaultScrollBar ()
 
 	for i in range(LISTSIZE):
@@ -90,8 +92,8 @@ def OnLoad():
 	TextAreaControl = RaceWindow.GetControl(2)
 	TextAreaControl.SetText(17256)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	RaceWindow.SetVisible(WINDOW_VISIBLE)
 	DisplayRaces()
 	return

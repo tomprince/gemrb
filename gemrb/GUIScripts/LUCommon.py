@@ -20,14 +20,15 @@
 # LUCommon.py - common functions related to leveling up
 
 import GemRB
-from GUICommon import *
+import GUICommon
+import CommonTables
 from ie_stats import *
 
 def GetNextLevelExp (Level, Class):
 	"""Returns the amount of XP required to gain the next level."""
-	Row = NextLevelTable.GetRowIndex (Class)
-	if Level < NextLevelTable.GetColumnCount (Row):
-		return str (NextLevelTable.GetValue (Row, Level) )
+	Row = CommonTables.NextLevel.GetRowIndex (Class)
+	if Level < CommonTables.NextLevel.GetColumnCount (Row):
+		return str (CommonTables.NextLevel.GetValue (Row, Level) )
 
 	return 0
 
@@ -36,10 +37,10 @@ def CanLevelUp(actor):
 
 	# get our class and placements for Multi'd and Dual'd characters
 	Class = GemRB.GetPlayerStat (actor, IE_CLASS)
-	Class = ClassTable.FindValue (5, Class)
-	Class = ClassTable.GetRowName (Class)
-	Multi = IsMultiClassed (actor, 1)
-	Dual = IsDualClassed (actor, 1)
+	Class = CommonTables.Classes.FindValue (5, Class)
+	Class = CommonTables.Classes.GetRowName (Class)
+	Multi = GUICommon.IsMultiClassed (actor, 1)
+	Dual = GUICommon.IsDualClassed (actor, 1)
 
 	# get all the levels and overall xp here
 	xp = GemRB.GetPlayerStat (actor, IE_XP)
@@ -54,8 +55,8 @@ def CanLevelUp(actor):
 		xp = xp/Multi[0] # divide the xp evenly between the classes
 		for i in range (Multi[0]):
 			# if any class can level, return 1
-			ClassIndex = ClassTable.FindValue (5, Multi[i+1])
-			tmpNext = int(GetNextLevelExp (Levels[i], ClassTable.GetRowName (ClassIndex) ) )
+			ClassIndex = CommonTables.Classes.FindValue (5, Multi[i+1])
+			tmpNext = int(GetNextLevelExp (Levels[i], CommonTables.Classes.GetRowName (ClassIndex) ) )
 			if tmpNext != 0 and tmpNext <= xp:
 				return 1
 
@@ -63,8 +64,8 @@ def CanLevelUp(actor):
 		return 0
 	elif Dual[0] > 0: # dual classed
 		# get the class we can level
-		Class = ClassTable.GetRowName (Dual[2])
-		if IsDualSwap(actor):
+		Class = CommonTables.Classes.GetRowName (Dual[2])
+		if GUICommon.IsDualSwap(actor):
 			Levels = [Levels[1], Levels[0], Levels[2]]
 
 	# check the class that can be level (single or dual)
@@ -92,37 +93,41 @@ def SetupSavingThrows (pc, Level=None):
 	Race = GemRB.GetPlayerStat (pc, IE_RACE)
 
 	#adjust the class for multi/dual chars
-	Multi = IsMultiClassed (pc, 1)
-	Dual = IsDualClassed (pc, 1)
+	Multi = GUICommon.IsMultiClassed (pc, 1)
+	Dual = GUICommon.IsDualClassed (pc, 1)
 	NumClasses = 1
 	if Multi[0]>1: #get each of the multi-classes
 		NumClasses = Multi[0]
 		Class = [Multi[1], Multi[2], Multi[3]]
 	elif Dual[0]: #only worry about the newer class
-		Class = [ClassTable.GetValue (Dual[2], 5)]
+		Class = [CommonTables.Classes.GetValue (Dual[2], 5)]
 		#assume Level is correct if passed
-		if IsDualSwap(pc) and not Level:
+		if GUICommon.IsDualSwap(pc) and not Level:
 			Levels = [Levels[1], Levels[0], Levels[2]]
 	if NumClasses>len(Levels):
 		return
 
 	#see if we can add racial bonuses to saves
-	#default return is -1 NOT "*", so we convert always convert to str
-	#I'm leaving the "*" just in case
-	Race = RaceTable.GetRowName (RaceTable.FindValue (3, Race) )
-	RaceSaveTableName = str(RaceTable.GetValue (Race, "SAVE") )
+	Race = CommonTables.Races.GetRowName (CommonTables.Races.FindValue (3, Race) )
+	RaceSaveTableName = CommonTables.Races.GetValue (Race, "SAVE", 0)
 	RaceSaveTable = None
 	if RaceSaveTableName != "-1" and RaceSaveTableName != "*":
 		Con = GemRB.GetPlayerStat (pc, IE_CON, 1)-1
-		RaceSaveTable = GemRB.LoadTableObject (RaceSaveTableName)
+		RaceSaveTable = GemRB.LoadTable (RaceSaveTableName)
 		if Con >= RaceSaveTable.GetRowCount ():
 			Con = RaceSaveTable.GetRowCount ()-1
 
 	#preload our tables to limit multi-classed lookups
 	SaveTables = []
+	ClassBonus = 0
 	for i in range (NumClasses):
-		SaveName = ClassTable.GetValue (ClassTable.FindValue (5, Class[i]), 3, 0)
-		SaveTables.append (GemRB.LoadTableObject (SaveName) )
+		Row = CommonTables.Classes.FindValue (5, Class[i])
+		RowName = CommonTables.Classes.GetRowName (Row)
+		SaveName = CommonTables.Classes.GetValue (RowName, "SAVE", 0)
+		SaveTables.append (GemRB.LoadTable (SaveName) )
+		#use numeric value
+		ClassBonus += CommonTables.ClassSkills.GetValue (RowName, "SAVEBONUS", 1)
+
 	if not len (SaveTables):
 		return
 
@@ -144,109 +149,21 @@ def SetupSavingThrows (pc, Level=None):
 
 		#add racial bonuses if applicable (small pc's)
 		if RaceSaveTable:
-			CurrentSave += RaceSaveTable.GetValue (row, Con)
+			CurrentSave -= RaceSaveTable.GetValue (row, Con)
+
+		#add class bonuses if applicable (paladin)
+		CurrentSave -= ClassBonus
 		GemRB.SetPlayerStat (pc, IE_SAVEVSDEATH+row, CurrentSave)
 	return
-
-def ReactivateBaseClass ():
-	"""Regains all abilities of the base dual-class.
-
-	Proficiencies, THACO, saves, spells, and innate abilites,
-	most noteably."""
-
-	ClassIndex = ClassTable.FindValue (5, Classes[1])
-	ClassName = ClassTable.GetRowName (ClassIndex)
-	KitIndex = GetKitIndex (pc)
-
-	# reactivate all our proficiencies
-	TmpTable = GemRB.LoadTableObject ("weapprof")
-	ProfCount = TmpTable.GetRowCount ()
-	if GameIsBG2 ():
-		ProfCount -= 8 # skip bg1 weapprof.2da proficiencies
-	for i in range(ProfCount):
-		StatID = TmpTable.GetValue (i+8, 0)
-		Value = GemRB.GetPlayerStat (pc, StatID)
-		OldProf = (Value & 0x38) >> 3
-		NewProf = Value & 0x07
-		if OldProf > NewProf:
-			Value = (OldProf << 3) | OldProf
-			print "Value:",Value
-			GemRB.ApplyEffect (pc, "Proficiency", Value, StatID )
-
-	# see if this thac0 is lower than our current thac0
-	ThacoTable = GemRB.LoadTableObject ("THAC0")
-	TmpThaco = ThacoTable.GetValue(Classes[1]-1, Level[1]-1, 1)
-	if TmpThaco < GemRB.GetPlayerStat (pc, IE_TOHIT, 1):
-		GemRB.SetPlayerStat (pc, IE_TOHIT, TmpThaco)
-
-	# see if all our saves are lower than our current saves
-	SavesTable = ClassTable.GetValue (ClassIndex, 3, 0)
-	SavesTable = GemRB.LoadTableObject (SavesTable)
-	for i in range (5):
-		# see if this save is lower than our old save
-		TmpSave = SavesTable.GetValue (i, Level[1]-1)
-		if TmpSave < GemRB.GetPlayerStat (pc, IE_SAVEVSDEATH+i, 1):
-			GemRB.SetPlayerStat (pc, IE_SAVEVSDEATH+i, TmpSave)
-
-	# see if we're a caster
-	SpellTables = [ClassSkillsTable.GetValue (Classes[1], 0, 0), ClassSkillsTable.GetValue (Classes[1], 1, 0), ClassSkillsTable.GetValue (Classes[1], 2, 0)]
-	if SpellTables[2] != "*": # casts mage spells
-		# set up our memorizations
-		SpellTable = GemRB.LoadTableObject (SpellTables[2])
-		for i in range (9):
-			# if we can cast more spells at this level (should be always), then update
-			NumSpells = SpellTable.GetValue (Level[1]-1, i)
-			if NumSpells > GemRB.GetMemorizableSpellsCount (pc, IE_SPELL_TYPE_WIZARD, i, 1):
-				GemRB.SetMemorizableSpellsCount (pc, NumSpells, IE_SPELL_TYPE_WIZARD, i)
-	elif SpellTables[1] != "*" or SpellTables[0] != "*": # casts priest spells
-		# get the correct table and mask
-		if SpellTables[1] != "*": # clerical spells
-			SpellTable = GemRB.LoadTableObject (SpellTables[1])
-			ClassMask = 0x4000
-		else: # druidic spells
-			if not GameRB.HasResource(SpellTables[0], RES_2DA):
-				SpellTables[0] = "MXSPLPRS"
-			SpellTable = GemRB.LoadTableObject (SpellTables[0])
-			ClassMask = 0x8000
-
-		# loop through each spell level
-		for i in range (7):
-			# update if we can cast more spells at this level
-			NumSpells = SpellTable.GetValue (str(Level[1]), str(i+1), 1)
-			if not NumSpells:
-				continue
-			if NumSpells > GemRB.GetMemorizableSpellsCount (pc, IE_SPELL_TYPE_PRIEST, i, 1):
-				GemRB.SetMemorizableSpellsCount (pc, NumSpells, IE_SPELL_TYPE_PRIEST, i)
-
-			# also re-learn the spells if we have to
-			# WARNING: this fixes the error whereby rangers dualed to clerics still got all druid spells
-			#	they will now only get druid spells up to the level they could cast
-			#	this should probably be noted somewhere (ranger/cleric multis still function the same,
-			#	but that could be remedied if desired)
-			Learnable = GetLearnablePriestSpells(ClassMask, GemRB.GetPlayerStat (pc, IE_ALIGNMENT), i+1)
-			for k in range (len (Learnable)): # loop through all the learnable spells
-				if HasSpell (pc, IE_SPELL_TYPE_PRIEST, i, Learnable[k]) < 0: # only write it if we don't yet know it
-					GemRB.LearnSpell(pc, Learnable[k])
-
-	# setup class bonuses for this class
-	if KitIndex == 0: # no kit
-		ABTable = ClassSkillsTable.GetValue (ClassName, "ABILITIES")
-	else: # kit
-		ABTable = KitListTable.GetValue (KitIndex, 4, 0)
-	print "ABTable:",ABTable
-
-	# add the abilites if we aren't a mage and have a table to ref
-	if ABTable != "*" and ABTable[:6] != "CLABMA":
-		AddClassAbilities (pc, ABTable, Level[1], Level[1]) # relearn class abilites
 
 def GetNextLevelFromExp (XP, Class):
 	"""Gets the next level based on current experience."""
 
-	ClassIndex = ClassTable.FindValue (5, Class)
-	ClassName = ClassTable.GetRowName (ClassIndex)
-	Row = NextLevelTable.GetRowIndex (ClassName)
-	for i in range(1, NextLevelTable.GetColumnCount()-1):
-		if XP < NextLevelTable.GetValue (Row, i):
+	ClassIndex = CommonTables.Classes.FindValue (5, Class)
+	ClassName = CommonTables.Classes.GetRowName (ClassIndex)
+	Row = CommonTables.NextLevel.GetRowIndex (ClassName)
+	for i in range(1, CommonTables.NextLevel.GetColumnCount()-1):
+		if XP < CommonTables.NextLevel.GetValue (Row, i):
 			return i
 	# fix hacked characters that have more xp than the xp cap
 	return 40
@@ -269,19 +186,19 @@ def SetupThaco (pc, Level=None):
 
 	#get some basic values
 	Class = [GemRB.GetPlayerStat (pc, IE_CLASS)]
-	ThacoTable = GemRB.LoadTableObject ("THAC0")
+	ThacoTable = GemRB.LoadTable ("THAC0")
 
 	#adjust the class for multi/dual chars
-	Multi = IsMultiClassed (pc, 1)
-	Dual = IsDualClassed (pc, 1)
+	Multi = GUICommon.IsMultiClassed (pc, 1)
+	Dual = GUICommon.IsDualClassed (pc, 1)
 	NumClasses = 1
 	if Multi[0]>1: #get each of the multi-classes
 		NumClasses = Multi[0]
 		Class = [Multi[1], Multi[2], Multi[3]]
 	elif Dual[0]: #only worry about the newer class
-		Class = [ClassTable.GetValue (Dual[2], 5)]
+		Class = [CommonTables.Classes.GetValue (Dual[2], 5)]
 		#assume Level is correct if passed
-		if IsDualSwap(pc) and not Level:
+		if GUICommon.IsDualSwap(pc) and not Level:
 			Levels = [Levels[1], Levels[0], Levels[2]]
 	if NumClasses>len(Levels):
 		return
@@ -297,7 +214,7 @@ def SetupThaco (pc, Level=None):
 	for i in range (NumClasses):
 		#loop through each class and update the save value if we have
 		#a better thac0
-		ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, Class[i]))
+		ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, Class[i]))
 		TmpThaco = ThacoTable.GetValue (ClassName, str(Levels[i]+1))
 		if TmpThaco < CurrentThaco:
 			NewThaco = 1
@@ -328,19 +245,19 @@ def SetupLore (pc, LevelDiff=None):
 
 	#get some basic values
 	Class = [GemRB.GetPlayerStat (pc, IE_CLASS)]
-	LoreTable = GemRB.LoadTableObject ("lore")
+	LoreTable = GemRB.LoadTable ("lore")
 
 	#adjust the class for multi/dual chars
-	Multi = IsMultiClassed (pc, 1)
-	Dual = IsDualClassed (pc, 1)
+	Multi = GUICommon.IsMultiClassed (pc, 1)
+	Dual = GUICommon.IsDualClassed (pc, 1)
 	NumClasses = 1
 	if Multi[0]>1: #get each of the multi-classes
 		NumClasses = Multi[0]
 		Class = [Multi[1], Multi[2], Multi[3]]
 	elif Dual[0]: #only worry about the newer class
-		Class = [ClassTable.GetValue (Dual[2], 5)]
+		Class = [CommonTables.Classes.GetValue (Dual[2], 5)]
 		#if LevelDiff is passed, we assume it is correct
-		if IsDualSwap(pc) and not LevelDiff:
+		if GUICommon.IsDualSwap(pc) and not LevelDiff:
 			LevelDiffs = [LevelDiffs[1], LevelDiffs[0], LevelDiffs[2]]
 	if NumClasses>len(LevelDiffs):
 		return
@@ -349,7 +266,7 @@ def SetupLore (pc, LevelDiff=None):
 	CurrentLore = GemRB.GetPlayerStat (pc, IE_LORE, 1)
 	for i in range (NumClasses):
 		#correct unlisted progressions
-		ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, Class[i]) )
+		ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, Class[i]) )
 		if ClassName == "SORCERER":
 			ClassName = "MAGE"
 		elif ClassName == "MONK": #monks have a rate of 1, so this is arbitrary
@@ -396,8 +313,8 @@ def SetupHP (pc, Level=None, LevelDiff=None):
 	Class = [GemRB.GetPlayerStat (pc, IE_CLASS)]
 		
 	#adjust the class for multi/dual chars
-	Multi = IsMultiClassed (pc, 1)
-	Dual = IsDualClassed (pc, 1)
+	Multi = GUICommon.IsMultiClassed (pc, 1)
+	Dual = GUICommon.IsDualClassed (pc, 1)
 	NumClasses = 1
 	if Multi[0]>1: #get each of the multi-classes
 		NumClasses = Multi[0]
@@ -406,19 +323,19 @@ def SetupHP (pc, Level=None, LevelDiff=None):
 		#we only get the hp bonus if the old class is reactivated
 		if (Levels[0]<=Levels[1]):
 			return
-		Class = [ClassTable.GetValue (Dual[2], 5)]
+		Class = [CommonTables.Classes.GetValue (Dual[2], 5)]
 		#if Level and LevelDiff are passed, we assume it is correct
-		if IsDualSwap(pc) and not Level and not LevelDiff:
+		if GUICommon.IsDualSwap(pc) and not Level and not LevelDiff:
 			LevelDiffs = [LevelDiffs[1], LevelDiffs[0], LevelDiffs[2]]
 	if NumClasses>len(Levels):
 		return
 
 	#get the correct hp for barbarians
-	Kit = GetKitIndex (pc)
+	Kit = GUICommon.GetKitIndex (pc)
 	ClassName = None
 	if Kit and not Dual[0] and Multi[0]<2:
-		KitName = KitListTable.GetValue (Kit, 0, 0)
-		if ClassTable.GetRowIndex (KitName) >= 0:
+		KitName = CommonTables.KitList.GetValue (Kit, 0, 0)
+		if CommonTables.Classes.GetRowIndex (KitName) >= 0:
 			ClassName = KitName
 
 	#loop through each class and update the hp
@@ -428,9 +345,9 @@ def SetupHP (pc, Level=None, LevelDiff=None):
 	for i in range (NumClasses):
 		#check this classes hp table for any gain
 		if not ClassName or NumClasses > 1:
-			ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, Class[i]) )
-		HPTable = ClassTable.GetValue (ClassName, "HP")
-		HPTable = GemRB.LoadTableObject (HPTable)
+			ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, Class[i]) )
+		HPTable = CommonTables.Classes.GetValue (ClassName, "HP")
+		HPTable = GemRB.LoadTable (HPTable)
 
 		#make sure we are within table ranges
 		MaxLevel = HPTable.GetRowCount()-1
@@ -455,7 +372,7 @@ def SetupHP (pc, Level=None, LevelDiff=None):
 
 			# we only do a roll if core diff or higher, or uncheck max
 			if rolls:
-				if GemRB.GetVar ("Difficulty Level") < 3:
+				if GemRB.GetVar ("Difficulty Level") >= 3 and not GemRB.GetVar ("Maximum HP"):
 					CurrentHP += int (GemRB.Roll (rolls, HPTable.GetValue (level, 0), bonus) / Divisor + 0.5)
 				else:
 					CurrentHP += int ((rolls * HPTable.GetValue (level, 0) + bonus) / Divisor + 0.5)

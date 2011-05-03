@@ -18,12 +18,17 @@
  *
  */
 
-#include "win32def.h"
 #include "CREImporter.h"
-#include "Interface.h"
-#include "EffectMgr.h"
-#include "GameScript.h"
+
 #include "ie_stats.h"
+#include "win32def.h"
+
+#include "EffectMgr.h"
+#include "GameData.h"
+#include "Interface.h"
+#include "TableMgr.h"
+#include "GameScript/GameScript.h"
+
 #include <cassert>
 
 #define MAXCOLOR 12
@@ -32,7 +37,12 @@ typedef unsigned char ColorSet[MAXCOLOR];
 static int RandColor=-1;
 static int RandRows=-1;
 static ColorSet* randcolors=NULL;
-static int MagicBit = core->HasFeature(GF_MAGICBIT);
+static int MagicBit;
+
+static void Initializer()
+{
+	MagicBit = core->HasFeature(GF_MAGICBIT);
+}
 
 //one column, these don't have a level
 static ieResRef* innlist;   //IE_IWD2_SPELL_INNATE
@@ -329,7 +339,6 @@ static void InitSpellbook()
 CREImporter::CREImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 	TotSCEFF = 0xff;
 	CREVersion = 0xff;
 	InitSpellbook();
@@ -337,21 +346,16 @@ CREImporter::CREImporter(void)
 
 CREImporter::~CREImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
 }
 
-bool CREImporter::Open(DataStream* stream, bool aF)
+bool CREImporter::Open(DataStream* stream)
 {
-	if (str && this->autoFree) {
-		delete( str );
-	}
-	str = stream;
-	autoFree = aF;
 	if (stream == NULL) {
 		return false;
 	}
+	delete str;
+	str = stream;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	IsCharacter = false;
@@ -385,8 +389,7 @@ bool CREImporter::Open(DataStream* stream, bool aF)
 		return true;
 	}
 
-	printMessage( "CREImporter"," ",LIGHT_RED);
-	printf("Not a CRE File or File Version not supported: %8.8s\n", Signature );
+	printMessage("CREImporter", "Not a CRE File or File Version not supported: %8.8s\n", LIGHT_RED, Signature);
 	return false;
 }
 
@@ -544,7 +547,6 @@ void CREImporter::ReadChrHeader(Actor *act)
 	ieVariable name;
 	char Signature[8];
 	ieDword offset, size;
-	ieDword tmpDword;
 	ieWord tmpWord;
 	ieByte tmpByte;
 
@@ -553,8 +555,7 @@ void CREImporter::ReadChrHeader(Actor *act)
 	str->Read (Signature, 8);
 	str->Read (name, 32);
 	name[32]=0;
-	tmpDword = *(ieDword *) name;
-	if (tmpDword != 0 && tmpDword !=1) {
+	if (name[0]) {
 		act->SetName( name, 0 ); //setting longname
 	}
 	str->ReadDword( &offset);
@@ -624,16 +625,21 @@ void CREImporter::ReadScript(Actor *act, int ScriptLevel)
 	act->SetScript( aScript, ScriptLevel, act->InParty!=0);
 }
 
-CRESpellMemorization* CREImporter::GetSpellMemorization()
+CRESpellMemorization* CREImporter::GetSpellMemorization(Actor *act)
 {
-	CRESpellMemorization* spl = new CRESpellMemorization();
+	ieWord Level, Type, Number, Number2;
 
-	str->ReadWord( &spl->Level );
-	str->ReadWord( &spl->Number );
-	str->ReadWord( &spl->Number2 );
-	str->ReadWord( &spl->Type );
+	str->ReadWord( &Level );
+	str->ReadWord( &Number );
+	str->ReadWord( &Number2 );
+	str->ReadWord( &Type );
 	str->ReadDword( &MemorizedIndex );
 	str->ReadDword( &MemorizedCount );
+
+	CRESpellMemorization* spl = act->spellbook.GetSpellMemorization(Type, Level);
+	assert(spl && spl->Number == 0 && spl->Number2 == 0); // unused
+	spl->Number = Number;
+	spl->Number2 = Number;
 
 	return spl;
 }
@@ -782,7 +788,7 @@ Actor* CREImporter::GetActor(unsigned char is_in_party)
 			break;
 		default:
 			Inventory_Size=0;
-			printMessage("CREImporter","Unknown creature signature.\n", YELLOW);
+			error("CREImporter", "Unknown creature signature: %d\n", CREVersion);
 	}
 
 	// Read saved effects
@@ -794,48 +800,12 @@ Actor* CREImporter::GetActor(unsigned char is_in_party)
 	// Reading inventory, spellbook, etc
 	ReadInventory( act, Inventory_Size );
 
-	//default is 9 in Tob
-	act->SetBase(IE_MOVEMENTRATE,9);
-
-	ieWord animID = ( ieWord ) act->BaseStats[IE_ANIMATION_ID];
-	//this is required so the actor has animation already
-	act->SetAnimationID( animID );
-	//Speed is determined by the number of frames in each cycle of its animation
-	CharAnimations* anims = act->GetAnims();
-	if (anims) {
-		Animation** tmp = anims->GetAnimation(IE_ANI_WALK, 0);
-		Animation* anim = NULL;
-		if (tmp)
-			anim = tmp[0];
-		if(anim) {
-			act->SetBase(IE_MOVEMENTRATE, anim->GetFrameCount()) ;
-		} else {
-			printMessage("CREImporter", "Unable to determine movement rate for animation ", YELLOW);
-			printf("%04x!\n", animID);
-		}
-	}
-	// Setting up derived stats
-	if (act->BaseStats[IE_STATE_ID] & STATE_DEAD) {
-		act->SetStance( IE_ANI_TWITCH );
-		act->Deactivate();
-	} else {
-		act->SetStance( IE_ANI_AWAKE );
-	}
 	if (IsCharacter) {
 		ReadChrHeader(act);
 	}
 
-	act->inventory.CalculateWeight();
-	act->CreateDerivedStats();
-	if (CREVersion==IE_CRE_V1_2) {
-		//do this after created derived stats
-		ieDword hp = act->BaseStats[IE_HITPOINTS] - GetHpAdjustment(act);
-		act->BaseStats[IE_HITPOINTS]=hp;
-	}
-	//do this after created derived stats
-	act->SetupFist();
-	//initial setup
-	memcpy(act->Modified,act->BaseStats, sizeof(act->Modified));
+	act->InitStatsOnLoad();
+
 	return act;
 }
 
@@ -1031,6 +1001,7 @@ void CREImporter::GetActorPST(Actor *act)
 	scriptname[32]=0;
 	act->SetScriptName(scriptname);
 	strnspccpy(act->KillVar, KillVar, 32);
+	memset(act->IncKillVar, 0, 32);
 
 	str->ReadDword( &KnownSpellsOffset );
 	str->ReadDword( &KnownSpellsCount );
@@ -1050,68 +1021,50 @@ void CREImporter::GetActorPST(Actor *act)
 
 void CREImporter::ReadInventory(Actor *act, unsigned int Inventory_Size)
 {
-	CREItem** items;
+	ieWord *indices = (ieWord *) calloc(Inventory_Size, sizeof(ieWord));
+	//CREItem** items;
 	unsigned int i,j,k;
 
-	str->Seek( ItemsOffset+CREOffset, GEM_STREAM_START );
-	items = (CREItem **) calloc (ItemsCount, sizeof(CREItem *) );
-
-	for (i = 0; i < ItemsCount; i++) {
-		items[i] = core->ReadItem(str); //could be NULL item
-	}
 	act->inventory.SetSlotCount(Inventory_Size+1);
-
 	str->Seek( ItemSlotsOffset+CREOffset, GEM_STREAM_START );
 
-	for (i = 1; i <= Inventory_Size; i++) {
-		int Slot = core->QuerySlot( i );
-		ieWord index;
-		str->ReadWord( &index );
-
-		if (index != 0xFFFF) {
-			if (index>=ItemsCount) {
-				printMessage("CREImporter"," ",LIGHT_RED);
-				printf("Invalid item index (%d) in creature!\n", index);
-				continue;
-			}
-			CREItem *item = items[index];
-			if (item && gamedata->Exists(item->ItemResRef, IE_ITM_CLASS_ID)) {
-				act->inventory.SetSlotItem( item, Slot );
-				/* this stuff will be done in Actor::SetMap
-				 * after the actor gets an area (and game obj)
-				int slottype = core->QuerySlotEffects( Slot );
-				//weapons will be equipped differently, see SetEquippedSlot later
-				//i think missiles equipping effects are always
-				//in effect, if not, then add SLOT_EFFECT_MISSILE
-				if (slottype != SLOT_EFFECT_NONE && slottype != SLOT_EFFECT_MELEE) {
-					act->inventory.EquipItem( Slot, true );
-				}
-				*/
-				items[index] = NULL;
-				continue;
-			}
-			printMessage("CREImporter"," ",LIGHT_RED);
-			printf("Duplicate or (no-drop) item (%d) in creature!\n", index);
-		}
+	//first read the indices
+	for (i = 0;i<Inventory_Size; i++) {
+		str->ReadWord(indices+i);
 	}
-
-	i = ItemsCount;
-	while(i--) {
-		if ( items[i]) {
-			printMessage("CREImporter"," ",LIGHT_RED);
-			printf("Dangling item in creature: %s!\n", items[i]->ItemResRef);
-			delete items[i];
-		}
-	}
-	free (items);
-
-	//this dword contains the equipping info (which slot is selected)
+	//this word contains the equipping info (which slot is selected)
 	// 0,1,2,3 - weapon slots
 	// 1000 - fist
 	// -24,-23,-22,-21 - quiver
 	//the equipping effects are delayed until the actor gets an area
 	str->ReadWordSigned( &act->Equipped );
+	//the equipped slot's selected ability is stored here
 	str->ReadWord( &act->EquippedHeader );
+	
+	//read the item entries based on the previously read indices
+	//an item entry may be read multiple times if the indices are repeating
+	for (i = 0;i<Inventory_Size;) {
+		//the index was intentionally increased here, the fist slot isn't saved
+		ieWord index = indices[i++];
+		if (index != 0xffff) {
+			if (index>=ItemsCount) {
+				printMessage("CREImporter", "Invalid item index (%d) in creature!\n", LIGHT_RED, index);
+				continue;
+			}
+			//20 is the size of CREItem on disc (8+2+3x2+4)
+			str->Seek( ItemsOffset+index*20 + CREOffset, GEM_STREAM_START );
+			//the core allocates this item data
+			CREItem *item = core->ReadItem(str);
+			int Slot = core->QuerySlot(i);
+			if (item) {
+				act->inventory.SetSlotItem(item, Slot);
+			} else {
+				printMessage("CREImporter", "Invalid item index (%d) in creature!\n", LIGHT_RED, index);
+			}
+		}
+	}
+
+	free (indices);
 
 	// Reading spellbook
 	CREKnownSpell **known_spells=(CREKnownSpell **) calloc(KnownSpellsCount, sizeof(CREKnownSpell *) );
@@ -1129,7 +1082,7 @@ void CREImporter::ReadInventory(Actor *act, unsigned int Inventory_Size)
 
 	str->Seek( SpellMemorizationOffset+CREOffset, GEM_STREAM_START );
 	for (i = 0; i < SpellMemorizationCount; i++) {
-		CRESpellMemorization* sm = GetSpellMemorization();
+		CRESpellMemorization* sm = GetSpellMemorization(act);
 
 		j=KnownSpellsCount;
 		while(j--) {
@@ -1145,21 +1098,21 @@ void CREImporter::ReadInventory(Actor *act, unsigned int Inventory_Size)
 		}
 		for (j = 0; j < MemorizedCount; j++) {
 			k = MemorizedIndex+j;
+			assert(k < MemorizedSpellsCount);
 			if (memorized_spells[k]) {
 				sm->memorized_spells.push_back( memorized_spells[k]);
 				memorized_spells[k] = NULL;
 				continue;
 			}
-			printf("[CREImporter]: Duplicate memorized spell (%d) in creature!\n", k);
+			print("[CREImporter]: Duplicate memorized spell (%d) in creature!\n", k);
 		}
-		act->spellbook.AddSpellMemorization( sm );
 	}
 
 	i=KnownSpellsCount;
 	while(i--) {
 		if (known_spells[i]) {
-			printMessage("CREImporter"," ", YELLOW);
-			printf("Dangling spell in creature: %s!\n", known_spells[i]->SpellResRef);
+			printMessage("CREImporter", "Dangling spell in creature: %s!\n", YELLOW,
+				known_spells[i]->SpellResRef);
 			delete known_spells[i];
 		}
 	}
@@ -1168,8 +1121,8 @@ void CREImporter::ReadInventory(Actor *act, unsigned int Inventory_Size)
 	i=MemorizedSpellsCount;
 	while(i--) {
 		if (memorized_spells[i]) {
-			printMessage("CREImporter"," ", YELLOW);
-			printf("Dangling spell in creature: %s!\n", memorized_spells[i]->SpellResRef);
+			printMessage("CREImporter", "Dangling spell in creature: %s!\n", YELLOW,
+				memorized_spells[i]->SpellResRef);
 			delete memorized_spells[i];
 		}
 	}
@@ -1192,7 +1145,7 @@ void CREImporter::ReadEffects(Actor *act)
 
 void CREImporter::GetEffect(Effect *fx)
 {
-	EffectMgr* eM = ( EffectMgr* ) core->GetInterface( IE_EFF_CLASS_ID );
+	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
 
 	eM->Open( str, false );
 	if (TotSCEFF) {
@@ -1200,7 +1153,6 @@ void CREImporter::GetEffect(Effect *fx)
 	} else {
 		eM->GetEffectV1( fx );
 	}
-	core->FreeInterface( eM );
 }
 
 ieDword CREImporter::GetActorGemRB(Actor *act)
@@ -1280,7 +1232,13 @@ ieDword CREImporter::GetActorGemRB(Actor *act)
 	act->BaseStats[IE_INTOXICATION]=tmpByte;
 	str->Read( &tmpByte, 1 );
 	act->BaseStats[IE_LUCK]=tmpByte;
+	str->Read( &tmpByte, 1 );
 	//these could be used to save iwd2 skills
+	//TODO: gemrb format
+	act->BaseStats[IE_TRACKING]=tmpByte;
+	for (int i=0;i<100;i++) {
+		str->ReadDword( &act->StrRefs[i] );
+	}
 	return 0;
 }
 
@@ -1437,7 +1395,8 @@ void CREImporter::GetActorBG(Actor *act)
 	str->Read( scriptname, 32);
 	scriptname[32]=0;
 	act->SetScriptName(scriptname);
-	act->KillVar[0]=0;
+	memset(act->KillVar, 0, 32);
+	memset(act->IncKillVar, 0, 32);
 
 	str->ReadDword( &KnownSpellsOffset );
 	str->ReadDword( &KnownSpellsCount );
@@ -1463,9 +1422,8 @@ void CREImporter::GetIWD2Spellpage(Actor *act, ieIWD2SpellType type, int level, 
 	ieDword tmpDword;
 
 	int check = 0;
-	CRESpellMemorization *sm = new CRESpellMemorization;
-	sm->Level = level;
-	sm->Type = type;
+	CRESpellMemorization* sm = act->spellbook.GetSpellMemorization(type, level);
+	assert(sm && sm->Number == 0 && sm->Number2 == 0); // unused
 	while(count--) {
 		str->ReadDword(&spellindex);
 		str->ReadDword(&totalcount);
@@ -1499,16 +1457,14 @@ void CREImporter::GetIWD2Spellpage(Actor *act, ieIWD2SpellType type, int level, 
 				sm->memorized_spells.push_back(memory);
 			}
 		} else {
-			printMessage("CREImporter","Unresolved spell index: ", LIGHT_RED);
-			printf("%d level:%d, type: %d\n", spellindex, level+1, type);
+			printMessage("CREImporter", "Unresolved spell index: %d level:%d, type: %d\n", LIGHT_RED,
+				spellindex, level+1, type);
 		}
 	}
 	str->ReadDword(&tmpDword);
 	sm->Number = (ieWord) tmpDword;
 	str->ReadDword(&tmpDword);
 	sm->Number2 = (ieWord) tmpDword;
-	
-	act->spellbook.AddSpellMemorization(sm);
 }
 
 void CREImporter::GetActorIWD2(Actor *act)
@@ -2141,19 +2097,6 @@ int CREImporter::PutInventory(DataStream *stream, Actor *actor, unsigned int siz
 	return 0;
 }
 
-//this hack is needed for PST to adjust the current hp for compatibility
-int CREImporter::GetHpAdjustment(Actor *actor)
-{
-	int val;
-
-	if (actor->IsWarrior()) {
-		val = core->GetConstitutionBonus(STAT_CON_HP_WARRIOR,actor->BaseStats[IE_CON]);
-	} else {
-		val = core->GetConstitutionBonus(STAT_CON_HP_NORMAL,actor->BaseStats[IE_CON]);
-	}
-	return val * actor->GetXPLevel( false );
-}
-
 int CREImporter::PutHeader(DataStream *stream, Actor *actor)
 {
 	char Signature[8];
@@ -2178,9 +2121,9 @@ int CREImporter::PutHeader(DataStream *stream, Actor *actor)
 	stream->WriteDword( &actor->BaseStats[IE_GOLD]);
 	stream->WriteDword( &actor->BaseStats[IE_STATE_ID]);
 	tmpWord = actor->BaseStats[IE_HITPOINTS];
-	if (CREVersion==IE_CRE_V1_2) {
-		tmpWord = (ieWord) (tmpWord + GetHpAdjustment(actor));
-	}
+	//decrease the hp back to the one without constitution bonus
+	//this is probably still not perfect
+	tmpWord = (ieWord) (tmpWord - actor->GetHpAdjustment(actor->GetXPLevel(false)));
 	stream->WriteWord( &tmpWord);
 	tmpWord = actor->BaseStats[IE_MAXHITPOINTS];
 	stream->WriteWord( &tmpWord);
@@ -2766,12 +2709,9 @@ int CREImporter::PutMemorizedSpells(DataStream *stream, Actor *actor)
 
 int CREImporter::PutEffects( DataStream *stream, Actor *actor)
 {
-	ieDword tmpDword1,tmpDword2;
-	ieWord tmpWord;
-	ieByte tmpByte;
-	char filling[60];
+	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
+	assert(eM != NULL);
 
-	memset(filling,0,sizeof(filling) );
 	std::list< Effect* >::const_iterator f=actor->fxqueue.GetFirstEffect();
 	for(unsigned int i=0;i<EffectsCount;i++) {
 		const Effect *fx = actor->fxqueue.GetNextSavedEffect(f);
@@ -2779,55 +2719,14 @@ int CREImporter::PutEffects( DataStream *stream, Actor *actor)
 		assert(fx!=NULL);
 
 		if (TotSCEFF) {
-			stream->Write( filling,8 ); //signature
-			stream->WriteDword( &fx->Opcode);
-			stream->WriteDword( &fx->Target);
-			stream->WriteDword( &fx->Power);
-			stream->WriteDword( &fx->Parameter1);
-			stream->WriteDword( &fx->Parameter2);
-			stream->WriteWord( &fx->TimingMode);
-			stream->WriteWord( &fx->unknown2);
-			stream->WriteDword( &fx->Duration);
-			stream->WriteWord( &fx->Probability1);
-			stream->WriteWord( &fx->Probability2);
-			stream->WriteResRef(fx->Resource);
-			stream->WriteDword( &fx->DiceThrown );
-			stream->WriteDword( &fx->DiceSides );
-			stream->WriteDword( &fx->SavingThrowType );
-			stream->WriteDword( &fx->SavingThrowBonus );
-			//isvariable
-			stream->Write( filling,4 );
-			stream->WriteDword( &fx->PrimaryType );
-			stream->Write( filling,12 );
-			stream->WriteDword( &fx->Resistance );
-			stream->WriteDword( &fx->Parameter3 );
-			stream->WriteDword( &fx->Parameter4 );
-			stream->Write( filling,8 );
-			if (fx->IsVariable) {
-				stream->Write(fx->Resource+8, 8);
-				//resource1-4 are used as a continuous memory
-				stream->Write(((ieByte *) fx->Resource)+16, 8);
-			} else {
-				stream->WriteResRef(fx->Resource2);
-				stream->WriteResRef(fx->Resource3);
-			}
-			tmpDword1 = (ieDword) fx->PosX;
-			tmpDword2 = (ieDword) fx->PosY;
-			stream->WriteDword( &tmpDword1 );
-			stream->WriteDword( &tmpDword2 );
-			//FIXME: these two points are actually different
-			stream->WriteDword( &tmpDword1 );
-			stream->WriteDword( &tmpDword2 );
-			stream->WriteDword( &fx->SourceType );
-			stream->WriteResRef( fx->Source );
-			stream->WriteDword( &fx->SourceFlags );
-			stream->WriteDword( &fx->Projectile );
-			tmpDword1 = (ieDword) fx->InventorySlot;
-			stream->WriteDword( &tmpDword1 );
-			stream->Write( filling,40 ); //12+32+8
-			stream->WriteDword( &fx->SecondaryType );
-			stream->Write( filling,60 );
+			eM->PutEffectV2(stream, fx);
 		} else {
+			ieWord tmpWord;
+			ieByte tmpByte;
+			char filling[60];
+
+			memset(filling,0,sizeof(filling) );
+
 			tmpWord = (ieWord) fx->Opcode;
 			stream->WriteWord( &tmpWord);
 			tmpByte = (ieByte) fx->Target;
@@ -2861,7 +2760,7 @@ int CREImporter::PutEffects( DataStream *stream, Actor *actor)
 int CREImporter::PutVariables( DataStream *stream, Actor *actor)
 {
 	char filling[104];
-	POSITION pos=NULL;
+	Variables::iterator pos=NULL;
 	const char *name;
 	ieDword tmpDword, value;
 
@@ -2873,8 +2772,12 @@ int CREImporter::PutVariables( DataStream *stream, Actor *actor)
 		stream->WriteDword( &tmpDword);
 		stream->Write(filling,8); //type, power
 		stream->WriteDword( &value); //param #1
-		//param #2, timing, duration, chance, resource, dices, saves
-		stream->Write( filling, 40);
+		stream->Write(filling,4); //param #2
+		//HoW has an assertion to ensure timing is nonzero (even for variables)
+		value = 1;
+		stream->WriteDword( &value); //timing
+		//duration, chance, resource, dices, saves
+		stream->Write( filling, 32);
 		tmpDword = FAKE_VARIABLE_MARKER;
 		stream->WriteDword( &tmpDword); //variable marker
 		stream->Write( filling, 92); //23 * 4
@@ -2899,6 +2802,8 @@ int CREImporter::PutActor(DataStream *stream, Actor *actor, bool chr)
 		WriteChrHeader( stream, actor );
 	}
 	assert(TotSCEFF==0 || TotSCEFF==1);
+
+	CREOffset = stream->GetPos(); // for asserts
 
 	ret = PutHeader( stream, actor);
 	if (ret) {
@@ -3000,19 +2905,24 @@ int CREImporter::PutActor(DataStream *stream, Actor *actor, bool chr)
 			stream->WriteDword(&tmpDword);
 		}
 	} else {
+		assert(stream->GetPos() == CREOffset+KnownSpellsOffset);
 		ret = PutKnownSpells( stream, actor);
 		if (ret) {
 			return ret;
 		}
+		assert(stream->GetPos() == CREOffset+SpellMemorizationOffset);
 		ret = PutSpellPages( stream, actor);
 		if (ret) {
 			return ret;
 		}
+		assert(stream->GetPos() == CREOffset+MemorizedSpellsOffset);
 		ret = PutMemorizedSpells( stream, actor);
 		if (ret) {
 			return ret;
 		}
 	}
+
+	assert(stream->GetPos() == CREOffset+EffectsOffset);
 	ret = PutEffects(stream, actor);
 	if (ret) {
 		return ret;
@@ -3024,6 +2934,7 @@ int CREImporter::PutActor(DataStream *stream, Actor *actor, bool chr)
 	}
 
 	//items and inventory slots
+	assert(stream->GetPos() == CREOffset+ItemsOffset);
 	ret = PutInventory( stream, actor, Inventory_Size);
 	if (ret) {
 		return ret;
@@ -3035,5 +2946,6 @@ int CREImporter::PutActor(DataStream *stream, Actor *actor, bool chr)
 
 GEMRB_PLUGIN(0xE507B60, "CRE File Importer")
 PLUGIN_CLASS(IE_CRE_CLASS_ID, CREImporter)
-PLUGIN_CLEANUP(ReleaseMemoryCRE);
+PLUGIN_INITIALIZER(Initializer)
+PLUGIN_CLEANUP(ReleaseMemoryCRE)
 END_PLUGIN()

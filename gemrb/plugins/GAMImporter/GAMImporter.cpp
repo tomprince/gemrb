@@ -18,17 +18,21 @@
  *
  */
 
-#include "win32def.h"
-#include "globals.h"
 #include "GAMImporter.h"
+
+#include "globals.h"
+#include "win32def.h"
+
+#include "DataFileMgr.h"
+#include "GameData.h"
 #include "Interface.h"
 #include "MapMgr.h"
-#include "MemoryStream.h"
-#include "DataFileMgr.h"
+#include "TableMgr.h"
+#include "Scriptable/Actor.h"
+#include "System/SlicedStream.h"
+
 #include <cassert>
 
-
-#define MAZE_DATA_SIZE 1720
 #define FAMILIAR_FILL_SIZE 324
 // if your compiler chokes on this, use -1 or 0xff whichever works for you
 #define UNINITIALIZED_CHAR '\xff'
@@ -36,17 +40,14 @@
 GAMImporter::GAMImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 }
 
 GAMImporter::~GAMImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
 }
 
-bool GAMImporter::Open(DataStream* stream, bool autoFree)
+bool GAMImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
@@ -55,7 +56,6 @@ bool GAMImporter::Open(DataStream* stream, bool autoFree)
 		return false;
 	}
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "GAMEV0.0", 8 ) == 0) {
@@ -111,16 +111,8 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 			newGame->version = ver_override;
 		}
 		else {
-			newGame->version=version;
+			newGame->version = version;
 		}
-/*
-		if (stricmp( core->GameType, "iwd2" ) == 0 && version != GAM_VER_IWD2) {
-			newGame->version = GAM_VER_IWD2;
-			printMessage("GAMImporter"," ",LIGHT_RED);
-			printf("Trying to load a non-iwd2 game (%d) in iwd2 mode! Patching version up.\n",
-				(int)version);
-		}
-*/
 	}
 
 	ieDword GameTime;
@@ -137,7 +129,8 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 		newGame->WhichFormation = 0;
 	}
 	str->ReadDword( &newGame->PartyGold );
-	str->ReadWord( &newGame->NpcInParty);                 //npc count in party???
+	//npc count in party???
+	str->ReadWord( &newGame->NpcInParty );
 	str->ReadWord( &newGame->WeatherBits );
 	str->ReadDword( &PCOffset );
 	str->ReadDword( &PCCount );
@@ -150,7 +143,7 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 	str->ReadDword( &GlobalOffset );
 	str->ReadDword( &GlobalCount );
 	str->ReadResRef( newGame->CurrentArea );
-	str->ReadDword( &newGame->Unknown48 );
+	str->ReadDword( &newGame->Unknown48 );//this is still unknown
 	str->ReadDword( &JournalCount );
 	str->ReadDword( &JournalOffset );
 	switch (version) {
@@ -160,7 +153,7 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 			str->ReadResRef( newGame->CurrentArea ); // FIXME: see above
 			memcpy(newGame->AnotherArea, newGame->CurrentArea, sizeof(ieResRef) );
 			str->ReadDword( &newGame->ControlStatus );
-			str->ReadDword( &KillVarsCount ); //this is still unknown
+			str->ReadDword( &newGame->Expansion );
 			str->ReadDword( &FamiliarsOffset );
 			str->ReadDword( &SavedLocOffset );
 			str->ReadDword( &SavedLocCount );
@@ -201,14 +194,11 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 	}
 
 	//Loading PCs
-	ActorMgr* aM = ( ActorMgr* ) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> aM(IE_CRE_CLASS_ID);
 	for (i = 0; i < PCCount; i++) {
 		str->Seek( PCOffset + ( i * PCSize ), GEM_STREAM_START );
 		Actor *actor = GetActor( aM, true );
-		newGame->JoinParty( actor, 0 );
-		if (actor->Selected) {
-			newGame->SelectActor(actor, true, SELECT_QUIET);
-		}
+		newGame->JoinParty( actor, actor->Selected?JP_SELECT:0 );
 	}
 
 	//Loading NPCs
@@ -217,12 +207,12 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 		Actor *actor = GetActor( aM, false );
 		newGame->AddNPC( actor );
 	}
-	core->FreeInterface( aM );
 
 	//apparently BG1/IWD2 relies on this, if chapter is unset, it is
 	//set to -1, hopefully it won't break anything
-	newGame->locals->SetAt("CHAPTER", (ieDword) -1);
-	
+	//PST has no chapter variable by default, and would crash on one
+	newGame->locals->SetAt("CHAPTER", (ieDword) -1, core->HasFeature(GF_NO_NEW_VARIABLES));
+
 	// load initial values from var.var
 	newGame->locals->LoadInitialValues("GLOBAL");
 
@@ -241,6 +231,7 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 	if(core->HasFeature(GF_HAS_KAPUTZ) ) {
 		newGame->kaputz = new Variables();
 		newGame->kaputz->SetType( GEM_VARIABLES_INT );
+		newGame->kaputz->ParseKey( 1 );
 		// load initial values from var.var
 		newGame->kaputz->LoadInitialValues("KAPUTZ");
 		str->Seek( KillVarsOffset, GEM_STREAM_START );
@@ -264,9 +255,13 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 	if (version == GAM_VER_PST) {
 		//loading maze
 		if (MazeOffset) {
-			newGame->mazedata = (ieByte*)malloc(MAZE_DATA_SIZE);
+			//Don't allocate memory in plugins (MSVC chokes on this)
+			newGame->AllocateMazeData();
 			str->Seek(MazeOffset, GEM_STREAM_START );
-			str->Read(newGame->mazedata, MAZE_DATA_SIZE);
+			for (i = 0; i<MAZE_ENTRY_COUNT;i++) {
+				GetMazeEntry(newGame->mazedata+i*MAZE_ENTRY_SIZE);
+			}
+			GetMazeHeader(newGame->mazedata+MAZE_ENTRY_COUNT*MAZE_ENTRY_SIZE);
 		}
 		str->Seek( FamiliarsOffset, GEM_STREAM_START );
 	} else {
@@ -274,6 +269,11 @@ Game* GAMImporter::LoadGame(Game *newGame, int ver_override)
 			str->Seek( FamiliarsOffset, GEM_STREAM_START );
 			for (i=0; i<9;i++) {
 				str->ReadResRef( newGame->GetFamiliar(i) );
+			}
+		} else {
+			//clear these fields up
+			for (i=0;i<9;i++) {
+				memset(newGame->GetFamiliar(i), 0, sizeof(ieResRef));
 			}
 		}
 	}
@@ -324,13 +324,12 @@ void SanityCheck(ieWord a,ieWord &b,const char *message)
 		return;
 	}
 	if (b==0xffff) {
-		printMessage("GAMImporter"," ",LIGHT_RED);
-		printf("Invalid Slot Enabler caught: %s!\n", message);
+		printMessage("GAMImporter", "Invalid Slot Enabler caught: %s!\n", LIGHT_RED, message);
 		b=0;
 	}
 }
 
-Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
+Actor* GAMImporter::GetActor(Holder<ActorMgr> aM, bool is_in_party )
 {
 	unsigned int i;
 	PCStruct pcInfo;
@@ -351,9 +350,12 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 	str->ReadWord( &pcInfo.ViewYPos );
 	str->ReadWord( &pcInfo.ModalState ); //see Modal.ids
 	str->ReadWord( &pcInfo.Happiness );
-	str->Read( &pcInfo.Unknown2c, 96 );
+	for (i=0;i<24;i++) {
+		str->ReadDword( &pcInfo.Interact[i] ); //interact counters
+	}
 
-	if (version==GAM_VER_GEMRB || version==GAM_VER_IWD2) {
+	bool extended = version==GAM_VER_GEMRB || version==GAM_VER_IWD2;
+	if (extended) {
 		ieResRef tmp;
 
 		for (i = 0; i < 4; i++) {
@@ -411,9 +413,13 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 		}
 		//QuickSlots are customisable in iwd2 and GemRB
 		//thus we adopt the iwd2 style actor info
+		//the first 3 slots are hardcoded anyway
+		pcInfo.QSlots[0] = ACT_TALK;
+		pcInfo.QSlots[1] = ACT_WEAPON1;
+		pcInfo.QSlots[2] = ACT_WEAPON2;
 		for (i=0;i<MAX_QSLOTS;i++) {
 			str->ReadDword( &tmpDword );
-			pcInfo.QSlots[i] = (ieByte) tmpDword;
+			pcInfo.QSlots[i+3] = (ieByte) tmpDword;
 		}
 	} else {
 		for (i = 0; i < 4; i++) {
@@ -459,19 +465,13 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 	tmpWord = is_in_party ? (pcInfo.PartyOrder + 1) : 0;
 
 	if (pcInfo.OffsetToCRE) {
-		str->Seek( pcInfo.OffsetToCRE, GEM_STREAM_START );
-		void* Buffer = malloc( pcInfo.CRESize );
-		str->Read( Buffer, pcInfo.CRESize );
-		//somehow autofree MemoryStream doesn't work on msvc 7.0
-		//separate heap for dll's?
-		MemoryStream* ms = new MemoryStream( Buffer, pcInfo.CRESize, false );
+		DataStream* ms = SliceStream( str, pcInfo.OffsetToCRE, pcInfo.CRESize );
 		if (ms) {
-			aM->Open( ms, true );
+			aM->Open(ms);
 			actor = aM->GetActor(tmpWord);
 		}
-		free (Buffer);
 
- 		//torment has them as 0 or -1
+		//torment has them as 0 or -1
 		if (pcInfo.Name[0]!=0 && pcInfo.Name[0]!=UNINITIALIZED_CHAR) {
 			actor->SetName(pcInfo.Name,0); //setting both names
 		}
@@ -482,7 +482,7 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 		//another plugin cannot free memory stream from this plugin
 		//so auto free is a no-no
 		if (ds) {
-			aM->Open( ds, true );
+			aM->Open(ds);
 			actor = aM->GetActor(pcInfo.PartyOrder);
 		}
 	}
@@ -495,7 +495,7 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 	//
 	actor->CreateStats();
 	PCStatsStruct *ps = actor->PCStats;
-	GetPCStats(ps);
+	GetPCStats(ps, extended);
 	memcpy(ps->QSlots, pcInfo.QSlots, sizeof(pcInfo.QSlots) );
 	memcpy(ps->QuickSpells, pcInfo.QuickSpellResRef, MAX_QSLOTS*sizeof(ieResRef) );
 	memcpy(ps->QuickSpellClass, pcInfo.QuickSpellClass, MAX_QSLOTS );
@@ -509,6 +509,9 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 	actor->SetOrientation( pcInfo.Orientation,0 );
 	actor->TalkCount = pcInfo.TalkCount;
 	actor->ModalState = pcInfo.ModalState;
+	actor->SetModalSpell(pcInfo.ModalState, 0);
+	ps->Happiness = pcInfo.Happiness;
+	memcpy(ps->Interact, pcInfo.Interact, MAX_INTERACT *sizeof(ieDword) );
 
 	actor->SetPersistent( tmpWord );
 
@@ -516,7 +519,7 @@ Actor* GAMImporter::GetActor( ActorMgr* aM, bool is_in_party )
 	return actor;
 }
 
-void GAMImporter::GetPCStats (PCStatsStruct *ps)
+void GAMImporter::GetPCStats (PCStatsStruct *ps, bool extended)
 {
 	int i;
 
@@ -545,6 +548,18 @@ void GAMImporter::GetPCStats (PCStatsStruct *ps)
 
 	if (core->HasFeature(GF_SOUNDFOLDERS) ) {
 		str->Read( ps->SoundFolder, 32);
+	}
+	
+	//iwd2 has some PC only stats that the player can set (this can be done via a guiscript interface)
+	if (extended) {
+		//3 - expertise
+		//4 - power attack
+		//5 - arterial strike
+		//6 - hamstring
+		//7 - rapid shot
+		for (i=0;i<16;i++) {
+			str->ReadDword( &ps->ExtraSettings[i] );
+		}
 	}
 }
 
@@ -604,26 +619,26 @@ int GAMImporter::GetStoredFileSize(Game *game)
 	}
 	PCOffset = headersize;
 
-	ActorMgr *am = (ActorMgr *) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> am(IE_CRE_CLASS_ID);
 	PCCount = game->GetPartySize(false);
 	headersize += PCCount * PCSize;
 	for (i = 0;i<PCCount; i++) {
-		Actor *ac=game->GetPC(i, false);
-		headersize +=am->GetStoredFileSize(ac);
+		Actor *ac = game->GetPC(i, false);
+		headersize += am->GetStoredFileSize(ac);
 	}
 	NPCOffset = headersize;
 
 	NPCCount = game->GetNPCCount();
 	headersize += NPCCount * PCSize;
 	for (i = 0;i<NPCCount; i++) {
-		Actor *ac=game->GetNPC(i);
-		headersize +=am->GetStoredFileSize(ac);
+		Actor *ac = game->GetNPC(i);
+		headersize += am->GetStoredFileSize(ac);
 	}
-	core->FreeInterface( am );
 
 	if (game->mazedata) {
 		MazeOffset = headersize;
-		headersize += MAZE_DATA_SIZE;
+		//due to alignment the internal size is not the same as the external size
+		headersize += MAZE_DATA_SIZE_HARDCODED;
 	} else {
 		MazeOffset = 0;
 	}
@@ -647,21 +662,25 @@ int GAMImporter::GetStoredFileSize(Game *game)
 	} else {
 		FamiliarsOffset = headersize;
 		if (core->GetBeastsINI()) {
-			headersize +=BESTIARY_SIZE;
+			headersize += BESTIARY_SIZE;
 		}
 		if (game->version!=GAM_VER_PST) {
 			headersize += 9 * 8 + 82 * 4;
 		}
 	}
 
-	//TODO: Fix this for ToB and BG2 (saved locations and pocket plane locations)
 	SavedLocOffset = headersize;
-	SavedLocCount = 0;
+	SavedLocCount = game->GetSavedLocationCount();
+	//there is an unknown dword at the end of iwd2 savegames
+	if (game->version==GAM_VER_IWD2) {
+		headersize += 4;
+	}
+	headersize += SavedLocCount*12;
 
 	PPLocOffset = headersize;
-	PPLocCount = 0;
+	PPLocCount = game->GetPlaneLocationCount();
 
-	return headersize + (PPLocCount+SavedLocCount) * 20;
+	return headersize + PPLocCount * 12;
 }
 
 int GAMImporter::PutJournals(DataStream *stream, Game *game)
@@ -681,10 +700,19 @@ int GAMImporter::PutJournals(DataStream *stream, Game *game)
 	return 0;
 }
 
-//only in ToB
+//only in ToB (and iwd2)
 int GAMImporter::PutSavedLocations(DataStream *stream, Game *game)
 {
 	ieWord tmpWord;
+	ieDword filling = 0;
+
+	//iwd2 has a single 0 dword here (at the end of the file)
+	//it could be a hacked out saved location list (inherited from SoA)
+	//if the field is missing, original engine cannot load this saved game
+	if (game->version==GAM_VER_IWD2) {
+		stream->WriteDword(&filling);
+		return 0;
+	}
 
 	for (unsigned int i=0;i<SavedLocCount;i++) {
 			GAMLocationEntry *j = game->GetSavedLocationEntry(i);
@@ -719,7 +747,7 @@ int GAMImporter::PutKillVars(DataStream *stream, Game *game)
 {
 	char filling[40];
 	ieVariable tmpname;
-	POSITION pos=NULL;
+	Variables::iterator pos=NULL;
 	const char *name;
 	ieDword value;
 
@@ -741,7 +769,7 @@ int GAMImporter::PutVariables(DataStream *stream, Game *game)
 {
 	char filling[40];
 	ieVariable tmpname;
-	POSITION pos=NULL;
+	Variables::iterator pos=NULL;
 	const char *name;
 	ieDword value;
 
@@ -749,7 +777,7 @@ int GAMImporter::PutVariables(DataStream *stream, Game *game)
 	for (unsigned int i=0;i<GlobalCount;i++) {
 		//global variables are locals for game, that's why the local/global confusion
 		pos=game->locals->GetNextAssoc( pos, name, value);
-		strnspccpy(tmpname,name,32);
+		strnspccpy(tmpname, name, 32);
 		stream->Write( tmpname, 32);
 		stream->Write( filling, 8);
 		stream->WriteDword( &value);
@@ -767,7 +795,7 @@ int GAMImporter::PutHeader(DataStream *stream, Game *game)
 
 	memcpy( Signature, "GAMEV0.0", 8);
 	Signature[5]+=game->version/10;
-	if (game->version==GAM_VER_PST) { //pst version
+	if (game->version==GAM_VER_PST || game->version==GAM_VER_BG) { //pst/bg1 saved version
 		Signature[7]+=1;
 	}
 	else {
@@ -804,8 +832,7 @@ int GAMImporter::PutHeader(DataStream *stream, Game *game)
 	stream->WriteDword( &GlobalOffset );
 	stream->WriteDword( &GlobalCount );
 	stream->WriteResRef( game->CurrentArea );
-	//this is always 0xffffffff
-	stream->WriteDword( &game->Unknown48 );        
+	stream->WriteDword( &game->Unknown48 );
 	stream->WriteDword( &JournalCount );
 	stream->WriteDword( &JournalOffset );
 
@@ -819,7 +846,7 @@ int GAMImporter::PutHeader(DataStream *stream, Game *game)
 		stream->WriteDword( &game->Reputation );
 		stream->WriteResRef( game->CurrentArea );
 		stream->WriteDword( &game->ControlStatus );
-		stream->WriteDword( &tmpDword);
+		stream->WriteDword( &game->Expansion);
 		stream->WriteDword( &FamiliarsOffset);
 		stream->WriteDword( &SavedLocOffset);
 		stream->WriteDword( &SavedLocCount);
@@ -835,9 +862,15 @@ int GAMImporter::PutHeader(DataStream *stream, Game *game)
 		break;
 	}
 	stream->WriteDword( &game->RealTime ); //this isn't correct, this field is the realtime
-	stream->WriteDword( &SavedLocOffset);
-	for (i=0;i<7;i++) {
-		stream->Write( Signature, 8);
+	stream->WriteDword( &PPLocOffset);
+	stream->WriteDword( &PPLocCount);
+	char filling[52];
+	memset( filling, 0, sizeof(filling) );
+	stream->Write( &filling, 52); //unknown
+
+	//save failed, but it is not our fault, returning now before the asserts kill us
+	if (stream->GetPos()==0) {
+		return -1;
 	}
 	return 0;
 }
@@ -847,7 +880,7 @@ int GAMImporter::PutActor(DataStream *stream, Actor *ac, ieDword CRESize, ieDwor
 	int i;
 	ieDword tmpDword;
 	ieWord tmpWord;
-	char filling[194];
+	char filling[130];
 
 	memset(filling,0,sizeof(filling) );
 	if (ac->Selected) {
@@ -863,9 +896,9 @@ int GAMImporter::PutActor(DataStream *stream, Actor *ac, ieDword CRESize, ieDwor
 	stream->WriteDword( &CREOffset);
 	stream->WriteDword( &CRESize);
 	//creature resref is always unused in saved games
-	filling[0]='*';                       //make it the same as in the original
+	//BG1 doesn't even like the * in there, zero fill
+	//seems to be accepted by all
 	stream->Write( filling, 8);
-	filling[0]=0;
 	tmpDword = ac->GetOrientation();
 	stream->WriteDword( &tmpDword);
 	stream->WriteResRef(ac->Area);
@@ -880,10 +913,12 @@ int GAMImporter::PutActor(DataStream *stream, Actor *ac, ieDword CRESize, ieDwor
 	stream->WriteWord( &tmpWord);
 	tmpWord = (ieWord) ac->ModalState;
 	stream->WriteWord( &tmpWord);
-	tmpWord = 0; //happiness
+	tmpWord = ac->PCStats->Happiness;
 	stream->WriteWord( &tmpWord);
-	//a field of zeroes
-	stream->Write(filling, 96);
+	//interact counters
+	for (i=0;i<24;i++) {
+		stream->WriteDword( ac->PCStats->Interact+i);
+	}
 
 	//quickweapons
 	if (version==GAM_VER_IWD2 || version==GAM_VER_GEMRB) {
@@ -968,7 +1003,7 @@ int GAMImporter::PutActor(DataStream *stream, Actor *ac, ieDword CRESize, ieDwor
 			}
 		}
 		for (i=0;i<MAX_QSLOTS;i++) {
-			tmpDword = ac->PCStats->QSlots[i];
+			tmpDword = ac->PCStats->QSlots[i+3];
 			stream->WriteDword( &tmpDword);
 		}
 	}
@@ -1009,15 +1044,21 @@ int GAMImporter::PutActor(DataStream *stream, Actor *ac, ieDword CRESize, ieDwor
 		stream->Write(ac->PCStats->SoundFolder, 32);
 	}
 	if (version==GAM_VER_IWD2 || version==GAM_VER_GEMRB) {
-		stream->Write(filling, 194);
+		//I don't know how many fields are actually used in IWD2 saved game
+		//but we got at least 8 (and only 5 of those are actually used)
+		for(i=0;i<16;i++) {
+			stream->WriteDword( &ac->PCStats->ExtraSettings[i]);
+		}
+		stream->Write(filling, 130);
 	}
+
 	return 0;
 }
 
 int GAMImporter::PutPCs(DataStream *stream, Game *game)
 {
 	unsigned int i;
-	ActorMgr *am = (ActorMgr *) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> am(IE_CRE_CLASS_ID);
 	ieDword CREOffset = PCOffset + PCCount * PCSize;
 
 	for(i=0;i<PCCount;i++) {
@@ -1027,9 +1068,10 @@ int GAMImporter::PutPCs(DataStream *stream, Game *game)
 		PutActor(stream, ac, CRESize, CREOffset, game->version);
 		CREOffset += CRESize;
 	}
-	assert(stream->GetPos() == PCOffset + PCCount * PCSize);
 
 	CREOffset = PCOffset + PCCount * PCSize; // just for the asserts..
+	assert(stream->GetPos() == CREOffset);
+
 	for(i=0;i<PCCount;i++) {
 		assert(stream->GetPos() == CREOffset);
 		Actor *ac = game->GetPC(i, false);
@@ -1037,35 +1079,106 @@ int GAMImporter::PutPCs(DataStream *stream, Game *game)
 		CREOffset += am->GetStoredFileSize(ac);
 		am->PutActor( stream, ac);
 	}
-	core->FreeInterface( am );
+	assert(stream->GetPos() == CREOffset);
 	return 0;
 }
 
 int GAMImporter::PutNPCs(DataStream *stream, Game *game)
 {
 	unsigned int i;
-	ActorMgr *am = (ActorMgr *) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> am(IE_CRE_CLASS_ID);
 	ieDword CREOffset = NPCOffset + NPCCount * PCSize;
 
 	for(i=0;i<NPCCount;i++) {
+		assert(stream->GetPos() == NPCOffset + i * PCSize);
 		Actor *ac = game->GetNPC(i);
 		ieDword CRESize = am->GetStoredFileSize(ac);
 		PutActor(stream, ac, CRESize, CREOffset, game->version);
 		CREOffset += CRESize;
 	}
+	CREOffset = NPCOffset + NPCCount * PCSize; // just for the asserts..
+	assert(stream->GetPos() == CREOffset);
+
 	for(i=0;i<NPCCount;i++) {
+		assert(stream->GetPos() == CREOffset);
 		Actor *ac = game->GetNPC(i);
 		//reconstructing offsets again
-		am->GetStoredFileSize(ac);
+		CREOffset += am->GetStoredFileSize(ac);
 		am->PutActor( stream, ac);
 	}
-	core->FreeInterface( am );
+	assert(stream->GetPos() == CREOffset);
 	return 0;
+}
+
+void GAMImporter::GetMazeHeader(void *memory)
+{
+	maze_header *m = (maze_header *) memory;
+	str->ReadDword( &m->maze_sizex );
+	str->ReadDword( &m->maze_sizey );
+	str->ReadDword( &m->pos1x );
+	str->ReadDword( &m->pos1y );
+	str->ReadDword( &m->pos2x );
+	str->ReadDword( &m->pos2y );
+	str->ReadDword( &m->pos3x );
+	str->ReadDword( &m->pos3y );
+	str->ReadDword( &m->pos4x );
+	str->ReadDword( &m->pos4y );
+	str->ReadDword( &m->trapcount );
+	str->ReadDword( &m->initialized );
+	str->ReadDword( &m->unknown2c );
+	str->ReadDword( &m->unknown30 );
+}
+
+void GAMImporter::GetMazeEntry(void *memory)
+{
+	maze_entry *h = (maze_entry *) memory;
+
+	str->ReadDword( &h->override );
+	str->ReadDword( &h->valid );
+	str->ReadDword( &h->accessible );
+	str->ReadDword( &h->trapped );
+	str->ReadDword( &h->traptype );
+	str->ReadWord( &h->walls );
+	str->ReadDword( &h->visited );
+}
+
+void GAMImporter::PutMazeHeader(DataStream *stream, void *memory)
+{
+	maze_header *m = (maze_header *) memory;
+	stream->WriteDword( &m->maze_sizex );
+	stream->WriteDword( &m->maze_sizey );
+	stream->WriteDword( &m->pos1x );
+	stream->WriteDword( &m->pos1y );
+	stream->WriteDword( &m->pos2x );
+	stream->WriteDword( &m->pos2y );
+	stream->WriteDword( &m->pos3x );
+	stream->WriteDword( &m->pos3y );
+	stream->WriteDword( &m->pos4x );
+	stream->WriteDword( &m->pos4y );
+	stream->WriteDword( &m->trapcount );
+	stream->WriteDword( &m->initialized );
+	stream->WriteDword( &m->unknown2c );
+	stream->WriteDword( &m->unknown30 );
+}
+
+void GAMImporter::PutMazeEntry(DataStream *stream, void *memory)
+{
+	maze_entry *h = (maze_entry *) memory;
+	stream->WriteDword( &h->override );
+	stream->WriteDword( &h->valid );
+	stream->WriteDword( &h->accessible );
+	stream->WriteDword( &h->trapped );
+	stream->WriteDword( &h->traptype );
+	stream->WriteWord( &h->walls );
+	stream->WriteDword( &h->visited );
 }
 
 int GAMImporter::PutMaze(DataStream *stream, Game *game)
 {
-	stream->Write( game->mazedata, MAZE_DATA_SIZE);
+	for(int i=0;i<MAZE_ENTRY_COUNT;i++) {
+		PutMazeEntry(stream, game->mazedata+i*MAZE_ENTRY_SIZE);
+	}
+	PutMazeHeader(stream, game->mazedata+MAZE_ENTRY_COUNT*MAZE_ENTRY_SIZE);
 	return 0;
 }
 
@@ -1145,6 +1258,18 @@ int GAMImporter::PutGame(DataStream *stream, Game *game)
 	}
 	if (FamiliarsOffset) {
 		ret = PutFamiliars( stream, game);
+		if (ret) {
+			return ret;
+		}
+	}
+	if (SavedLocOffset) {
+		ret = PutSavedLocations( stream, game);
+		if (ret) {
+			return ret;
+		}
+	}
+	if (PPLocOffset) {
+		ret = PutPlaneLocations( stream, game);
 		if (ret) {
 			return ret;
 		}

@@ -18,7 +18,8 @@
 #
 #character generation, skills (GUICG6)
 import GemRB
-from GUICommon import RaceTable, ClassTable
+from GUIDefines import *
+import CommonTables
 
 SkillWindow = 0
 TextAreaControl = 0
@@ -104,10 +105,10 @@ def OnLoad():
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_NAND)
 	GemRB.SetVar("Level",1) #for simplicity
 	Class = GemRB.GetVar("Class") - 1
-	KitName = ClassTable.GetRowName(Class)
+	KitName = CommonTables.Classes.GetRowName(Class)
 	#classcolumn is base class
 	ClassColumn=GemRB.GetVar("BaseClass") - 1
-	SkillPtsTable = GemRB.LoadTableObject("skillpts")
+	SkillPtsTable = GemRB.LoadTable("skillpts")
 	p = SkillPtsTable.GetValue(0, ClassColumn)
 	IntBonus = GemRB.GetVar("Ability 3")/2-5  #intelligence bonus
 	p = p + IntBonus
@@ -121,10 +122,10 @@ def OnLoad():
 	# Humans recieve +2 skill points at level 1 and +1 skill points each level thereafter
 	# Recommend creation of SKILRACE.2da with levels as rows and race names as columns
 	
-	RaceName = RaceTable.GetRowName(RaceTable.FindValue(3, GemRB.GetVar('Race')))
+	RaceName = CommonTables.Races.GetRowName(CommonTables.Races.FindValue(3, GemRB.GetVar('Race')))
 	
 	### Example code for implementation of SKILRACE.2da
-	# TmpTable = GemRB.LoadTableObject('skilrace')
+	# TmpTable = GemRB.LoadTable('skilrace')
 	# PointsLeft += TmpTable.GetValue(str(Level), RaceName)
 	###
 	
@@ -137,12 +138,12 @@ def OnLoad():
 		else: PointsLeft += 1
 	
 
-	SkillTable = GemRB.LoadTableObject("skills")
+	SkillTable = GemRB.LoadTable("skills")
 	RowCount = SkillTable.GetRowCount()
 
-	CostTable = GemRB.LoadTableObject("skilcost")
+	CostTable = GemRB.LoadTable("skilcost")
 
-	SkillRacTable = GemRB.LoadTableObject("SKILLRAC")
+	SkillRacTable = GemRB.LoadTable("SKILLRAC")
 
 	for i in range(RowCount):
 		GemRB.SetVar("Skill "+str(i),0) # Racial/Class bonuses don't factor in char-gen or leveling
@@ -151,20 +152,20 @@ def OnLoad():
 	GemRB.SetToken("number",str(PointsLeft) )
 
 	GemRB.LoadWindowPack("GUICG", 800 ,600)
-	SkillWindow = GemRB.LoadWindowObject(6)
+	SkillWindow = GemRB.LoadWindow(6)
 
 	for i in range(10):
 		Button = SkillWindow.GetControl(i+93)
 		Button.SetVarAssoc("Skill",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "JustPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, JustPress)
 
 		Button = SkillWindow.GetControl(i*2+14)
 		Button.SetVarAssoc("Skill",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, LeftPress)
 
 		Button = SkillWindow.GetControl(i*2+15)
 		Button.SetVarAssoc("Skill",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "RightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RightPress)
 
 	BackButton = SkillWindow.GetControl(105)
 	BackButton.SetText(15416)
@@ -178,15 +179,15 @@ def OnLoad():
 	TextAreaControl.SetText(17248)
 
 	ScrollBarControl = SkillWindow.GetControl(104)
-	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE,"ScrollBarPress")
+	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, ScrollBarPress)
 	ScrollBarControl.SetDefaultScrollBar ()
 	#decrease it with the number of controls on screen (list size)
 	TopIndex = 0
 	GemRB.SetVar("TopIndex",0)
 	ScrollBarControl.SetVarAssoc("TopIndex",RowCount-10+1)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	RedrawSkills()
 	SkillWindow.SetVisible(WINDOW_VISIBLE)
@@ -236,7 +237,7 @@ def LeftPress():
 
 def BackPress():
 	MyChar = GemRB.GetVar("Slot")
-	TmpTable = GemRB.LoadTableObject ("skillsta")
+	TmpTable = GemRB.LoadTable ("skillsta")
 	for i in range(TmpTable.GetRowCount()):
 		GemRB.SetVar("Skill "+str(i),0)
 		StatID=TmpTable.GetValue (i, 2)
@@ -249,7 +250,7 @@ def BackPress():
 def NextPress():
 	MyChar = GemRB.GetVar("Slot")
 	#setting skills
-	TmpTable = GemRB.LoadTableObject ("skillsta")
+	TmpTable = GemRB.LoadTable ("skillsta")
 	SkillCount = TmpTable.GetRowCount ()
 	for i in range (SkillCount):
 		StatID=TmpTable.GetValue (i, 2)

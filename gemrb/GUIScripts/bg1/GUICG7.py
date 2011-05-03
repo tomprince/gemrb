@@ -19,42 +19,35 @@
 # character generation, mage spells (GUICG7)
 
 import GemRB
-from GUICommon import GetLearnableMageSpells, GetLearnablePriestSpells,CloseOtherWindow
-from CharGenCommon import * 
-from LUSpellSelection import *
+from GUIDefines import *
+from ie_stats import *
+import GUICommon
+import CommonTables
+import LUSpellSelection
 
 def OnLoad():
-	KitTable = GemRB.LoadTableObject("magesch")
 	Slot = GemRB.GetVar ("Slot")
 	Class = GemRB.GetPlayerStat (Slot, IE_CLASS)
-	TableName = ClassSkillsTable.GetValue(Class, 2)
+	TableName = CommonTables.ClassSkills.GetValue(Class, 2)
 
 	# make sure we have a correct table
 	if Class == 19:
 		# sorcerer's need their known not max table
 		TableName = "SPLSRCKN"
 
-	# get our kit index
-	KitIndex = GetKitIndex (Slot)
-	if KitIndex:
-		KitValue = KitTable.GetValue(KitIndex - 21, 3)
-
-		# bards have kits too
-		if KitValue == -1:
-			KitValue = 0x4000 # we only need it for the spells, so this is ok
-	else:
-		KitValue = 0x4000
+	# get our kit
+	KitValue = GemRB.GetPlayerStat (Slot, IE_KIT)
 
 	# open up the spell selection window
 	# remember, it is pc, table, level, diff, kit, chargen
-	IsMulti = IsMultiClassed (Slot, 1)
+	IsMulti = GUICommon.IsMultiClassed (Slot, 1)
 	Level = GemRB.GetPlayerStat (Slot, IE_LEVEL)
 	if IsMulti[0]>1:
-		for i in range (2, IsMulti[0]+1):
-			if ClassSkillsTable.GetValue (IsMulti[i], 2, 0) != "*":
+		for i in range (1, IsMulti[0]):
+			if CommonTables.ClassSkills.GetValue (IsMulti[i], 2, 0) != "*":
 				Level = GemRB.GetPlayerStat (Slot, IE_LEVEL2+i-1)
 			break
-	SetupSpellLevels(Slot, TableName, IE_SPELL_TYPE_WIZARD, 1)
-	OpenSpellsWindow (Slot, TableName, Level, Level, KitValue, 1,False)
+	GUICommon.SetupSpellLevels(Slot, TableName, IE_SPELL_TYPE_WIZARD, 1)
+	LUSpellSelection.OpenSpellsWindow (Slot, TableName, Level, Level, KitValue, 1,False)
 
 	return

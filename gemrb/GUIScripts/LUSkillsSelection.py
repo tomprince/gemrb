@@ -21,13 +21,13 @@
 import GemRB
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import *
+import GUICommon
+import CommonTables
 
 #constants
-LUSKILLS_TYPE_LEVELUP = 0
-LUSKILLS_TYPE_LEVELUP_BG1 = 1
+LUSKILLS_TYPE_LEVELUP = 1
 LUSKILLS_TYPE_CHARGEN = 2
-LUSKILLS_TYPE_DUALCLASS = 3
+LUSKILLS_TYPE_DUALCLASS = 4
 LUSKILLS_MAX = 250
 
 #refs to the script calling this
@@ -69,7 +69,7 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 	SkillsClickCount = 0
 	SkillsOldDirection = 0
 	SkillsAssignable = 0
-	SkillsTable = GemRB.LoadTableObject ("skills")
+	SkillsTable = GemRB.LoadTable ("skills")
 	SkillPointsLeft = 0
 	GemRB.SetVar ("SkillPointsLeft", 0)
 	SkillsNullify ()
@@ -79,7 +79,7 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		return
 
 	#setup the offsets
-	if type == LUSKILLS_TYPE_LEVELUP:
+	if type == LUSKILLS_TYPE_LEVELUP and GUICommon.GameIsBG2():
 		SkillsOffsetPress = 120
 		SkillsOffsetButton1 = 17
 		SkillsOffsetSum = 37
@@ -88,7 +88,7 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		SkillsNumButtons = 4
 		SkillsTextArea = SkillsWindow.GetControl (110)
 		ScrollBar = SkillsWindow.GetControl (109)
-	elif type == LUSKILLS_TYPE_LEVELUP_BG1:
+	elif type == LUSKILLS_TYPE_LEVELUP:
 		SkillsOffsetPress = -1
 		SkillsOffsetButton1 = 17
 		SkillsOffsetSum = 37
@@ -107,8 +107,9 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		SkillsNumButtons = 4
 		SkillsTextArea = SkillsWindow.GetControl (22)
 		SkillsTextArea.SetText(17248)
-		ScrollBar = SkillsWindow.GetControl (26)
-		ScrollBar.SetDefaultScrollBar ()
+		if (scroll):
+			ScrollBar = SkillsWindow.GetControl (26)
+			ScrollBar.SetDefaultScrollBar ()
 	elif type == LUSKILLS_TYPE_CHARGEN:
 		SkillsOffsetPress = 21
 		SkillsOffsetButton1 = 11
@@ -125,15 +126,15 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		return
 
 	#get our class id and name
-	IsDual = IsDualClassed (pc, 1)
-	IsMulti = IsMultiClassed (pc, 1)
+	IsDual = GUICommon.IsDualClassed (pc, 1)
+	IsMulti = GUICommon.IsMultiClassed (pc, 1)
 	if classid: #used when dual-classing
 		Class = classid
 	elif IsDual[0]: #only care about the current class
-		Class = ClassTable.GetValue (IsDual[2], 5)
+		Class = CommonTables.Classes.GetValue (IsDual[2], 5)
 	else:
 		Class = GemRB.GetPlayerStat (pc, IE_CLASS)
-	ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, Class) )
+	ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, Class) )
 
 	#get the number of classes
 	if IsMulti[0]>1:
@@ -145,11 +146,11 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 
 	#figure out the kitname if we need it
 	#protect against kitted multiclasses
-	Kit = GetKitIndex (pc)
+	Kit = GUICommon.GetKitIndex (pc)
 	if not Kit or type == LUSKILLS_TYPE_DUALCLASS or IsDual[0] or IsMulti[0]>1:
 		SkillsKitName = ClassName
 	else:
-		SkillsKitName = KitListTable.GetValue (Kit, 0, 0)
+		SkillsKitName = CommonTables.KitList.GetValue (Kit, 0, 0)
 
 	#figure out the correct skills table
 	SkillIndex = -1
@@ -157,7 +158,7 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		TmpClass = Class
 		if NumClasses > 1:
 			TmpClass = IsMulti[i+1]
-		if (ClassSkillsTable.GetValue (TmpClass, 5, 0) != "*"):
+		if (CommonTables.ClassSkills.GetValue (TmpClass, 5, 0) != "*"):
 			SkillIndex = i
 			break
 
@@ -186,16 +187,15 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 			SkillPointsLeft = 0
 		else:
 			#get racial values for dual-classing
-			SkillRacTable = GemRB.LoadTableObject ("SKILLRAC")
-			RaceTable = GemRB.LoadTableObject ("RACES")
-			Race = RaceTable.FindValue (3, GemRB.GetPlayerStat (pc, IE_RACE))
-			Race = RaceTable.GetRowName (Race)
+			SkillRacTable = GemRB.LoadTable ("SKILLRAC")
+			Race = CommonTables.Races.FindValue (3, GemRB.GetPlayerStat (pc, IE_RACE))
+			Race = CommonTables.Races.GetRowName (Race)
 
 			#get the skill values
 			for i in range(SkillsTable.GetRowCount()-2):
 				SkillName = SkillsTable.GetRowName (i+2)
 				SkillID = SkillsTable.GetValue (SkillName, "ID")
-				if type != LUSKILLS_TYPE_LEVELUP and type != LUSKILLS_TYPE_LEVELUP_BG1: #give racial bonuses to starting classes
+				if type != LUSKILLS_TYPE_LEVELUP: #give racial bonuses to starting classes
 					SkillValue = SkillRacTable.GetValue (Race, SkillName)
 				else:
 					SkillValue = GemRB.GetPlayerStat (pc, SkillID, 1)
@@ -215,14 +215,14 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 				classname = IsMulti[i+1]
 			else:
 				classname = Class
-			classname = ClassTable.GetRowName (ClassTable.FindValue (5, classname))
+			classname = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, classname))
 			for table in "RANGERSKILL", "BARDSKILL":
-				SpecialSkillsTable = ClassSkillsTable.GetValue (classname, table)
+				SpecialSkillsTable = CommonTables.ClassSkills.GetValue (classname, table)
 				if SpecialSkillsTable != "*":
 					SpecialSkillsMap.append((SpecialSkillsTable, i))
 					break
 		for skills in SpecialSkillsMap:
-			SpecialSkillsTable = GemRB.LoadTableObject (skills[0])
+			SpecialSkillsTable = GemRB.LoadTable (skills[0])
 			for skill in range(SpecialSkillsTable.GetColumnCount ()):
 				skillname = SpecialSkillsTable.GetColumnName (skill)
 				value = SpecialSkillsTable.GetValue (str(level2[skills[1]]), skillname)
@@ -240,7 +240,7 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 	#skills scrollbar
 	GemRB.SetVar ("SkillsTopIndex", 0)
 	if len(SkillsIndices) > SkillsNumButtons:
-		ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, "SkillScrollBarPress")
+		ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, SkillScrollBarPress)
 		#decrease it with the number of controls on screen (list size) and two unrelated rows
 		ScrollBar.SetVarAssoc ("SkillsTopIndex", SkillsTable.GetRowCount()-SkillsNumButtons-1)
 	else:
@@ -255,15 +255,15 @@ def SetupSkillsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1
 		if SkillsOffsetPress != -1:
 			Button = SkillsWindow.GetControl(i+SkillsOffsetPress)
 			Button.SetVarAssoc("Skill",SkillsIndices[i])
-			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SkillJustPress")
+			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, SkillJustPress)
 
 		Button = SkillsWindow.GetControl(i*2+SkillsOffsetButton1)
 		Button.SetVarAssoc("Skill",SkillsIndices[i])
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SkillLeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, SkillLeftPress)
 
 		Button = SkillsWindow.GetControl(i*2+SkillsOffsetButton1+1)
 		Button.SetVarAssoc("Skill",SkillsIndices[i])
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SkillRightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, SkillRightPress)
 	
 	SkillsRedraw ()
 	return
@@ -377,7 +377,7 @@ def SkillScrollBarPress():
 def SkillsSave (pc):
 	global SkillsTable
 	if not SkillsTable:
-		SkillsTable = GemRB.LoadTableObject ("skills")
+		SkillsTable = GemRB.LoadTable ("skills")
 
 	for i in range(SkillsTable.GetRowCount() - 2):
 		SkillName = SkillsTable.GetRowName (i+2)
@@ -389,7 +389,7 @@ def SkillsSave (pc):
 def SkillsNullify ():
 	global SkillsTable
 	if not SkillsTable:
-		SkillsTable = GemRB.LoadTableObject ("skills")
+		SkillsTable = GemRB.LoadTable ("skills")
 
 	for i in range(SkillsTable.GetRowCount()-2):
 		GemRB.SetVar ("Skill "+str(i), 0)

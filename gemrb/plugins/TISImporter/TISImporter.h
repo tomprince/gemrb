@@ -30,14 +30,8 @@ private:
 public:
 	TISImporter(void);
 	~TISImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
-private:
+	bool Open(DataStream* stream);
 	Sprite2D* GetTile(int index);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

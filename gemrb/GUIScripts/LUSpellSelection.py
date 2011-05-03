@@ -18,10 +18,10 @@
 #
 
 import GemRB
-from math import ceil
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import *
+from ie_restype import RES_BAM
+import GUICommon
 
 # storage variables
 pc = 0
@@ -76,18 +76,24 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 		KitMask = kit 
 
 	# make sure there is an entry at the given level (bard)
-	SpellsKnownTable = GemRB.LoadTableObject (table)
+	SpellsKnownTable = GemRB.LoadTable (table)
 	if not SpellsKnownTable.GetValue (str(level), str(1), 1):
 		if chargen:
-			GemRB.SetNextScript("GUICG6")
+			if GUICommon.GameIsBG2():
+				# HACK
+				GemRB.SetNextScript("GUICG6")
+			elif GUICommon.GameIsBG1():
+				# HACK
+				from CharGenCommon import next
+				next()
 		return
 
 	# load our window
 	if chargen:
 		GemRB.LoadWindowPack("GUICG", 640, 480)
-		SpellsWindow = GemRB.LoadWindowObject (7)
+		SpellsWindow = GemRB.LoadWindow (7)
 		if not recommend:
-			CloseOtherWindow (SpellsWindow.Unload)
+			GUICommon.CloseOtherWindow (SpellsWindow.Unload)
 		DoneButton = SpellsWindow.GetControl (0)
 		SpellsTextArea = SpellsWindow.GetControl (27)
 		SpellPointsLeftLabel = SpellsWindow.GetControl (0x1000001b)
@@ -99,10 +105,7 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 		# cancel button only applicable for chargen
 		SpellsCancelButton = SpellsWindow.GetControl(29)
 		SpellsCancelButton.SetState(IE_GUI_BUTTON_ENABLED)
-		if recommend:
-			SpellsCancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SpellsCancelPress")
-		else:
-			SpellsCancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "BackPress")
+		SpellsCancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SpellsCancelPress)
 		SpellsCancelButton.SetText(13727)
 		SpellsCancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
@@ -110,10 +113,10 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 			# recommended spell picks
 			SpellsPickButton = SpellsWindow.GetControl(30)
 			SpellsPickButton.SetState(IE_GUI_BUTTON_ENABLED)
-			SpellsPickButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SpellsPickPress")
+			SpellsPickButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SpellsPickPress)
 			SpellsPickButton.SetText(34210)
 	else:
-		SpellsWindow = GemRB.LoadWindowObject (8)
+		SpellsWindow = GemRB.LoadWindow (8)
 		DoneButton = SpellsWindow.GetControl (28)
 		SpellsTextArea = SpellsWindow.GetControl(26)
 		SpellPointsLeftLabel = SpellsWindow.GetControl (0x10000018)
@@ -129,7 +132,7 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 
 	# the done button also doubles as a next button
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SpellsDonePress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SpellsDonePress)
 	DoneButton.SetText(11973)
 	DoneButton.SetFlags(IE_GUI_BUTTON_DEFAULT, OP_OR)
 		
@@ -154,13 +157,13 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 			SpellsSelectPointsLeft[i] += 1
 
 		# get all the spells of the given level
-		Spells[i] = GetMageSpells (KitMask, GemRB.GetPlayerStat (pc, IE_ALIGNMENT), i+1)
+		Spells[i] = GUICommon.GetMageSpells (KitMask, GemRB.GetPlayerStat (pc, IE_ALIGNMENT), i+1)
 
 		# dump all the spells we already know
 		NumDeleted = 0
 		for j in range (len (Spells[i])):
 			CurrentIndex = j - NumDeleted # this ensure we don't go out of range
-			if HasSpell (pc, IE_SPELL_TYPE_WIZARD, i, Spells[i][CurrentIndex][0]) >= 0:
+			if GUICommon.HasSpell (pc, IE_SPELL_TYPE_WIZARD, i, Spells[i][CurrentIndex][0]) >= 0:
 				del Spells[i][CurrentIndex]
 				NumDeleted += 1
 
@@ -173,17 +176,19 @@ def OpenSpellsWindow (actor, table, level, diff, kit=0, gen=0, recommend=True):
 			if(EnhanceGUI):
 				# setup the scrollbar
 				ScrollBar = SpellsWindow.GetControl (1000)
-				ScrollBar.SetSprites ("GUISCRCW", 0, 0,1,2,3,5,4)
-				ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, "ShowSpells")
+				#FIXME: use other resources instead, this one is bg2-only
+				if GemRB.HasResource ("GUISCRCW", RES_BAM):
+					ScrollBar.SetSprites ("GUISCRCW", 0, 0,1,2,3,5,4)
+				ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, ShowSpells)
 				ScrollBar.SetDefaultScrollBar ()
 
 				# only scroll if we have more than 24 spells or 25 if extra 25th spell slot is available in sorcs LevelUp
 				if len (Spells[i]) > ( 24 + ExtraSpellButtons() ):
 					HideUnhideScrollBar(0)
 					if chargen:
-						ScrollBar.SetVarAssoc ("SpellTopIndex", int ( ceil ( ( len (Spells[i])-24 ) / 6.0 ) ) + 1 )
+						ScrollBar.SetVarAssoc ("SpellTopIndex", GUICommon.ceildiv ( ( len (Spells[i])-24 ) , 6 ) + 1 )
 					else: #there are five rows of 5 spells in level up of sorcs
-						ScrollBar.SetVarAssoc ("SpellTopIndex", int ( ceil ( ( len (Spells[i])-25 ) / 5.0 ) ) + 1 )
+						ScrollBar.SetVarAssoc ("SpellTopIndex", GUICommon.ceildiv ( ( len (Spells[i])-25 ) , 5 ) + 1 )
 				else:
 					ScrollBar.SetVarAssoc ("SpellTopIndex", 0)
 					HideUnhideScrollBar(1)
@@ -209,7 +214,7 @@ def SpellsDonePress ():
 	If there is not another assignable level, then save all the new spells and
 	close the window."""
 
-	global SpellBook, SpellLevel
+	global SpellBook, SpellLevel, SpellsWindow
 
 	# save all the spells
 	for i in range (len (Spells[SpellLevel])):
@@ -230,9 +235,9 @@ def SpellsDonePress ():
 				if len (Spells[i]) > ( 24 + ExtraSpellButtons() ):
 					HideUnhideScrollBar(0)
 					if chargen:
-						ScrollBar.SetVarAssoc ("SpellTopIndex", int ( ceil ( ( len (Spells[i])-24 ) / 6.0 ) ) + 1 )
+						ScrollBar.SetVarAssoc ("SpellTopIndex", GUICommon.ceildiv ( ( len (Spells[i])-24 ) , 6 ) + 1 )
 					else:
-						ScrollBar.SetVarAssoc ("SpellTopIndex", int ( ceil ( ( len (Spells[i])-25 ) / 5.0 ) ) + 1 )
+						ScrollBar.SetVarAssoc ("SpellTopIndex", GUICommon.ceildiv ( ( len (Spells[i])-25 ) , 5 ) + 1 )
 				else:
 					ScrollBar.SetVarAssoc ("SpellTopIndex", 0)
 					HideUnhideScrollBar(1)
@@ -242,16 +247,17 @@ def SpellsDonePress ():
 			DoneButton.SetState (IE_GUI_BUTTON_DISABLED)
 			return
 
-	if GameIsBG2():
-		# close our window and update our records
-		if SpellsWindow:
-			SpellsWindow.Unload ()
+	# close our window and update our records
+	if SpellsWindow and (not chargen or GUICommon.GameIsBG2()):
+		SpellsWindow.Unload ()
+		SpellsWindow = None
 
 	# move to the next script if this is chargen
 	if chargen:
-		if GameIsBG2():
+		if GUICommon.GameIsBG2():
+			# HACK
 			GemRB.SetNextScript("GUICG6")
-		elif GameIsBG1():
+		elif GUICommon.GameIsBG1():
 			# HACK
 			from CharGenCommon import next
 			next()
@@ -279,8 +285,8 @@ def ShowSpells ():
 		Spell = GemRB.GetSpell (Spells[SpellLevel][i+j][0], 1)
 		SpellButton.SetTooltip(Spell['SpellName'])
 		SpellButton.SetVarAssoc("ButtonPressed", i)
-		SpellButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SpellsSelectPress")
-		if GameIsBG2():
+		SpellButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SpellsSelectPress)
+		if GUICommon.GameIsBG2():
 			SpellButton.SetSprites("GUIBTBUT",0, 0,1,2,3)
 		else:
 			SpellButton.SetSprites("GUIBTBUT",0, 0,1,24,25)
@@ -289,7 +295,6 @@ def ShowSpells ():
 		SpellButton.SetFlags(IE_GUI_BUTTON_PICTURE, OP_OR)
 
 		# don't allow the selection of an un-learnable spell
-		#TODO: check if the SetBorder calls work in bg1
 		if Spells[SpellLevel][i+j][1] == 0:
 			SpellButton.SetState(IE_GUI_BUTTON_LOCKED)
 			# shade red
@@ -404,12 +409,18 @@ def SpellsCancelPress ():
 	This is only callable within character generation."""
 
 	# remove all learned spells
-	RemoveKnownSpells (pc, IE_SPELL_TYPE_WIZARD, 1, 9, 1)
+	GUICommon.RemoveKnownSpells (pc, IE_SPELL_TYPE_WIZARD, 1, 9, 1)
 
-	# unload teh window and go back
-	if SpellsWindow:
-		SpellsWindow.Unload()
-	GemRB.SetNextScript("CharGen6") #haterace
+	if GUICommon.GameIsBG2():
+		# unload teh window and go back
+		if SpellsWindow:
+			SpellsWindow.Unload()
+		GemRB.SetNextScript("CharGen6") #haterace
+	elif GUICommon.GameIsBG1():
+		import CharGenCommon
+		CharGenCommon.BackPress()
+	else:
+		print "Uh-oh in SpellsCancelPress in", GemRB.GameType
 	return
 
 def SpellsPickPress ():
@@ -421,7 +432,7 @@ def SpellsPickPress ():
 	global SpellBook, SpellsSelectPointsLeft
 
 	# load up our table
-	AutoTable = GemRB.LoadTableObject ("splautop")
+	AutoTable = GemRB.LoadTable ("splautop")
 
 	for i in range (AutoTable.GetRowCount ()):
 		if SpellsSelectPointsLeft[SpellLevel] == 0:

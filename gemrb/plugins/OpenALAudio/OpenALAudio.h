@@ -21,23 +21,20 @@
 #ifndef OPENALAUDIO_H_INCLUDED
 #define OPENALAUDIO_H_INCLUDED
 
-#define RETRY 5
-#define BUFFER_CACHE_SIZE 100
-#define MAX_STREAMS 30
-#define MUSICBUFFERS 10
-#define REFERENCE_DISTANCE 50
-#define ACM_BUFFERSIZE 8192
-
-#include "SDL.h"
 #include "Audio.h"
-#include "LRUCache.h"
-#include "Interface.h"
-#include "MusicMgr.h"
-#include "ie_types.h"
-#include "FileStream.h"
-#include "SoundMgr.h"
+
 #include "AmbientMgrAL.h"
 #include "StackLock.h"
+
+#include "ie_types.h"
+
+#include "Interface.h"
+#include "LRUCache.h"
+#include "MusicMgr.h"
+#include "SoundMgr.h"
+#include "System/FileStream.h"
+
+#include <SDL.h>
 
 #ifndef WIN32
 #ifdef __APPLE_CC__
@@ -52,76 +49,100 @@
 #include <alc.h>
 #endif
 
+#ifdef ANDROID
+#include <AL/android.h>
+#endif
+
+#define RETRY 5
+#define BUFFER_CACHE_SIZE 100
+#define MAX_STREAMS 30
+#define MUSICBUFFERS 10
+#define REFERENCE_DISTANCE 50
+#define ACM_BUFFERSIZE 8192
+
+class OpenALSoundHandle : public SoundHandle {
+protected:
+	struct AudioStream *parent;
+
+public:
+	OpenALSoundHandle(AudioStream *p) : parent(p) { }
+	virtual ~OpenALSoundHandle() { }
+	virtual void SetPos(int XPos, int YPos);
+	virtual bool Playing();
+	virtual void Stop();
+	virtual void StopLooping();
+	void Invalidate() { parent = 0; }
+};
 
 struct AudioStream {
-    AudioStream() : Buffer(0), Source(0), Duration(0), free(true), ambient(false), locked(false), delete_buffers(false) { }
+	AudioStream() : Buffer(0), Source(0), Duration(0), free(true), ambient(false), locked(false), delete_buffers(false) { }
 
-    ALuint Buffer;
-    ALuint Source;
-    int Duration;
-    bool free;
-    bool ambient;
-    bool locked;
-    bool delete_buffers;
+	ALuint Buffer;
+	ALuint Source;
+	int Duration;
+	bool free;
+	bool ambient;
+	bool locked;
+	bool delete_buffers;
 
-    void ClearIfStopped();
-    void ClearProcessedBuffers();
-    void ForceClear();
+	void ClearIfStopped();
+	void ClearProcessedBuffers();
+	void ForceClear();
+
+	Holder<OpenALSoundHandle> handle;
 };
 
 struct CacheEntry {
-    ALuint Buffer;
-    unsigned int Length;
+	ALuint Buffer;
+	unsigned int Length;
 };
 
 class OpenALAudioDriver : public Audio {
 public:
-    OpenALAudioDriver(void);
-    ~OpenALAudioDriver(void);
-    bool Init(void);
-    unsigned int Play(const char* ResRef, int XPos = 0, int YPos = 0,
-                      unsigned int flags = GEM_SND_RELATIVE);
-    void release(void)
-    {
-        delete this;
-    }
-    bool IsSpeaking();
-    void UpdateVolume(unsigned int flags);
-    bool CanPlay();
-    void ResetMusics();
-    bool Play();
-    bool Stop();
-    int StreamFile( const char* filename );
-    void UpdateListenerPos(int XPos, int YPos );
-    void GetListenerPos( int &XPos, int &YPos );
-    bool ReleaseStream(int stream, bool HardStop);
-    int SetupNewStream( ieWord x, ieWord y, ieWord z,
-                    ieWord gain, bool point, bool Ambient );
-    int QueueAmbient(int stream, const char* sound);
-    void SetAmbientStreamVolume(int stream, int volume);
-    void QueueBuffer(int stream, unsigned short bits,
-                int channels, short* memory,
-                int size, int samplerate) ;
+	OpenALAudioDriver(void);
+	~OpenALAudioDriver(void);
+	bool Init(void);
+	Holder<SoundHandle> Play(const char* ResRef, int XPos, int YPos,
+					unsigned int flags = 0, unsigned int *length = 0);
+	bool IsSpeaking();
+	void UpdateVolume(unsigned int flags);
+	bool CanPlay();
+	void ResetMusics();
+	bool Play();
+	bool Stop();
+	bool Pause();
+	bool Resume();
+	int CreateStream(Holder<SoundMgr>);
+	void UpdateListenerPos(int XPos, int YPos );
+	void GetListenerPos( int &XPos, int &YPos );
+	bool ReleaseStream(int stream, bool HardStop);
+	int SetupNewStream( ieWord x, ieWord y, ieWord z,
+					ieWord gain, bool point, bool Ambient );
+	int QueueAmbient(int stream, const char* sound);
+	void SetAmbientStreamVolume(int stream, int volume);
+	void QueueBuffer(int stream, unsigned short bits,
+				int channels, short* memory,
+				int size, int samplerate) ;
 private:
-    ALCcontext *alutContext;
-    ALuint MusicSource;
-    bool MusicPlaying;
-    SDL_mutex* musicMutex;
-    ALuint MusicBuffer[MUSICBUFFERS];
-    SoundMgr* MusicReader;
-    LRUCache buffercache;
-    AudioStream speech;
-    AudioStream streams[MAX_STREAMS];
-    ALuint loadSound(const char* ResRef, unsigned int &time_length);
-    int num_streams;
-    int CountAvailableSources(int limit);
-    bool evictBuffer();
-    void clearBufferCache(bool force);
-    ALenum GetFormatEnum(int channels, int bits);
-    static int MusicManager(void* args);
-    bool stayAlive;
-    unsigned char* music_memory;
-    SDL_Thread* musicThread;
+	ALCcontext *alutContext;
+	ALuint MusicSource;
+	bool MusicPlaying;
+	SDL_mutex* musicMutex;
+	ALuint MusicBuffer[MUSICBUFFERS];
+	Holder<SoundMgr> MusicReader;
+	LRUCache buffercache;
+	AudioStream speech;
+	AudioStream streams[MAX_STREAMS];
+	ALuint loadSound(const char* ResRef, unsigned int &time_length);
+	int num_streams;
+	int CountAvailableSources(int limit);
+	bool evictBuffer();
+	void clearBufferCache(bool force);
+	ALenum GetFormatEnum(int channels, int bits);
+	static int MusicManager(void* args);
+	bool stayAlive;
+	short* music_memory;
+	SDL_Thread* musicThread;
 };
 
 #endif // OPENALAUDIO_H_INCLUDED

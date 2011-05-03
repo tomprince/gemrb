@@ -22,55 +22,47 @@
 ###################################################
 
 import GemRB
-from GUICommonWindows import *
+import GUICommon
 import GUICommonWindows
-from GUIClasses import GTextArea
-
-from GUIJRNL import *
-from GUIMA import *
-from GUIMG import *
-from GUIINV import *
-from GUIOPT import *
-from GUIPR import *
-from GUIREC import *
-from GUISTORE import *
-from GUIWORLD import *
-from TextScreen import *
-from LevelUp import *
-from DualClass import *
+import CommonWindow
+import GUIClasses
+import CommonTables
+from GUIDefines import *
+from CharGenEnd import GiveEquipment
 
 MessageWindow = 0
 PortraitWindow = 0
 OptionsWindow = 0
 ExpandButton = 0
 ContractButton = 0
+TMessageTA = 0 # for dialog code
 
 def OnLoad():
 	global PortraitWindow, OptionsWindow
 
 	GemRB.GameSetPartySize(PARTY_SIZE)
 	GemRB.GameSetProtagonistMode(1)
-	GemRB.LoadWindowPack(GetWindowPack())
+	GemRB.LoadWindowPack(GUICommon.GetWindowPack())
 
 	GUICommonWindows.PortraitWindow = None
 	GUICommonWindows.ActionsWindow = None
 	GUICommonWindows.OptionsWindow = None
 
-	OptionsWindow = GemRB.LoadWindowObject(0)
-	SetupMenuWindowControls (OptionsWindow, 1, "ReturnToGame")
-	PortraitWindow = OpenPortraitWindow(1)
+	OptionsWindow = GemRB.LoadWindow(0)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 1, None)
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow(1)
 
 	Button=OptionsWindow.GetControl(10)
-	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MinimizeOptions")
+	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, MinimizeOptions)
 	Button=PortraitWindow.GetControl(8)
-	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MinimizePortraits")
+	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, GUICommonWindows.MinimizePortraits)
 
-	ActionsWindow = GemRB.LoadWindowObject(3)
-	OpenActionsWindowControls (ActionsWindow)
+	ActionsWindow = GemRB.LoadWindow(3)
+	GUICommonWindows.OpenActionsWindowControls (ActionsWindow)
 	Button=ActionsWindow.GetControl(60)
-	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MaximizeOptions")
+	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, MaximizeOptions)
 	Button=ActionsWindow.GetControl(61)
-	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MaximizePortraits")
+	Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, MaximizePortraits)
 
 	GemRB.SetVar("PortraitWindow", PortraitWindow.ID)
 	GemRB.SetVar("ActionsWindow", ActionsWindow.ID)
@@ -93,8 +85,7 @@ def MinimizeOptions():
 def MaximizeOptions():
 	GemRB.GameSetScreenFlags(GS_OPTIONPANE, OP_NAND)
 
-def MinimizePortraits():
-	GemRB.GameSetScreenFlags(GS_PORTRAITPANE, OP_OR)
+# MinimizePortraits is in GUICommonWindows for dependency reasons
 
 def MaximizePortraits():
 	GemRB.GameSetScreenFlags(GS_PORTRAITPANE, OP_NAND)
@@ -102,26 +93,8 @@ def MaximizePortraits():
 def TogglePartyAI():
 	GemRB.GameSetScreenFlags(GS_PARTYAI, OP_XOR)
 
-def OnIncreaseSize():
-	GSFlags = GemRB.GetMessageWindowSize()
-	Expand = GSFlags&GS_DIALOGMASK
-	GSFlags = GSFlags-Expand
-	if Expand>2:
-		return
-	Expand = (Expand + 1)*2
-	GemRB.GameSetScreenFlags(Expand + GSFlags, OP_SET)
-
-def OnDecreaseSize():
-	GSFlags = GemRB.GetMessageWindowSize()
-	Expand = GSFlags&GS_DIALOGMASK
-	GSFlags = GSFlags-Expand
-	if Expand<2:
-		return
-	Expand = Expand/2 - 1 # 6->2, 2->0
-	GemRB.GameSetScreenFlags(Expand + GSFlags, OP_SET)
-
 def UpdateControlStatus():
-	global MessageWindow, ExpandButton, ContractButton
+	global MessageWindow, ExpandButton, ContractButton, TMessageTA
 	
 	TMessageWindow = 0
 	TMessageTA = 0
@@ -136,41 +109,41 @@ def UpdateControlStatus():
 	
 	MessageWindow = GemRB.GetVar("MessageWindow")
 
-	GemRB.LoadWindowPack(GetWindowPack())
+	GemRB.LoadWindowPack(GUICommon.GetWindowPack())
 
 	if Expand == GS_MEDIUMDIALOG:
-		TMessageWindow = GemRB.LoadWindowObject(12)
+		TMessageWindow = GemRB.LoadWindow(12)
 		TMessageTA = TMessageWindow.GetControl(1)
 		ExpandButton = TMessageWindow.GetControl(0)
-		ExpandButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OnIncreaseSize")
+		ExpandButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommonWindow.OnIncreaseSize)
 		ContractButton = TMessageWindow.GetControl(3)
-		ContractButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OnDecreaseSize")
+		ContractButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommonWindow.OnDecreaseSize)
 
 	elif Expand == GS_LARGEDIALOG:
-		TMessageWindow = GemRB.LoadWindowObject(7)
+		TMessageWindow = GemRB.LoadWindow(7)
 		TMessageTA = TMessageWindow.GetControl(1)
 		ContractButton = TMessageWindow.GetControl(0)
-		ContractButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OnDecreaseSize")
+		ContractButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommonWindow.OnDecreaseSize)
 	else:
-		TMessageWindow = GemRB.LoadWindowObject(4)
+		TMessageWindow = GemRB.LoadWindow(4)
 		TMessageTA = TMessageWindow.GetControl(3)
 		ExpandButton = TMessageWindow.GetControl(2)
-		ExpandButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OnIncreaseSize")
+		ExpandButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommonWindow.OnIncreaseSize)
 
 	TMessageTA.SetFlags(IE_GUI_TEXTAREA_AUTOSCROLL|IE_GUI_TEXTAREA_SPEAKER)
 	TMessageTA.SetHistory(100)
 	hideflag = GemRB.HideGUI()
-	MessageTA = GTextArea(MessageWindow,GemRB.GetVar("MessageTextArea"))
+	MessageTA = GUIClasses.GTextArea(MessageWindow,GemRB.GetVar("MessageTextArea"))
 	if MessageWindow>0 and MessageWindow!=TMessageWindow.ID:
 		MessageTA.MoveText(TMessageTA)
-		GemRB.UnloadWindow(MessageWindow)
+		GUIClasses.GWindow(MessageWindow).Unload()
 
 	GemRB.SetVar("MessageWindow", TMessageWindow.ID)
 	GemRB.SetVar("MessageTextArea", TMessageTA.ID)
 	if Override:
 		TMessageTA.SetStatus (IE_GUI_CONTROL_FOCUSED)
 	else:
-		GemRB.SetControlStatus (0,0,IE_GUI_CONTROL_FOCUSED)
+		GUICommon.GameControl.SetStatus(IE_GUI_CONTROL_FOCUSED)
 
 	if GSFlags & GS_OPTIONPANE:
 		GemRB.SetVar("OptionsWindow", -1)
@@ -184,7 +157,83 @@ def UpdateControlStatus():
 
 	if hideflag:
 		GemRB.UnhideGUI()
+	return
 
-def UpdateMasterScript():
+def RemoveYoshimo( idx):
+	GemRB.DisplayString(72046, 0xF5F596)
+	#WARNING:multiple strings are executed in reverse order
+	GemRB.ExecuteString('ApplySpellRES("destself",myself)', idx)
+	GemRB.ExecuteString('GivePartyAllEquipment()', idx)
+	return
+
+def RemoveImoen( idx):
+	GemRB.DisplayString(72047, 0xF5F596)
+	GemRB.ExecuteString('ApplySpellRES("destself",myself)', idx)
+	GemRB.ExecuteString('GivePartyAllEquipment()', idx)
+	return
+
+def FixEdwin( idx):
+	GemRB.ApplySpell(idx, "SPIN661")
+	return
+
+def FixAnomen( idx):
+	#lawful neutral
+	if (GemRB.GetPlayerStat(idx, IE_ALIGNMENT) == 0x12):
+		GemRB.ApplySpell(idx, "SPIN678")
+	return
+
+#do all the stuff not done yet
+def FixProtagonist( idx):
+	
+	Class = GemRB.GetPlayerStat (idx, IE_CLASS)
+	ClassIndex = CommonTables.Classes.FindValue (5, Class)
+	ClassName = CommonTables.Classes.GetRowName (ClassIndex)
+	KitIndex = GUICommon.GetKitIndex (idx)
+	GiveEquipment(idx, ClassName, KitIndex)
+	return
+
+#upgrade savegame to next version
+def GameExpansion():
+
+	version = GemRB.GameGetExpansion()
+	if version<3:
+		GemRB.GameSetReputation(100)
+
+	if not GUICommon.HasTOB():
+		return
+
+	if GemRB.GetVar("oldgame"):
+		#upgrade SoA to ToB/SoA
+		if GemRB.GameSetExpansion(4):
+			GemRB.AddNewArea("xnewarea")
+		return
+
+	if not GemRB.GameSetExpansion(5):
+		return
+
+	#upgrade to ToB only
 	GemRB.SetMasterScript("BALDUR25","WORLDM25")
+	GemRB.SetGlobal("INTOB","GLOBAL",1)
+	GemRB.SetGlobal("HADELLESIMEDREAM1","GLOBAL", 1)
+	GemRB.SetGlobal("HADELLESIMEDREAM2","GLOBAL", 1)
+	GemRB.SetGlobal("HADIMOENDREAM1","GLOBAL", 1)
+	GemRB.SetGlobal("HADSLAYERDREAM","GLOBAL", 1)
+	GemRB.SetGlobal("HADJONDREAM1","GLOBAL", 1)
+	GemRB.SetGlobal("HADJONDREAM2","GLOBAL", 1)
+	idx = GemRB.GetPartySize()
+	
+	while idx:
+		name = GemRB.GetPlayerName(idx, 2) #scripting name
+		if name == "yoshimo":
+			RemoveYoshimo(idx)
+		elif name == "imoen":
+			RemoveImoen(idx)
+		elif name == "edwin":
+			FixEdwin(idx)
+		elif name == "anomen":
+			FixAnomen(idx)
+		elif name == "none":
+			FixProtagonist(idx)
+			GemRB.GameSelectPC (idx, True, SELECT_REPLACE)
+		idx=idx-1
 	return

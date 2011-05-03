@@ -20,34 +20,48 @@
 
 // GemRB.cpp : Defines the entry point for the application.
 
+#include "win32def.h" // logging
 
-#include <cstdio>
-#include "win32def.h"
 #include "Interface.h"
 
-#ifndef WIN32
-#include <ctype.h>
-#include <sys/time.h>
-#include <dirent.h>
-#else
-#include <windows.h>
-#endif
 
 //this supposed to convince SDL to work on OS/X
+//WARNING: commenting this out will cause SDL 1.2.x to crash
 #ifdef __APPLE_CC__ // we need startup SDL here
-#include "SDL/SDL.h"
+#include <SDL.h>
+#endif
+
+#ifdef ANDROID
+#include <SDL/SDL.h>
+#include "audio.h"
+
+// pause audio playing if app goes in background
+static void appPutToBackground()
+{
+  core->GetAudioDrv()->Pause();
+}
+// resume audio playing if app return to foreground
+static void appPutToForeground()
+{
+  core->GetAudioDrv()->Resume();
+}
+
 #endif
 
 int main(int argc, char* argv[])
 {
+	Interface::SanityCheck(VERSION_GEMRB);
 	core = new Interface( argc, argv );
 	if (core->Init() == GEM_ERROR) {
 		delete( core );
-		printf("Press enter to continue...");
+		print("Press enter to continue...");
 		textcolor(DEFAULT);
 		getc(stdin);
 		return -1;
 	}
+#ifdef ANDROID
+    SDL_ANDROID_SetApplicationPutToBackgroundCallback(&appPutToBackground, &appPutToForeground);
+#endif
 	core->Main();
 	delete( core );
 	textcolor(DEFAULT);

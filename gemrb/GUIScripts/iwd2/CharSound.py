@@ -20,6 +20,7 @@
 #Character Sound Options Menu using GUIOPT
 
 import GemRB
+from GUIDefines import *
 
 CSoundWindow = 0
 TextAreaControl = 0
@@ -28,7 +29,7 @@ def OnLoad():
 	global CSoundWindow, TextAreaControl
 
 	GemRB.LoadWindowPack("GUIOPT", 800, 600)
-	CSoundWindow = GemRB.LoadWindowObject(12)
+	CSoundWindow = GemRB.LoadWindow(12)
 	CSoundWindow.SetFrame( )
 	TextAreaControl = CSoundWindow.GetControl(16)
 	SubtitlesButton = CSoundWindow.GetControl(20)
@@ -54,54 +55,54 @@ def OnLoad():
 	CancelButton.SetText(13727)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
-	SubtitlesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SubtitlesPress")
-	SubtitlesButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SubtitlesPress")
+	SubtitlesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SubtitlesPress)
+	SubtitlesButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, SubtitlesPress)
 	SubtitlesButtonB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	SubtitlesButtonB.SetVarAssoc("Subtitles", 1)
 	SubtitlesButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
 
-	AttackSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "AttackSoundPress")
-	AttackSoundButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "AttackSoundPress")
+	AttackSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, AttackSoundPress)
+	AttackSoundButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, AttackSoundPress)
 	AttackSoundButtonB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	AttackSoundButtonB.SetVarAssoc("Attack Sound", 1) #can't find the right variable name, this is a dummy name
 	AttackSoundButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
 
-	MovementSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MovementSoundPress")
-	MovementSoundButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MovementSoundPress")
+	MovementSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, MovementSoundPress)
+	MovementSoundButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, MovementSoundPress)
 	MovementSoundButtonB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	MovementSoundButtonB.SetVarAssoc("Movement Sound", 1) #can't find the right variable name, this is a dummy name
 	MovementSoundButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
 
-	CommandSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CommandSoundPress")
-	CSAlwaysButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CommandSoundPress")
+	CommandSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommandSoundPress)
+	CSAlwaysButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommandSoundPress)
 	CSAlwaysButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	CSAlwaysButtonB.SetVarAssoc("Command Sounds Frequency", 3)
 	CSAlwaysButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
-	CSSeldomButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CommandSoundPress")
+	CSSeldomButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommandSoundPress)
 	CSSeldomButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	CSSeldomButtonB.SetVarAssoc("Command Sounds Frequency", 2)
 	CSSeldomButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
-	CSNeverButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CommandSoundPress")
+	CSNeverButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, CommandSoundPress)
 	CSNeverButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	CSNeverButtonB.SetVarAssoc("Command Sounds Frequency", 1)
 	CSNeverButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
 
-	SelectionSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionSoundPress")
-	SSAlwaysButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionSoundPress")
+	SelectionSoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionSoundPress)
+	SSAlwaysButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionSoundPress)
 	SSAlwaysButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	SSAlwaysButtonB.SetVarAssoc("Selection Sounds Frequency", 3)
 	SSAlwaysButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
-	SSSeldomButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionSoundPress")
+	SSSeldomButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionSoundPress)
 	SSSeldomButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	SSSeldomButtonB.SetVarAssoc("Selection Sounds Frequency", 2)
 	SSSeldomButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
-	SSNeverButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionSoundPress")
+	SSNeverButtonB.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionSoundPress)
 	SSNeverButtonB.SetFlags(IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
 	SSNeverButtonB.SetVarAssoc("Selection Sounds Frequency", 1)
 	SSNeverButtonB.SetSprites("GBTNOPT4", 0, 0, 1, 2, 3)
 
-	OkButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OkPress")
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CancelPress")
+	OkButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, OkPress)
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CancelPress)
 	CSoundWindow.SetVisible(WINDOW_VISIBLE)
 	return
 

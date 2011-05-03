@@ -21,9 +21,11 @@
 #ifndef BIFIMPORTER_H
 #define BIFIMPORTER_H
 
-#include "globals.h"
 #include "ArchiveImporter.h"
-#include "CachedFileStream.h"
+
+#include "globals.h"
+
+#include "System/DataStream.h"
 
 struct FileEntry {
 	ieDword resLocator;
@@ -48,7 +50,7 @@ private:
 	FileEntry* fentries;
 	TileEntry* tentries;
 	ieDword fentcount, tentcount;
-	CachedFileStream* stream;
+	DataStream* stream;
 public:
 	BIFImporter(void);
 	~BIFImporter(void);
@@ -59,11 +61,6 @@ public:
 	DataStream* GetStream(unsigned long Resource, unsigned long Type);
 private:
 	void ReadBIF(void);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

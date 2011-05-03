@@ -18,35 +18,32 @@
  *
  */
 
-#include "win32def.h"
 #include "DLGImporter.h"
-#include "FileStream.h"
+
+#include "win32def.h"
+
 #include "Interface.h"
+#include "GameScript/GameScript.h"
+#include "System/FileStream.h"
 
 DLGImporter::DLGImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 	Version = 0;
 }
 
 DLGImporter::~DLGImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
 }
 
-bool DLGImporter::Open(DataStream* stream, bool autoFree)
+bool DLGImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strnicmp( Signature, "DLG V1.0", 8 ) != 0) {
@@ -81,7 +78,7 @@ bool DLGImporter::Open(DataStream* stream, bool autoFree)
 	return true;
 }
 
-Dialog* DLGImporter::GetDialog()
+Dialog* DLGImporter::GetDialog() const
 {
 	if(!Version) {
 		return NULL;
@@ -98,7 +95,7 @@ Dialog* DLGImporter::GetDialog()
 	return d;
 }
 
-DialogState* DLGImporter::GetDialogState(Dialog *d, unsigned int index)
+DialogState* DLGImporter::GetDialogState(Dialog *d, unsigned int index) const
 {
 	DialogState* ds = new DialogState();
 	//16 = sizeof(State)
@@ -109,14 +106,14 @@ DialogState* DLGImporter::GetDialogState(Dialog *d, unsigned int index)
 	str->ReadDword( &FirstTransitionIndex );
 	str->ReadDword( &ds->transitionsCount );
 	str->ReadDword( &TriggerIndex );
-	ds->trigger = GetStateTrigger( TriggerIndex );
+	ds->condition = GetStateTrigger( TriggerIndex );
 	ds->transitions = GetTransitions( FirstTransitionIndex, ds->transitionsCount );
 	if (TriggerIndex<StatesCount)
 		d->Order[TriggerIndex] = index;
 	return ds;
 }
 
-DialogTransition** DLGImporter::GetTransitions(unsigned int firstIndex, unsigned int count)
+DialogTransition** DLGImporter::GetTransitions(unsigned int firstIndex, unsigned int count) const
 {
 	DialogTransition** trans = ( DialogTransition** )
 		malloc( count*sizeof( DialogTransition* ) );
@@ -126,7 +123,7 @@ DialogTransition** DLGImporter::GetTransitions(unsigned int firstIndex, unsigned
 	return trans;
 }
 
-DialogTransition* DLGImporter::GetTransition(unsigned int index)
+DialogTransition* DLGImporter::GetTransition(unsigned int index) const
 {
 	if (index >= TransitionsCount) {
 		return NULL;
@@ -150,21 +147,39 @@ DialogTransition* DLGImporter::GetTransition(unsigned int index)
 	str->ReadResRef( dt->Dialog );
 	str->ReadDword( &dt->stateIndex );
 	if (dt->Flags &IE_DLG_TR_TRIGGER) {
-		dt->trigger = GetTransitionTrigger( TriggerIndex );
+		dt->condition = GetTransitionTrigger( TriggerIndex );
 	}
 	else {
-		dt->trigger = NULL;
+		dt->condition = NULL;
 	}
 	if (dt->Flags & IE_DLG_TR_ACTION) {
-		dt->action = GetAction( ActionIndex );
-	}
-	else {
-		dt->action = NULL;
+		dt->actions = GetAction( ActionIndex );
 	}
 	return dt;
 }
 
-DialogString* DLGImporter::GetStateTrigger(unsigned int index)
+static char** GetStrings(char* string, unsigned int& count);
+
+Condition* GetCondition(char* string)
+{
+	unsigned int count;
+	char **lines = GetStrings( string, count );
+	Condition *condition = new Condition();
+	for (size_t i = 0; i < count; ++i) {
+		Trigger *trigger = GenerateTrigger(lines[i]);
+		if (!trigger) {
+			printMessage( "DLGImporter", "Can't compile trigger: " ,YELLOW);
+			print("%s\n", lines[i]);
+		} else {
+			condition->triggers.push_back(trigger);
+		}
+		free(lines[i]);
+	}
+	free(lines);
+	return condition;
+}
+
+Condition* DLGImporter::GetStateTrigger(unsigned int index) const
 {
 	if (index >= StateTriggersCount) {
 		return NULL;
@@ -180,17 +195,16 @@ DialogString* DLGImporter::GetStateTrigger(unsigned int index)
 	if (!Length) {
 		return NULL;
 	}
-	DialogString* ds = new DialogString();
 	str->Seek( Offset, GEM_STREAM_START );
 	char* string = ( char* ) malloc( Length + 1 );
 	str->Read( string, Length );
 	string[Length] = 0;
-	ds->strings = GetStrings( string, ds->count );
-	free( string );
-	return ds;
+	Condition *condition = GetCondition(string);
+	free(string);
+	return condition;
 }
 
-DialogString* DLGImporter::GetTransitionTrigger(unsigned int index)
+Condition* DLGImporter::GetTransitionTrigger(unsigned int index) const
 {
 	if (index >= TransitionTriggersCount) {
 		return NULL;
@@ -199,33 +213,43 @@ DialogString* DLGImporter::GetTransitionTrigger(unsigned int index)
 	ieDword Offset, Length;
 	str->ReadDword( &Offset );
 	str->ReadDword( &Length );
-	DialogString* ds = new DialogString();
 	str->Seek( Offset, GEM_STREAM_START );
 	char* string = ( char* ) malloc( Length + 1 );
 	str->Read( string, Length );
 	string[Length] = 0;
-	ds->strings = GetStrings( string, ds->count );
+	Condition *condition = GetCondition(string);
 	free( string );
-	return ds;
+	return condition;
 }
 
-DialogString* DLGImporter::GetAction(unsigned int index)
+std::vector<Action*> DLGImporter::GetAction(unsigned int index) const
 {
 	if (index >= ActionsCount) {
-		return NULL;
+		return std::vector<Action*>();
 	}
 	str->Seek( ActionsOffset + ( index * 8 ), GEM_STREAM_START );
 	ieDword Offset, Length;
 	str->ReadDword( &Offset );
 	str->ReadDword( &Length );
-	DialogString* ds = new DialogString();
 	str->Seek( Offset, GEM_STREAM_START );
 	char* string = ( char* ) malloc( Length + 1 );
 	str->Read( string, Length );
 	string[Length] = 0;
-	ds->strings = GetStrings( string, ds->count );
-	free( string );
-	return ds;
+	unsigned int count;
+	char ** lines = GetStrings( string, count );
+	std::vector<Action*> actions;
+	for (size_t i = 0; i < count; ++i) {
+		Action *action = GenerateAction(lines[i]);
+		if (!action) {
+			printMessage( "DLGImporter", "Can't compile action: " ,YELLOW);
+			print("%s\n", lines[i]);
+		} else {
+			action->IncRef();
+			actions.push_back(action);
+		}
+		free(lines[i]);
+	}
+	return actions;
 }
 
 int GetActionLength(const char* string)
@@ -253,6 +277,11 @@ int GetActionLength(const char* string)
 					}
 				}
 				break;
+			case '\r':
+			case '\n':
+				// force reset on newline if quotes are open
+				if (!quotes) return i;
+				break;
 			default:
 				break;
 		}
@@ -264,7 +293,11 @@ int GetActionLength(const char* string)
 
 /* this function will break up faulty script strings that lack the CRLF
    between commands, common in PST dialog */
-char** DLGImporter::GetStrings(char* string, unsigned int& count)
+/* misc test cases (just examples, there are more):
+     pst's FORGE.DLG (trigger split across two lines),
+     bg2's SAHIMP02.DLG (missing quotemark in string),
+     bg2's QUAYLE.DLG (missing closing bracket) */
+char** GetStrings(char* string, unsigned int& count)
 {
 	int col = 0;
 	int level = 0;
@@ -300,6 +333,16 @@ char** DLGImporter::GetStrings(char* string, unsigned int& count)
 						}
 						ignore=false;
 					}
+				}
+				break;
+			case '\r':
+			case '\n':
+				// force reset on newline if quotes are open, or we had a comment
+				if (!quotes || ignore) {
+					level = 0;
+					quotes = true;
+					ignore = false;
+					count++;
 				}
 				break;
 			default:

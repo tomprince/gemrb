@@ -19,8 +19,8 @@
 
 # 
 import GemRB
-from LoadScreen import *
-from GUICommon import LoadCommonTables
+import LoadScreen
+from GUIDefines import *
 
 StartWindow = 0
 ProtocolWindow = 0
@@ -36,7 +36,7 @@ def OnLoad():
 		GemRB.LoadWindowFrame("STON10L", "STON10R", "STON10T", "STON10B")
 	GemRB.LoadWindowPack("GUICONN", 800, 600)
 #main window
-	StartWindow = GemRB.LoadWindowObject(0)
+	StartWindow = GemRB.LoadWindow(0)
 	StartWindow.SetFrame ()
 	ProtocolButton = StartWindow.GetControl(0x00)
 	NewGameButton = StartWindow.GetControl(0x02)
@@ -53,16 +53,16 @@ def OnLoad():
 	LoadGameButton.SetStatus(IE_GUI_BUTTON_ENABLED)
 
 	GemRB.SetVar("SaveDir",1)
-	GameCount=GemRB.GetSaveGameCount()
+	Games=GemRB.GetSaveGames()
 
 	#looking for the quicksave
 	EnableQuickLoad = IE_GUI_BUTTON_DISABLED
-	for ActPos in range(GameCount):
-		Slotname = GemRB.GetSaveGameAttrib(5,ActPos)
-		# quick save is 2
-		if Slotname == 2:
+	for Game in Games:
+		Slotname = Game.GetSaveID()
+		# quick save is 1
+		if Slotname == 1:
 			EnableQuickLoad = IE_GUI_BUTTON_ENABLED
-			QuickLoadSlot = ActPos
+			QuickLoadSlot = Game
 			break
 
 	QuickLoadButton.SetStatus(EnableQuickLoad)
@@ -83,23 +83,22 @@ def OnLoad():
 	OptionsButton.SetText(13905)
 	QuitGameButton.SetText(13731)
 	QuitGameButton.SetFlags(IE_GUI_BUTTON_CANCEL, OP_OR)
-	NewGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "NewGamePress")
-	QuitGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "QuitPress")
-	ProtocolButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ProtocolPress")
-	OptionsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OptionsPress")
-	LoadGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LoadPress")
-	QuickLoadButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "QuickLoadPress")
+	NewGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NewGamePress)
+	QuitGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, QuitPress)
+	ProtocolButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ProtocolPress)
+	OptionsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, OptionsPress)
+	LoadGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, LoadPress)
+	QuickLoadButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, QuickLoadPress)
 	StartWindow.SetVisible(WINDOW_VISIBLE)
 	GemRB.LoadMusicPL("Theme.mus")
 
-	LoadCommonTables ()
 	return
 
 def ProtocolPress():
 	global StartWindow, ProtocolWindow
-	#GemRB.UnloadWindow(StartWindow)
+	#StartWindow.Unload()
 	StartWindow.SetVisible(WINDOW_INVISIBLE)
-	ProtocolWindow = GemRB.LoadWindowObject(1)
+	ProtocolWindow = GemRB.LoadWindow(1)
 
 	#Disabling Unused Buttons in this Window
 	Button = ProtocolWindow.GetControl(2)
@@ -133,7 +132,7 @@ def ProtocolPress():
 
 	DoneButton = ProtocolWindow.GetControl(6)
 	DoneButton.SetText(11973)
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ProtocolDonePress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ProtocolDonePress)
 	DoneButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	ProtocolWindow.SetVisible(WINDOW_VISIBLE)
@@ -168,7 +167,7 @@ def LoadPress():
 def QuickLoadPress():
 	global StartWindow, QuickLoadSlot
 
-	StartLoadScreen()
+	LoadScreen.StartLoadScreen()
 	GemRB.LoadGame(QuickLoadSlot) # load & start game
 	GemRB.EnterGame()
 	return
@@ -183,13 +182,13 @@ def OptionsPress():
 def QuitPress():
 	global StartWindow, QuitWindow
 	StartWindow.SetVisible(WINDOW_INVISIBLE)
-	QuitWindow = GemRB.LoadWindowObject(22)
+	QuitWindow = GemRB.LoadWindow(22)
 	CancelButton = QuitWindow.GetControl(2)
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "QuitCancelPress")
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, QuitCancelPress)
 	CancelButton.SetFlags(IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	QuitButton = QuitWindow.GetControl(1)
-	QuitButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "QuitQuitPress")
+	QuitButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, QuitQuitPress)
 	QuitButton.SetFlags(IE_GUI_BUTTON_DEFAULT, OP_OR)
 
 	TextArea = QuitWindow.GetControl(0)

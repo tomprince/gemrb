@@ -18,34 +18,81 @@
  *
  */
 
-#include "win32def.h"
-#include "Interface.h"
-#include "EffectMgr.h"
 #include "SPLImporter.h"
+
+#include "win32def.h"
+
+#include "EffectMgr.h"
+#include "Interface.h"
+#include "TableMgr.h" //needed for autotable
+
+int *cgsounds = NULL;
+int cgcount = -1;
+
+//cannot call this at the time of initialization because the tablemanager isn't alive yet
+void Initializer()
+{
+	if (cgsounds) {
+		free(cgsounds);
+		cgsounds = NULL;
+	}
+	cgcount = 0;
+	AutoTable tm("cgtable");
+	if (!tm) {
+		printStatus( "ERROR", LIGHT_RED );
+		print( "Cannot find cgtable.2da.\n");
+		return;
+	}
+	cgcount = tm->GetRowCount();
+	cgsounds = (int *) calloc( cgcount, sizeof(int) );
+	for (int i = 0; i < cgcount; i++) {
+		cgsounds[i] = atoi(tm->QueryField( i, 1 ) );
+	}
+}
+
+void ReleaseMemorySPL()
+{
+	free(cgsounds);
+	cgsounds = NULL;
+	cgcount = -1;
+}
+
+int GetCGSound(ieDword CastingGraphics)
+{
+	if (cgcount<0) {
+		Initializer();
+	}
+
+	if (CastingGraphics>=(ieDword) cgcount) {
+		return -1;
+	}
+	int ret = -1;
+	if (core->HasFeature(GF_CASTING_SOUNDS) ) {
+		ret = cgsounds[CastingGraphics];
+		if (core->HasFeature(GF_CASTING_SOUNDS2) ) {
+			ret |= 0x100;
+		}
+	}
+	return ret;
+}
 
 SPLImporter::SPLImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 }
 
 SPLImporter::~SPLImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
 }
 
-bool SPLImporter::Open(DataStream* stream, bool autoFree)
+bool SPLImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "SPL V1  ", 8 ) == 0) {
@@ -53,7 +100,7 @@ bool SPLImporter::Open(DataStream* stream, bool autoFree)
 	} else if (strncmp( Signature, "SPL V2.0", 8 ) == 0) {
 		version = 20;
 	} else {
-		printf( "[SPLImporter]: This file is not a valid SPL File\n" );
+		print( "[SPLImporter]: This file is not a valid SPL File\n" );
 		return false;
 	}
 
@@ -72,6 +119,7 @@ Spell* SPLImporter::GetSpell(Spell *s, bool /*silent*/)
 	str->ReadWord( &s->ExclusionSchool );
 	str->ReadWord( &s->PriestType );
 	str->ReadWord( &s->CastingGraphics );
+	s->CastingSound = GetCGSound(s->CastingGraphics);
 	str->Read( &s->unknown1, 1 );
 	str->ReadWord( &s->PrimaryType );
 	str->Read( &s->SecondaryType, 1 );
@@ -112,6 +160,16 @@ Spell* SPLImporter::GetSpell(Spell *s, bool /*silent*/)
 		//the low byte is unused, so we can keep the iwd2 bits there
 		s->Flags|=(s->Flags>>8)&0xc0;
 		s->Flags&=~0xc000;
+	} else {
+		//in case of old format, use some unused fields for gemrb's simplified duration
+		//to simulate IWD2's useful feature (this is needed for some pst projectiles)
+		if (s->Flags&SF_SIMPLIFIED_DURATION) {
+			s->TimePerLevel = s->unknown2;
+			s->TimeConstant = s->unknown3;
+		} else {
+			s->TimePerLevel = 0;
+			s->TimeConstant = 0;
+		}
 	}
 
 	s->ext_headers = core->GetSPLExt(s->ExtHeaderCount);
@@ -141,6 +199,13 @@ void SPLImporter::GetExtHeader(Spell *s, SPLExtHeader* eh)
 	str->Read( &eh->unknown2, 1 );
 	str->ReadResRef( eh->MemorisedIcon );
 	str->Read( &eh->Target, 1 );
+
+	//this hack is to let gemrb target dead actors by some spells
+	if (eh->Target == 1) {
+		if (core->GetSpecialSpell(s->Name)&SPEC_DEAD) {
+			eh->Target = 3;
+		}
+	}
 	str->Read( &tmpByte,1 );
 	if (!tmpByte) {
 		tmpByte = 1;
@@ -172,17 +237,17 @@ void SPLImporter::GetExtHeader(Spell *s, SPLExtHeader* eh)
 
 void SPLImporter::GetFeature(Spell *s, Effect *fx)
 {
-	EffectMgr* eM = ( EffectMgr* ) core->GetInterface( IE_EFF_CLASS_ID );
+	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
 	eM->Open( str, false );
 	eM->GetEffect( fx );
 	memcpy(fx->Source, s->Name, 9);
 	fx->PrimaryType = s->PrimaryType;
 	fx->SecondaryType = s->SecondaryType;
-	core->FreeInterface( eM );
 }
 
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0xA8D1014, "SPL File Importer")
 PLUGIN_CLASS(IE_SPL_CLASS_ID, SPLImporter)
+PLUGIN_CLEANUP(ReleaseMemorySPL)
 END_PLUGIN()

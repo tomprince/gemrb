@@ -20,8 +20,9 @@
 import GemRB
 from ie_stats import *
 from GUIDefines import *
-from GUICommon import *
-from GUICommonWindows import GetKitIndex, KitListTable, ClassTable, ClassSkillsTable, RaceTable
+import GUICommon
+import CommonTables
+from ie_restype import RES_BMP
 
 CharGenWindow = 0
 TextAreaControl = 0
@@ -33,7 +34,7 @@ def DisplayOverview(step):
 	global CharGenWindow, TextAreaControl, PortraitName
 
 	GemRB.LoadWindowPack ("GUICG", 640, 480)
-	CharGenWindow = GemRB.LoadWindowObject (0)
+	CharGenWindow = GemRB.LoadWindow (0)
 	CharGenWindow.SetFrame ()
 	GemRB.SetVar ("Step", step)
 
@@ -44,7 +45,8 @@ def DisplayOverview(step):
 	PortraitButton.SetFlags(IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
 	PortraitName = GemRB.GetToken ("LargePortrait")
 	if PortraitName != "":
-		PortraitButton.SetPicture (PortraitName, "NOPORTMD")
+		if GemRB.HasResource (PortraitName, RES_BMP, 1) or GemRB.HasResource ("NOPORTMD", RES_BMP, 1):
+			PortraitButton.SetPicture (PortraitName, "NOPORTMD")
 	PortraitButton.SetState (IE_GUI_BUTTON_LOCKED)
 
 	GenderButton = CharGenWindow.GetControl (0)
@@ -82,7 +84,7 @@ def DisplayOverview(step):
 	BackButton = CharGenWindow.GetControl (11)
 	BackButton.SetText (15416)
 	BackButton.SetState (IE_GUI_BUTTON_ENABLED)
-	BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "BackPress")
+	BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, BackPress)
 	BackButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	AcceptButton = CharGenWindow.GetControl (8)
@@ -93,7 +95,7 @@ def DisplayOverview(step):
 		AcceptButton.SetText (13956)
 	SetButtonStateFromStep ("AcceptButton", AcceptButton, step)
 	#AcceptButton.SetFlags(IE_GUI_BUTTON_DEFAULT,OP_OR)
-	#AcceptButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "NextPress")
+	AcceptButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, NextPress)
 
 	ScrollBar = CharGenWindow.GetControl (10)
 	ScrollBar.SetDefaultScrollBar ()
@@ -101,7 +103,7 @@ def DisplayOverview(step):
 	ImportButton = CharGenWindow.GetControl (13)
 	ImportButton.SetText (13955)
 	ImportButton.SetState (IE_GUI_BUTTON_ENABLED)
-	ImportButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ImportPress")
+	ImportButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ImportPress)
 
 	CancelButton = CharGenWindow.GetControl (15)
 	if step == 1:
@@ -109,11 +111,11 @@ def DisplayOverview(step):
 	else:
 		CancelButton.SetText (8159) # Start over
 	CancelButton.SetState (IE_GUI_BUTTON_ENABLED)
-	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CancelPress")
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CancelPress)
 
 	BiographyButton = CharGenWindow.GetControl (16)
 	BiographyButton.SetText (18003)
-	BiographyButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "BiographyPress")
+	BiographyButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, BiographyPress)
 	if step == 9:
 		BiographyButton.SetState (IE_GUI_BUTTON_ENABLED)
 	else:
@@ -122,8 +124,8 @@ def DisplayOverview(step):
 	###
 	# Stat overview
 	###
-	AlignmentTable = GemRB.LoadTableObject ("aligns")
-	AbilityTable = GemRB.LoadTableObject ("ability")
+	AlignmentTable = GemRB.LoadTable ("aligns")
+	AbilityTable = GemRB.LoadTable ("ability")
 
 	MyChar = GemRB.GetVar ("Slot")
 
@@ -150,12 +152,12 @@ def DisplayOverview(step):
 			TextAreaControl.Append (1048, -1) # new line
 			TextAreaControl.Append (": ")
 			stat = GemRB.GetPlayerStat(MyChar, IE_RACE)
-			v = RaceTable.FindValue (3, stat)
-			TextAreaControl.Append (RaceTable.GetValue (v,2) )
+			v = CommonTables.Races.FindValue (3, stat)
+			TextAreaControl.Append (CommonTables.Races.GetValue (v,2) )
 		elif part == 4:
 			TextAreaControl.Append (12136, -1)
 			TextAreaControl.Append (": ")
-			ClassTitle = GetActorClassTitle (MyChar)
+			ClassTitle = GUICommon.GetActorClassTitle (MyChar)
 			TextAreaControl.Append (ClassTitle)
 		elif part == 5:
 			TextAreaControl.Append (1049, -1)
@@ -166,8 +168,8 @@ def DisplayOverview(step):
 		elif part == 6:
 			TextAreaControl.Append ("\n")
 			ClassID = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-			Class = ClassTable.FindValue (5, ClassID)
-			hasextra = ClassTable.GetValue (Class, 3)=="SAVEWAR"
+			Class = CommonTables.Classes.FindValue (5, ClassID)
+			hasextra = CommonTables.Classes.GetValue (Class, 3)=="SAVEWAR"
 			strextra = GemRB.GetPlayerStat (MyChar, IE_STREXTRA)
 			for i in range(6):
 				v = AbilityTable.GetValue (i, 2)
@@ -182,17 +184,17 @@ def DisplayOverview(step):
 			TextAreaControl.Append ("\n\n")
 			# thieving and other skills
 			info = ""
-			SkillTable = GemRB.LoadTableObject ("skills")
+			SkillTable = GemRB.LoadTable ("skills")
 			ClassID = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-			Class = ClassTable.FindValue (5, ClassID)
-			ClassName = ClassTable.GetRowName (Class)
-			RangerSkills = ClassSkillsTable.GetValue (ClassName, "RANGERSKILL")
-			BardSkills = ClassSkillsTable.GetValue (ClassName, "BARDSKILL")
-			KitName = GetKitIndex (MyChar)
+			Class = CommonTables.Classes.FindValue (5, ClassID)
+			ClassName = CommonTables.Classes.GetRowName (Class)
+			RangerSkills = CommonTables.ClassSkills.GetValue (ClassName, "RANGERSKILL")
+			BardSkills = CommonTables.ClassSkills.GetValue (ClassName, "BARDSKILL")
+			KitName = GUICommon.GetKitIndex (MyChar)
 			if KitName == 0:
 				KitName = ClassName
 			else:
-				KitName = KitListTable.GetValue (KitName, 0)
+				KitName = CommonTables.KitList.GetValue (KitName, 0)
 
 			if SkillTable.GetValue ("RATE", KitName) != -1:
 				for skill in range(SkillTable.GetRowCount () - 2):
@@ -242,7 +244,7 @@ def DisplayOverview(step):
 			info = ""
 			Race = GemRB.GetVar ("HatedRace")
 			if Race:
-				HateRaceTable = GemRB.LoadTableObject ("HATERACE")
+				HateRaceTable = GemRB.LoadTable ("HATERACE")
 				Row = HateRaceTable.FindValue (1, Race)
 				info = GemRB.GetString (HateRaceTable.GetValue(Row, 0))
 				if info != "":
@@ -253,7 +255,7 @@ def DisplayOverview(step):
 			# weapon proficiencies
 			TextAreaControl.Append (9466)
 			TextAreaControl.Append ("\n")
-			TmpTable=GemRB.LoadTableObject ("weapprof")
+			TmpTable=GemRB.LoadTable ("weapprof")
 			ProfCount = TmpTable.GetRowCount ()
 			#bg2 weapprof.2da contains the bg1 proficiencies too, skipping those
 			for i in range(ProfCount-8):
@@ -313,7 +315,7 @@ def SetButtonStateFromStep (buttonName, button, step):
 
 	if state == IE_GUI_BUTTON_ENABLED:
 		button.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
-		button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "NextPress")
+		button.SetEvent (IE_GUI_BUTTON_ON_PRESS, NextPress)
 	return
 
 def CancelPress():
@@ -384,7 +386,7 @@ def NextPress():
 	elif step == 8:
 		GemRB.SetNextScript ("GUICG5")
 	elif step == 9:
-		pass #FinishCharGen()
+		GemRB.SetNextScript ("CharGenEnd")
 	else: # 3, 4, 5
 		GemRB.SetNextScript ("GUICG" + str(step-1))
 	return

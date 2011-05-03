@@ -20,7 +20,7 @@
  */
 
 #include "TISTile.h"
-#include "../Core/Interface.h"
+#include "Interface.h"
 
 Sprite2D* TileToSprite(RevColor RevCol[256], void* pixels) {
 	Color Palette[256];

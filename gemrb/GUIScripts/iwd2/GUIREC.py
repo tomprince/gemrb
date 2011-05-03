@@ -23,11 +23,12 @@
 ###################################################
 
 import GemRB
+import GUICommon
+import CommonTables
 import GUICommonWindows
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import CloseOtherWindow, SetColorStat, RaceTable, ClassTable, NextLevelTable
-from GUICommonWindows import *
+from ie_restype import *
 
 SelectWindow = 0
 Topic = None
@@ -42,12 +43,19 @@ PortraitWindow = None
 OldPortraitWindow = None
 OptionsWindow = None
 OldOptionsWindow = None
+OldVoiceSet = None
+
+# the available sounds
+SoundSequence = [ '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', \
+		'13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', \
+		'25', '26', '27', '28', '29', '30', '31']
+SoundIndex = 0
 
 def OpenRecordsWindow ():
 	global RecordsWindow, OptionsWindow, PortraitWindow
 	global OldPortraitWindow, OldOptionsWindow, SelectWindow
 
-	if CloseOtherWindow (OpenRecordsWindow):
+	if GUICommon.CloseOtherWindow (OpenRecordsWindow):
 		if RecordsWindow:
 			RecordsWindow.Unload ()
 		if OptionsWindow:
@@ -57,27 +65,27 @@ def OpenRecordsWindow ():
 
 		RecordsWindow = None
 		GemRB.SetVar ("OtherWindow", -1)
-		GemRB.SetVisible (0, WINDOW_VISIBLE)
+		GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 		GemRB.UnhideGUI ()
 		GUICommonWindows.PortraitWindow = OldPortraitWindow
 		OldPortraitWindow = None
 		GUICommonWindows.OptionsWindow = OldOptionsWindow
 		OldOptionsWindow = None
-		SetSelectionChangeHandler (None)
+		GUICommonWindows.SetSelectionChangeHandler (None)
 		return
 
 	GemRB.HideGUI ()
-	GemRB.SetVisible (0, WINDOW_INVISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_INVISIBLE)
 
 	GemRB.LoadWindowPack ("GUIREC", 800, 600)
-	RecordsWindow = Window = GemRB.LoadWindowObject (2)
+	RecordsWindow = Window = GemRB.LoadWindow (2)
 	GemRB.SetVar ("OtherWindow", RecordsWindow.ID)
 	#saving the original portrait window
 	OldPortraitWindow = GUICommonWindows.PortraitWindow
-	PortraitWindow = OpenPortraitWindow ()
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow ()
 	OldOptionsWindow = GUICommonWindows.OptionsWindow
-	OptionsWindow = GemRB.LoadWindowObject (0)
-	SetupMenuWindowControls (OptionsWindow, 0, "OpenRecordsWindow")
+	OptionsWindow = GemRB.LoadWindow (0)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 0, OpenRecordsWindow)
 	Window.SetFrame ()
 
 	#portrait icon
@@ -88,22 +96,22 @@ def OpenRecordsWindow ():
 	#information (help files)
 	Button = Window.GetControl (1)
 	Button.SetText (11946)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenHelpWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenHelpWindow)
 
 	#biography
 	Button = Window.GetControl (59)
 	Button.SetText (18003)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenBiographyWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenBiographyWindow)
 
 	#export
 	Button = Window.GetControl (36)
 	Button.SetText (13956)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenExportWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenExportWindow)
 
 	#customize
 	Button = Window.GetControl (50)
 	Button.SetText (10645)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenCustomizeWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenCustomizeWindow)
 
 	#general
 	GemRB.SetVar ("SelectWindow", 1)
@@ -112,37 +120,37 @@ def OpenRecordsWindow ():
 	Button.SetTooltip (40316)
 	Button.SetVarAssoc ("SelectWindow", 1)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "RefreshRecordsWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateRecordsWindow)
 
 	#weapons and armour
 	Button = Window.GetControl (61)
 	Button.SetTooltip (40317)
 	Button.SetVarAssoc ("SelectWindow", 2)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "RefreshRecordsWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateRecordsWindow)
 
 	#skills and feats
 	Button = Window.GetControl (62)
 	Button.SetTooltip (40318)
 	Button.SetVarAssoc ("SelectWindow", 3)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "RefreshRecordsWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateRecordsWindow)
 
 	#miscellaneous
 	Button = Window.GetControl (63)
 	Button.SetTooltip (33500)
 	Button.SetVarAssoc ("SelectWindow", 4)
 	Button.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_OR)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "RefreshRecordsWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateRecordsWindow)
 
 	#level up
 	Button = Window.GetControl (37)
 	Button.SetText (7175)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "LevelUpWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateRecordsWindow) #TODO: OpenLevelUpWindow
 
-	SetSelectionChangeHandler (RefreshRecordsWindow)
+	GUICommonWindows.SetSelectionChangeHandler (UpdateRecordsWindow)
 
-	RefreshRecordsWindow ()
+	UpdateRecordsWindow ()
 	return
 
 def ColorDiff (Window, Label, diff):
@@ -192,8 +200,8 @@ def GetAbilityBonus (pc, stat):
 def GetNextLevelExp (Level, Adjustment):
 	if Adjustment>5:
 		Adjustment = 5
-	if (Level < NextLevelTable.GetColumnCount (4) - 5):
-		return str(NextLevelTable.GetValue (4, Level + Adjustment ) )
+	if (Level < CommonTables.NextLevel.GetColumnCount (4) - 5):
+		return str(CommonTables.NextLevel.GetValue (4, Level + Adjustment ) )
 
 	return GemRB.GetString(24342) #godhood
 
@@ -222,7 +230,7 @@ def DisplayGeneral (pc):
 		level = GemRB.GetPlayerStat (pc, Classes[i])
 
 		if level:
-			Class = GetActorClassTitle (pc, i )
+			Class = GUICommonWindows.GetActorClassTitle (pc, i )
 			RecordsTextArea.Append (Class, -1)
 			RecordsTextArea.Append (": "+str(level) )
 			if tmp<level:
@@ -237,23 +245,26 @@ def DisplayGeneral (pc):
 
 	#favoured class
 	RecordsTextArea.Append (40310,-1)
-	AlignTable = GemRB.LoadTableObject("aligns")
+	AlignTable = GemRB.LoadTable("aligns")
 
 	#get the subrace value
 	Value = GemRB.GetPlayerStat(pc,IE_RACE)
 	Value2 = GemRB.GetPlayerStat(pc,IE_SUBRACE)
 	if Value2:
 		Value = Value<<16 | Value2
-	tmp = RaceTable.FindValue (3, Value)
-	Race = RaceTable.GetValue (tmp, 2)
-	tmp = RaceTable.GetValue (tmp, 8)
+	tmp = CommonTables.Races.FindValue (3, Value)
+	Race = CommonTables.Races.GetValue (tmp, 2)
+	tmp = CommonTables.Races.GetValue (tmp, 8)
+
+	Label = Window.GetControl (0x1000000f)
+	Label.SetText (Race)
 
 	if tmp == -1:
 		tmp = highest
 	else:
 		tmp = GetFavoredClass(pc, tmp)
 
-	tmp = ClassTable.GetValue (tmp, 0)
+	tmp = CommonTables.Classes.GetValue (tmp, 0)
 	RecordsTextArea.Append (": ")
 	RecordsTextArea.Append (tmp)
 
@@ -275,7 +286,7 @@ def DisplayGeneral (pc):
 		RecordsTextArea.Append ("\n\n[color=ffff00]")
 		RecordsTextArea.Append (32052)
 		RecordsTextArea.Append ("[/color][capital=2]")
-		StateTable = GemRB.LoadTableObject ("statdesc")
+		StateTable = GemRB.LoadTable ("statdesc")
 		for c in effects:
 			tmp = StateTable.GetValue (ord(c)-66, 0)
 			RecordsTextArea.Append (c+" ", -1)
@@ -361,23 +372,204 @@ def DisplayGeneral (pc):
 
 	return
 
+#FIXME: display only nonzero values except for casting failure
+#TODO: +/- prefix
+#TODO: check if there are any other entries
 def DisplayWeapons (pc):
 	Window = RecordsWindow
+
+	GS = lambda s, pc=pc: GemRB.GetPlayerStat (pc, s)
+	GB = lambda s, pc=pc: GemRB.GetPlayerStat (pc, s, 1)
+	# maybe add an iwd2 mode to GemRB.GetAbilityBonus
+	GA = lambda s, pc=pc: int((GS(s)-10)/2)
+
+	###################
+	# Attack Roll Modifiers
+	RecordsTextArea.Append ("[color=ffff00]")
+	RecordsTextArea.Append (9457)
+	RecordsTextArea.Append ("[/color]\n")
+
+	combatdet = GemRB.GetCombatDetails(pc, 0)
+
+	# Main Hand
+	#TODO: display all the attack values (+15/+10/+5)
+	current = combatdet["ToHit"]
+	RecordsTextArea.Append (delimited_txt (734, ":", str (current), 0))
+	# Base
+	RecordsTextArea.Append ("  ", -1) # indentation
+	RecordsTextArea.Append (delimited_txt (31353, ":", str (GS(IE_TOHIT)), 0))
+	# Weapon
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (32560 , ":", str (0), 0))
+	# Proficiency
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (32561, ":", str (0), 0))
+	# Armor Penalty
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (39816 , ":", str (0), 0))
+	#TODO: check if there's also a @39822 = ~Shield Penalty~
+
+	# Abilities
+	#FIXME: this is different for ranged weapons (dex) or if weapon finese is chosen (dex or str)
+	strbon = GA(IE_STR)
+	if strbon:
+		RecordsTextArea.Append ("  ", -1)
+		RecordsTextArea.Append (delimited_txt (33547, ":", str (strbon), 0))
+	# Others
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (33548, ":", str (current - GS(IE_TOHIT) - strbon)))
+	RecordsTextArea.Append ("\n")
+
+	# Off Hand
+	if (GemRB.IsDualWielding(pc)):
+		RecordsTextArea.Append (delimited_txt (733, ":", str (GemRB.GetCombatDetails(pc, 1)["ToHit"]), 0))
+		RecordsTextArea.Append ("\n")
+		#TODO: probably all the same categories as above
+
+
+	###################
+	# Number of Attacks
+	RecordsTextArea.Append (delimited_txt (9458, ":", str (GS (IE_NUMBEROFATTACKS)/2)))
+	RecordsTextArea.Append ("\n")
+
+	###################
+	# Armor Class
+	RecordsTextArea.Append ("[color=ffff00]")
+	RecordsTextArea.Append (33553)
+	RecordsTextArea.Append ("[/color]\n")
+	RecordsTextArea.Append (delimited_txt (33553, ":", str (GS(IE_ARMORCLASS)), 0))
+
+	# Base
+	RecordsTextArea.Append ("  ", -1) # indentation
+	RecordsTextArea.Append (delimited_txt (31353, ":", str (10), 0))
+	# Armor
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (11997, ":", str (0), 0))
+	# Shield
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (6347, ":", str (0), 0))
+	# Deflection
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (33551, ":", str (0), 0))
+	# Generic
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (33552, ":", str (0), 0))
+	# Dexterity
+	if GA(IE_DEX):
+		RecordsTextArea.Append ("  ", -1)
+		RecordsTextArea.Append (delimited_txt (1151, ":", str (GA(IE_DEX)), 0))
+	# Monk Wisdom Bonus: <number> to AC
+	if GS(IE_LEVELMONK):
+		RecordsTextArea.Append ("  ", -1)
+		GemRB.SetToken ("number", str (GA(IE_WIS)))
+		RecordsTextArea.Append (39431, -1)
+	#TODO: Dodge?
+
+	RecordsTextArea.Append ("\n\n")
+
+	###################
+	# Armor Class Modifiers
+	stat = GS (IE_ACMISSILEMOD) + GS (IE_ACSLASHINGMOD) + GS (IE_ACPIERCINGMOD) + GS (IE_ACCRUSHINGMOD)
+	if stat:
+		RecordsTextArea.Append ("[color=ffff00]")
+		RecordsTextArea.Append (11766)
+		RecordsTextArea.Append ("[/color]")
+
+		# Missile
+		if GS (IE_ACMISSILEMOD):
+			RecordsTextArea.Append ("  ", -1) # indentation
+			RecordsTextArea.Append (delimited_txt (11767, ":", str (GS (IE_ACMISSILEMOD)), 0))
+		# Slashing
+		if GS (IE_ACSLASHINGMOD):
+			RecordsTextArea.Append ("  ", -1)
+			RecordsTextArea.Append (delimited_txt (11768, ":", str (GS (IE_ACSLASHINGMOD)), 0))
+		# Piercing
+		if GS (IE_ACPIERCINGMOD):
+			RecordsTextArea.Append ("  ", -1)
+			RecordsTextArea.Append (delimited_txt (11769, ":", str (GS (IE_ACPIERCINGMOD)), 0))
+		# Bludgeoning
+		if GS (IE_ACCRUSHINGMOD):
+			RecordsTextArea.Append ("  ", -1)
+			RecordsTextArea.Append (delimited_txt (11770, ":", str (GS (IE_ACCRUSHINGMOD))))
+
+		RecordsTextArea.Append ("\n")
+
+	###################
+	# Arcane spell failure
+	if GS(IE_LEVELBARD) + GS(IE_LEVELSORCEROR) + GS(IE_LEVELMAGE):
+		RecordsTextArea.Append ("[color=ffff00]")
+		RecordsTextArea.Append (41391)
+		RecordsTextArea.Append ("[/color]\n")
+
+		# Casting Failure
+		RecordsTextArea.Append (delimited_txt (41390 , ":", str (GS(IE_SPELLFAILUREMAGE)), 0))
+		# Armor Penalty
+		RecordsTextArea.Append ("  ", -1)
+		RecordsTextArea.Append (delimited_txt (39816 , ":", str (0), 0))
+		# Shield Penalty
+		RecordsTextArea.Append ("  ", -1)
+		RecordsTextArea.Append (delimited_txt (39822, ":", str (0), 0))
+		#TODO: check if there's also the bonus from armored arcana
+
+		RecordsTextArea.Append ("\n\n")
+
+	###################
+	# Weapon Statistics
+	RecordsTextArea.Append ("[color=ffff00]")
+	RecordsTextArea.Append (41119)
+	RecordsTextArea.Append ("[/color]\n")
+
+	slot_item = GemRB.GetSlotItem (pc, GemRB.GetEquippedQuickSlot (pc) )
+	if not slot_item:
+		print "ARGHH, no slot item, bailing out"
+		return
+	item = GemRB.GetItem (slot_item["ItemResRef"])
+	##FIXME: display Ranged (41123) + ammo for ranged weapons
+	RecordsTextArea.Append (delimited_str (734, " -", item["ItemNameIdentified"], 0))
+
+	# Damage
+	# TODO: display the unresolved damage string (2d6)
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (39518, ":", str (0), 0))
+	# Strength
+	# TODO: check if the weapon takes strength bonus at all
+	if GA(IE_STR):
+		RecordsTextArea.Append ("  ", -1)
+		RecordsTextArea.Append (delimited_txt (1145, ":", str (GA(IE_STR)), 0))
+	# Launcher
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (41408, ":", str (0), 0))
+	# Damage Potential
+	# TODO: display the unresolved total damage potential (2-12)
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (41120, ":", str (0), 0))
+	# Critical Hit (19-20 / x2)
+	# TODO: display the number of rolls and check if the critical range is already ok
+	crange = 20 - combatdet["CriticalBonus"]
+	if crange == 20:
+		crange = "20 / x" + str(1)
+	else:
+		crange = str(crange) + "-20 / x" + str(1)
+	RecordsTextArea.Append ("  ", -1)
+	RecordsTextArea.Append (delimited_txt (41122, ":", crange, 0))
+
+	#TODO: probably repeat for the off-hand
 
 	return
 
 def DisplaySkills (pc):
 	Window = RecordsWindow
 
-	SkillTable = GemRB.LoadTableObject ("skillsta")
-	SkillName = GemRB.LoadTableObject ("skills")
+	SkillTable = GemRB.LoadTable ("skillsta")
+	SkillName = GemRB.LoadTable ("skills")
 	rows = SkillTable.GetRowCount ()
 
 	#skills
 	RecordsTextArea.Append ("[color=ffff00]")
 	RecordsTextArea.Append (11983)
-	RecordsTextArea.Append ("[/color]")
+	RecordsTextArea.Append ("[/color]\n")
 
+	skills = []
 	for i in range(rows):
 		stat = SkillTable.GetValue (i, 0, 2)
 		value = GemRB.GetPlayerStat (pc, stat)
@@ -385,46 +577,67 @@ def DisplaySkills (pc):
 
 		if value:
 			skill = SkillName.GetValue (i, 1)
-			RecordsTextArea.Append (skill, -1)
-			RecordsTextArea.Append (" "+str(value)+"("+str(base)+")")
+			skills.append (GemRB.GetString(skill) + ": " + str(value) + " (" + str(base) + ")\n")
 
+	skills.sort()
+	for i in skills:
+		RecordsTextArea.Append (i)
 
-	FeatTable = GemRB.LoadTableObject ("featreq")
-	FeatName = GemRB.LoadTableObject ("feats")
+	FeatTable = GemRB.LoadTable ("featreq")
+	FeatName = GemRB.LoadTable ("feats")
 	rows = FeatTable.GetRowCount ()
 	#feats
 	featbits = [GemRB.GetPlayerStat (pc, IE_FEATS1), GemRB.GetPlayerStat (pc, IE_FEATS2), GemRB.GetPlayerStat (pc, IE_FEATS3)]
 	RecordsTextArea.Append ("\n\n[color=ffff00]")
 	RecordsTextArea.Append (36361)
-	RecordsTextArea.Append ("[/color]")
+	RecordsTextArea.Append ("[/color]\n")
 
+	feats = []
 	for i in range(rows):
 		featidx = i/32
 		pos = 1<<(i%32)
 		if featbits[featidx]&pos:
 			feat = FeatName.GetValue (i, 1)
-			RecordsTextArea.Append (feat, -1)
 			stat = FeatTable.GetValue (i, 9, 2)
 			if stat:
 				multi = GemRB.GetPlayerStat (pc, stat)
-				RecordsTextArea.Append (": "+str(multi) )
+				feats.append (GemRB.GetString(feat) + ": " + str(multi) + "\n")
+			else:
+				feats.append (GemRB.GetString(feat) + "\n")
+
+	feats.sort()
+	for i in feats:
+		RecordsTextArea.Append (i)
 
 	return
+
+def delimited_str(strref, delimiter, strref2, newline=1):
+	if strref2:
+		val = GemRB.GetString(strref) + delimiter + " " + GemRB.GetString(strref2)
+	else:
+		val = GemRB.GetString(strref) + delimiter
+	if newline:
+		return val + "\n"
+	else:
+		return val
+
+def delimited_txt(strref, delimiter, text, newline=1):
+	val = GemRB.GetString(strref) + delimiter + " " + str(text)
+	if newline:
+		return val + "\n"
+	else:
+		return val
 
 #character information
 def DisplayMisc (pc):
 	Window = RecordsWindow
 
 	TotalPartyExp = 0
-	ChapterPartyExp = 0
 	TotalCount = 0
-	ChapterCount = 0
 	for i in range (1, GemRB.GetPartySize() + 1):
 		stat = GemRB.GetPCStats(i)
 		TotalPartyExp = TotalPartyExp + stat['KillsTotalXP']
-		ChapterPartyExp = ChapterPartyExp + stat['KillsChapterXP']
 		TotalCount = TotalCount + stat['KillsTotalCount']
-		ChapterCount = ChapterCount + stat['KillsChapterCount']
 
 	stat = GemRB.GetPCStats (pc)
 
@@ -433,18 +646,17 @@ def DisplayMisc (pc):
 	RecordsTextArea.Append (40320)
 	RecordsTextArea.Append ("[/color]\n")
 
-	#favourite spell
-	RecordsTextArea.Append (stat['FavouriteSpell'])
-	RecordsTextArea.Append (stat['FavouriteWeapon'])
+	#favourite spell and weapon
+	RecordsTextArea.Append (delimited_str (11949, ":", stat['FavouriteSpell']))
+	RecordsTextArea.Append (delimited_str (11950, ":", stat['FavouriteWeapon']))
 
-	#
-	RecordsTextArea.Append ("[color=ffff00]")
+	# combat details
+	RecordsTextArea.Append ("\n[color=ffff00]")
 	RecordsTextArea.Append (40322)
 	RecordsTextArea.Append ("[/color]\n")
 
-	#most powerful vanquished
-	#we need getstring, so -1 will translate to empty string
-	RecordsTextArea.Append (GemRB.GetString (stat['BestKilledName']))
+	#most powerful vanquished, time spent, xp and kills
+	RecordsTextArea.Append (delimited_str (11947, ":", stat['BestKilledName']))
 
 	# NOTE: currentTime is in seconds, joinTime is in seconds * 15
 	#   (script updates???). In each case, there are 60 seconds
@@ -461,46 +673,42 @@ def DisplayMisc (pc):
 	GemRB.SetToken ('GAMEDAYS', str (days))
 	GemRB.SetToken ('HOUR', str (hours))
 
-	#actually it is 16043 <DURATION>, but duration is translated to
-	#16041, hopefully this won't cause problem with international version
-	RecordsTextArea.Append (16041)
-
-	#total xp
-	if TotalPartyExp != 0:
-		PartyExp = int ((stat['KillsTotalXP'] * 100) / TotalPartyExp)
-		RecordsTextArea.Append (str (PartyExp) + '%')
+	# construct <GAMEDAYS> days ~and~ ~<HOUR> hours~
+	if days == 1:
+		time = GemRB.GetString (10698)
 	else:
-		RecordsTextArea.Append ("0%")
-
-	if ChapterPartyExp != 0:
-		PartyExp = int ((stat['KillsChapterXP'] * 100) / ChapterPartyExp)
-		RecordsTextArea.Append (str (PartyExp) + '%')
+		time = GemRB.GetString (10697)
+	time += " " + GemRB.GetString (10699) + " "
+	if hours == 1:
+		time += GemRB.GetString (10701)
 	else:
-		RecordsTextArea.Append ("0%")
+		time += GemRB.GetString (10700)
 
-	#total xp
-	if TotalCount != 0:
-		PartyExp = int ((stat['KillsTotalCount'] * 100) / TotalCount)
-		RecordsTextArea.Append (str (PartyExp) + '%')
+	RecordsTextArea.Append (delimited_txt (11948, ":", time))
+
+	# Experience Value of Kills
+	RecordsTextArea.Append (delimited_txt (11953, ":", stat['KillsTotalXP']))
+
+	# Number of Kills
+	RecordsTextArea.Append (delimited_txt (11954, ":", stat['KillsTotalCount']))
+
+	# Total Experience Value in Party
+	if TotalPartyExp:
+		val = stat['KillsTotalXP']*100/TotalPartyExp
 	else:
-		RecordsTextArea.Append ("0%")
+		val = 0
+	RecordsTextArea.Append (delimited_txt (11951, ":", str(val) + "%"))
 
-	if ChapterCount != 0:
-		PartyExp = int ((stat['KillsChapterCount'] * 100) / ChapterCount)
-		RecordsTextArea.Append (str (PartyExp) + '%')
+	# Percentage of Total Kills in Party
+	if TotalPartyExp:
+		val = stat['KillsTotalCount']*100/TotalCount
 	else:
-		RecordsTextArea.Append ("0%")
-
-	RecordsTextArea.Append (str (stat['KillsChapterXP']))
-	RecordsTextArea.Append (str (stat['KillsTotalXP']))
-
-	#count of kills in chapter/game
-	RecordsTextArea.Append (str (stat['KillsChapterCount']))
-	RecordsTextArea.Append (str (stat['KillsTotalCount']))
+		val = 0
+	RecordsTextArea.Append (delimited_txt (11954, ":", str(val) + "%"))
 
 	return
 
-def RefreshRecordsWindow ():
+def UpdateRecordsWindow ():
 	global RecordsTextArea
 
 	Window = RecordsWindow
@@ -530,7 +738,7 @@ def RefreshRecordsWindow ():
 	Label.SetText (str (GemRB.GetPlayerStat (pc, IE_MAXHITPOINTS)))
 	Label.SetTooltip (17378)
 
- 	# stats
+	# stats
 
 	sstr = GemRB.GetPlayerStat (pc, IE_STR)
 	dstr = sstr-GemRB.GetPlayerStat (pc, IE_STR,1)
@@ -632,9 +840,9 @@ def CloseHelpWindow ():
 def OpenHelpWindow ():
 	global HelpTable, InformationWindow
 
-	InformationWindow = Window = GemRB.LoadWindowObject (57)
+	InformationWindow = Window = GemRB.LoadWindow (57)
 
-	HelpTable = GemRB.LoadTableObject ("topics")
+	HelpTable = GemRB.LoadTable ("topics")
 	GemRB.SetVar("Topic", 0)
 	GemRB.SetVar("TopIndex", 0)
 
@@ -647,7 +855,7 @@ def OpenHelpWindow ():
 		if title:
 			Label.SetText (title)
 			Button.SetState (IE_GUI_BUTTON_LOCKED)
-			Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "UpdateHelpWindow")
+			Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, UpdateHelpWindow)
 		else:
 			Label.SetText ("")
 			Button.SetState (IE_GUI_BUTTON_DISABLED)
@@ -655,7 +863,7 @@ def OpenHelpWindow ():
 	#done
 	Button = Window.GetControl (1)
 	Button.SetText (11973)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CloseHelpWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseHelpWindow)
 	Window.ShowModal (MODAL_SHADOW_GRAY)
 	UpdateHelpWindow ()
 	return
@@ -682,7 +890,7 @@ def UpdateHelpWindow ():
 	if DescTable:
 		DescTable = None
 
-	DescTable = GemRB.LoadTableObject (resource)
+	DescTable = GemRB.LoadTable (resource)
 
 	ScrollBar = Window.GetControl (4)
 
@@ -695,7 +903,7 @@ def UpdateHelpWindow ():
 	if i<1: i=1
 
 	ScrollBar.SetVarAssoc ("TopIndex", i)
-	ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, "RefreshHelpWindow")
+	ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, RefreshHelpWindow)
 
 	RefreshHelpWindow ()
 	return
@@ -725,7 +933,7 @@ def RefreshHelpWindow ():
 			Label.SetText (title)
 			Button.SetState (IE_GUI_BUTTON_LOCKED)
 			Button.SetVarAssoc ("Selected", i+TopIndex)
-			Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "RefreshHelpWindow")
+			Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, RefreshHelpWindow)
 		else:
 			Label.SetText ("")
 			Button.SetState (IE_GUI_BUTTON_DISABLED)
@@ -748,7 +956,7 @@ def CloseBiographyWindow ():
 def OpenBiographyWindow ():
 	global BiographyWindow
 
-	BiographyWindow = Window = GemRB.LoadWindowObject (12)
+	BiographyWindow = Window = GemRB.LoadWindow (12)
 
 	pc = GemRB.GameGetSelectedPCSingle ()
 
@@ -758,15 +966,502 @@ def OpenBiographyWindow ():
 	# Done
 	Button = Window.GetControl (2)
 	Button.SetText (11973)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CloseBiographyWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseBiographyWindow)
 
 	Window.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def OpenCustomizeWindow ():
+	global CustomizeWindow
+	global PortraitsTable, ScriptsTable, ColorTable
+
+	pc = GemRB.GameGetSelectedPCSingle ()
+	if GemRB.GetPlayerStat (pc, IE_MC_FLAGS)&MC_EXPORTABLE:
+		Exportable = 1
+	else:
+		Exportable = 0
+	PortraitsTable = GemRB.LoadTable ("PICTURES")
+	ScriptsTable = GemRB.LoadTable ("SCRPDESC")
+	ColorTable = GemRB.LoadTable ("CLOWNCOL")
+	CustomizeWindow = GemRB.LoadWindow (17)
+
+	AppearanceButton = CustomizeWindow.GetControl (0)
+	AppearanceButton.SetText (11961)
+	if not Exportable:
+		AppearanceButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	SoundButton = CustomizeWindow.GetControl (1)
+	SoundButton.SetText (10647)
+	if not Exportable:
+		SoundButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	#ColorButton = CustomizeWindow.GetControl (2)
+	#ColorButton.SetText (10646)
+	#if not Exportable:
+	#	ColorButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	ScriptButton = CustomizeWindow.GetControl (3)
+	ScriptButton.SetText (17111)
+
+	BiographyButton = CustomizeWindow.GetControl (9)
+	BiographyButton.SetText (18003)
+	if not Exportable:
+		BiographyButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	TextArea = CustomizeWindow.GetControl (5)
+	TextArea.SetText (11327)
+
+	DoneButton = CustomizeWindow.GetControl (7)
+	DoneButton.SetText (11973)
+	DoneButton.SetState (IE_GUI_BUTTON_ENABLED)
+
+	CancelButton = CustomizeWindow.GetControl (8);
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	AppearanceButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenAppearanceWindow)
+	SoundButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenSoundWindow)
+	#ColorButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenColorWindow)
+	ScriptButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenScriptWindow)
+	BiographyButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenBiographyEditWindow)
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CustomizeDonePress)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CustomizeCancelPress)
+
+	CustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def CustomizeDonePress ():
+	global CustomizeWindow
+
+	if CustomizeWindow:
+		CustomizeWindow.Unload ()
+		CustomizeWindow = None
+
+	UpdateRecordsWindow ()
+	return
+
+def CustomizeCancelPress ():
+	global CustomizeWindow
+
+	if CustomizeWindow:
+		CustomizeWindow.Unload ()
+		CustomizeWindow = None
+
+	UpdateRecordsWindow ()
+	return
+
+def OpenAppearanceWindow ():
+	global SubCustomizeWindow
+	global PortraitButton
+	global Gender, LastPortrait
+
+	SubCustomizeWindow = GemRB.LoadWindow (18)
+	pc = GemRB.GameGetSelectedPCSingle ()
+	Gender = GemRB.GetPlayerStat (pc, IE_SEX, 1)
+	PortraitName = GemRB.GetPlayerPortrait (pc, 0)
+	LastPortrait = PortraitsTable.GetRowIndex (PortraitName[0:len(PortraitName)-1])
+
+	PortraitButton = SubCustomizeWindow.GetControl (0)
+	PortraitButton.SetFlags (IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
+	PortraitButton.SetState (IE_GUI_BUTTON_LOCKED)
+
+	LeftButton = SubCustomizeWindow.GetControl (1)
+	RightButton = SubCustomizeWindow.GetControl (2)
+
+	DoneButton = SubCustomizeWindow.GetControl (3)
+	DoneButton.SetText (11973)
+	DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
+
+	CancelButton = SubCustomizeWindow.GetControl (4)
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	CustomPortraitButton = SubCustomizeWindow.GetControl (5)
+	CustomPortraitButton.SetText (17545)
+
+	LeftButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, PortraitLeftPress)
+	RightButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, PortraitRightPress)
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DonePortraitWindow)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseSubCustomizeWindow)
+	CustomPortraitButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenCustomPortraitWindow)
+	SubCustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+
+	while True:
+		if PortraitsTable.GetValue (LastPortrait, 0) == Gender:
+			UpdatePortrait ()
+			break
+		LastPortrait = LastPortrait + 1
+
+	return
+
+def DonePortraitWindow ():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	Name = PortraitsTable.GetRowName (LastPortrait)
+	GemRB.FillPlayerInfo (pc, Name + "M", Name + "S")
+	CloseSubCustomizeWindow ()
+	return
+
+def PortraitRightPress():
+	global LastPortrait
+
+	while True:
+		LastPortrait = LastPortrait + 1
+		if LastPortrait >= PortraitsTable.GetRowCount ():
+			LastPortrait = 0
+		if PortraitsTable.GetValue (LastPortrait, 0) == Gender:
+			UpdatePortrait ()
+			return
+
+	return
+
+def PortraitLeftPress():
+	global LastPortrait
+
+	while True:
+		LastPortrait = LastPortrait - 1
+		if LastPortrait < 0:
+			LastPortrait = PortraitsTable.GetRowCount ()-1
+		if PortraitsTable.GetValue (LastPortrait, 0) == Gender:
+			UpdatePortrait ()
+			return
+
+	return
+
+def UpdatePortrait ():
+	PortraitName = PortraitsTable.GetRowName (LastPortrait)+"L"
+	PortraitButton.SetPicture (PortraitName, "NOPORTLG")
+	return
+
+def OpenCustomPortraitWindow ():
+	global SubSubCustomizeWindow
+	global PortraitList1, PortraitList2
+	global RowCount1, RowCount2
+
+	SubSubCustomizeWindow = GemRB.LoadWindow (19)
+
+	SmallPortraitButton = SubSubCustomizeWindow.GetControl (1)
+	SmallPortraitButton.SetFlags (IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
+
+	LargePortraitButton = SubSubCustomizeWindow.GetControl (0)
+	LargePortraitButton.SetFlags (IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
+
+	DoneButton = SubSubCustomizeWindow.GetControl (10)
+	DoneButton.SetText (11973)
+	DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
+	DoneButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	CancelButton = SubSubCustomizeWindow.GetControl (11)
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	# Portrait List Large
+	PortraitList1 = SubSubCustomizeWindow.GetControl (2)
+	RowCount1 = PortraitList1.GetPortraits (0)
+	PortraitList1.SetEvent (IE_GUI_TEXTAREA_ON_CHANGE, LargeCustomPortrait)
+	GemRB.SetVar ("Row1", RowCount1)
+	PortraitList1.SetVarAssoc ("Row1",RowCount1)
+
+	# Portrait List Small
+	PortraitList2 = SubSubCustomizeWindow.GetControl (3)
+	RowCount2 = PortraitList2.GetPortraits (1)
+	PortraitList2.SetEvent (IE_GUI_TEXTAREA_ON_CHANGE, SmallCustomPortrait)
+	GemRB.SetVar ("Row2", RowCount2)
+	PortraitList2.SetVarAssoc ("Row2",RowCount2)
+
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DonePortraitCustomizeWindow)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseSubSubCustomizeWindow)
+
+	SubSubCustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def DonePortraitCustomizeWindow ():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	GemRB.FillPlayerInfo (pc, PortraitList1.QueryText () , PortraitList2.QueryText ())
+	CloseSubSubCustomizeWindow ()
+	#closing the generic portraits, because we just set a custom one
+	CloseSubCustomizeWindow ()
+	return
+
+def LargeCustomPortrait ():
+	Window = SubSubCustomizeWindow
+
+	Portrait = PortraitList1.QueryText ()
+	#small hack
+	if GemRB.GetVar ("Row1") == RowCount1:
+		return
+
+	Label = Window.GetControl (0x10000007)
+	Label.SetText (Portrait)
+
+	Button = Window.GetControl (10)
+	if Portrait=="":
+		Portrait = "NOPORTMD"
+		Button.SetState (IE_GUI_BUTTON_DISABLED)
+	else:
+		if PortraitList2.QueryText ()!="":
+			Button.SetState (IE_GUI_BUTTON_ENABLED)
+
+	Button = Window.GetControl (0)
+	Button.SetPicture (Portrait, "NOPORTMD")
+	return
+
+def SmallCustomPortrait ():
+	Window = SubSubCustomizeWindow
+
+	Portrait = PortraitList2.QueryText ()
+	#small hack
+	if GemRB.GetVar ("Row2") == RowCount2:
+		return
+
+	Label = Window.GetControl (0x10000008)
+	Label.SetText (Portrait)
+
+	Button = Window.GetControl (10)
+	if Portrait=="":
+		Portrait = "NOPORTSM"
+		Button.SetState (IE_GUI_BUTTON_DISABLED)
+	else:
+		if PortraitList1.QueryText ()!="":
+			Button.SetState (IE_GUI_BUTTON_ENABLED)
+
+	Button = Window.GetControl (1)
+	Button.SetPicture (Portrait, "NOPORTSM")
+	return
+
+def OpenSoundWindow ():
+	global SubCustomizeWindow
+	global VoiceList
+	global Gender
+	global OldVoiceSet
+
+	pc = GemRB.GameGetSelectedPCSingle ()
+	OldVoiceSet = GemRB.GetPlayerSound (pc)
+	SubCustomizeWindow = GemRB.LoadWindow (20)
+
+	VoiceList = SubCustomizeWindow.GetControl (5)
+	VoiceList.SetFlags (IE_GUI_TEXTAREA_SELECTABLE)
+	Gender = GemRB.GetPlayerStat (pc, IE_SEX, 1)
+
+	VoiceList.SetVarAssoc ("Selected", 0)
+	VoiceList.GetCharSounds()
+	VoiceList.SelectText (OldVoiceSet)
+
+	PlayButton = SubCustomizeWindow.GetControl (7)
+	PlayButton.SetText (17318)
+
+	TextArea = SubCustomizeWindow.GetControl (8)
+	TextArea.SetText (11315)
+
+	DoneButton = SubCustomizeWindow.GetControl (10)
+	DoneButton.SetText (11973)
+	DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
+
+	CancelButton = SubCustomizeWindow.GetControl (11)
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	PlayButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, PlaySoundPressed)
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DoneSoundWindow)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseSoundWindow)
+
+	SubCustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def CloseSoundWindow ():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	GemRB.SetPlayerSound (pc, OldVoiceSet)
+	CloseSubCustomizeWindow ()
+	return
+
+def DoneSoundWindow ():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	CharSound = VoiceList.QueryText ()
+	GemRB.SetPlayerSound (pc, CharSound)
+
+	CloseSubCustomizeWindow ()
+	return
+
+def PlaySoundPressed():
+	global CharSoundWindow, SoundIndex, SoundSequence
+
+	CharSound = VoiceList.QueryText ()
+	pc = GemRB.GameGetSelectedPCSingle ()
+	GemRB.SetPlayerSound (pc, CharSound)
+	VoiceSet = GemRB.GetPlayerSound (pc, 1)
+	tmp = SoundIndex
+	while (not GemRB.HasResource (VoiceSet + SoundSequence[SoundIndex], RES_WAV)):
+		NextSound()
+		if SoundIndex == tmp:
+			break
+	else:
+		NextSound()
+
+	GemRB.PlaySound (VoiceSet + SoundSequence[SoundIndex], 0, 0, 5)
+	return
+
+def NextSound():
+	global SoundIndex, SoundSequence
+	SoundIndex += 1
+	if SoundIndex >= len(SoundSequence):
+		SoundIndex = 0
+	return
+
+def OpenScriptWindow ():
+	global SubCustomizeWindow
+	global ScriptTextArea, SelectedTextArea
+
+	SubCustomizeWindow = GemRB.LoadWindow (11)
+
+	ScriptTextArea = SubCustomizeWindow.GetControl (2)
+	ScriptTextArea.SetFlags (IE_GUI_TEXTAREA_SELECTABLE)
+	FillScriptList ()
+	pc = GemRB.GameGetSelectedPCSingle ()
+	script = GemRB.GetPlayerScript (pc)
+	scriptindex = ScriptsTable.GetRowIndex (script)
+	GemRB.SetVar ("Selected", scriptindex)
+	ScriptTextArea.SetVarAssoc ("Selected", scriptindex)
+
+	SelectedTextArea = SubCustomizeWindow.GetControl (4)
+	UpdateScriptSelection ()
+
+	DoneButton = SubCustomizeWindow.GetControl (5)
+	DoneButton.SetText (11973)
+	DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
+
+	CancelButton = SubCustomizeWindow.GetControl (6)
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DoneScriptWindow)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseSubCustomizeWindow)
+	ScriptTextArea.SetEvent (IE_GUI_TEXTAREA_ON_CHANGE, UpdateScriptSelection)
+
+	SubCustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def FillScriptList ():
+	ScriptTextArea.Clear ()
+	row = ScriptsTable.GetRowCount ()
+	for i in range (row):
+		GemRB.SetToken ("script", ScriptsTable.GetRowName (i) )
+		title = ScriptsTable.GetValue (i,0)
+		if title!=-1:
+			desc = ScriptsTable.GetValue (i,1)
+			txt = GemRB.GetString (title)
+
+			if (desc!=-1):
+				txt += GemRB.GetString (desc)
+
+			ScriptTextArea.Append (txt+"\n", -1)
+
+		else:
+			ScriptTextArea.Append (ScriptsTable.GetRowName (i)+"\n" ,-1)
+
+	return
+
+def DoneScriptWindow ():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	script = ScriptsTable.GetRowName (GemRB.GetVar ("Selected") )
+	GemRB.SetPlayerScript (pc, script)
+	CloseSubCustomizeWindow ()
+	return
+
+def UpdateScriptSelection():
+	text = ScriptTextArea.QueryText ()
+	SelectedTextArea.SetText (text)
+	return
+
+def OpenBiographyEditWindow ():
+	global SubCustomizeWindow
+	global BioStrRef
+	global TextArea
+
+	Changed = 0
+	pc = GemRB.GameGetSelectedPCSingle ()
+	BioStrRef = GemRB.GetPlayerString (pc, 74)
+	if BioStrRef != 33347:
+		Changed = 1
+
+	SubCustomizeWindow = GemRB.LoadWindow (51)
+
+	ClearButton = SubCustomizeWindow.GetControl (5)
+	ClearButton.SetText (18622)
+
+	DoneButton = SubCustomizeWindow.GetControl (1)
+	DoneButton.SetText (11973)
+	DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
+
+	RevertButton = SubCustomizeWindow.GetControl (6)
+	RevertButton.SetText (2240)
+	if not Changed:
+		RevertButton.SetState (IE_GUI_BUTTON_DISABLED)
+
+	CancelButton = SubCustomizeWindow.GetControl (2)
+	CancelButton.SetText (13727)
+	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+	TextArea = SubCustomizeWindow.GetControl (4)
+	TextArea.SetBufferLength (65535)
+	TextArea.SetText (BioStrRef)
+
+	ClearButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ClearBiography)
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DoneBiographyWindow)
+	RevertButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, RevertBiography)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseSubCustomizeWindow)
+
+	SubCustomizeWindow.ShowModal (MODAL_SHADOW_GRAY)
+	return
+
+def ClearBiography():
+	pc = GemRB.GameGetSelectedPCSingle ()
+	BioStrRef = 62015+pc
+	#GemRB.CreateString (BioStrRef, "")
+	TextArea.SetText ("")
+	return
+
+def DoneBiographyWindow ():
+	global BioStrRef
+
+	#TODO set bio
+	pc = GemRB.GameGetSelectedPCSingle ()
+	#pc is 1 based
+	BioStrRef = 62015+pc
+	GemRB.CreateString (BioStrRef, TextArea.QueryText())
+	GemRB.SetPlayerString (pc, 74, BioStrRef)
+	CloseSubCustomizeWindow ()
+	return
+
+def RevertBiography():
+	global BioStrRef
+
+	BioTable = GemRB.LoadTable ("bios")
+	pc = GemRB.GameGetSelectedPCSingle ()
+	Class = GemRB.GetPlayerStat (pc, IE_CLASS)
+	BioStrRef = BioTable.GetValue(Class,1)
+	TextArea.SetText (BioStrRef)
+	CloseSubCustomizeWindow ()
+	return
+
+def CloseSubCustomizeWindow ():
+	global SubCustomizeWindow
+
+	if SubCustomizeWindow:
+		SubCustomizeWindow.Unload ()
+		SubCustomizeWindow = None
+	return
+
+def CloseSubSubCustomizeWindow ():
+	global SubSubCustomizeWindow
+
+	if SubSubCustomizeWindow:
+		SubSubCustomizeWindow.Unload ()
+		SubSubCustomizeWindow = None
 	return
 
 def OpenExportWindow ():
 	global ExportWindow, NameField, ExportDoneButton
 
-	ExportWindow = GemRB.LoadWindowObject(13)
+	ExportWindow = GemRB.LoadWindow(13)
 
 	TextArea = ExportWindow.GetControl(2)
 	TextArea.SetText(10962)
@@ -784,9 +1479,9 @@ def OpenExportWindow ():
 
 	NameField = ExportWindow.GetControl(6)
 
-	ExportDoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ExportDonePress")
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ExportCancelPress")
-	NameField.SetEvent(IE_GUI_EDIT_ON_CHANGE, "ExportEditChanged")
+	ExportDoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ExportDonePress)
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ExportCancelPress)
+	NameField.SetEvent(IE_GUI_EDIT_ON_CHANGE, ExportEditChanged)
 	ExportWindow.ShowModal (MODAL_SHADOW_GRAY)
 	NameField.SetStatus (IE_GUI_CONTROL_FOCUSED)
 	return

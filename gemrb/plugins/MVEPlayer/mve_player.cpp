@@ -25,14 +25,14 @@
  * Jens Granseuer <jensgr@gmx.net>
  */
 
+#if defined(__HAIKU__)
+#include <unistd.h>
+#endif
+
 #include "mve_player.h"
 #include "MVEPlayer.h"
 #include "gstmvedemux.h"
 #include "mve.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 /* mvevideodec8.cpp */
 extern int ipvideo_decode_frame8 (const GstMveDemuxStream * s,
@@ -80,7 +80,7 @@ MVEPlayer::~MVEPlayer() {
 	if (audio_stream != -1) host->freeAudioStream(audio_stream);
 
 	if (video_skippedframes)
-		printf("Warning: Had to drop %d video frame(s).\n", video_skippedframes);
+		print("Warning: Had to drop %d video frame(s).\n", video_skippedframes);
 }
 
 /*
@@ -103,7 +103,7 @@ bool MVEPlayer::start_playback() {
 	 * The first two chunks contain audio and video initialisation, hopefully.
 	 */
 	if (!process_chunk() || !process_chunk()) {
-		printf("Error: Failed to read initial movie chunks.\n");
+		print("Error: Failed to read initial movie chunks.\n");
 		return false;
 	}
 
@@ -147,7 +147,7 @@ bool MVEPlayer::request_data(unsigned int len) {
 bool MVEPlayer::verify_header() {
 	if (!request_data(MVE_PREAMBLE_SIZE)) return false;
 	if (memcmp(buffer, MVE_PREAMBLE, MVE_PREAMBLE_SIZE) != 0) {
-		printf("Error: MVE preamble didn't match\n");
+		print("Error: MVE preamble didn't match\n");
 		return false;
 	}
 	return true;
@@ -173,7 +173,7 @@ bool MVEPlayer::process_chunk() {
 	}
 
 	if (chunk_offset != chunk_size) {
-		printf("Error: Decoded past the end of an MVE chunk\n");
+		print("Error: Decoded past the end of an MVE chunk\n");
 		return false;
 	}
 
@@ -228,7 +228,7 @@ bool MVEPlayer::process_segment(unsigned short len, unsigned char type, unsigned
 			/* ignore these */
 			break;
 		default:
-			printf("Warning: Skipping unknown segment type 0x%02x", type);
+			print("Warning: Skipping unknown segment type 0x%02x", type);
 	}
 
 	return true;
@@ -297,22 +297,31 @@ void MVEPlayer::segment_create_timer() {
 void MVEPlayer::segment_video_init(unsigned char version) {
 	unsigned short width = GST_READ_UINT16_LE(buffer) << 3;
 	unsigned short height = GST_READ_UINT16_LE(buffer + 2) << 3;
+/* count is unused
 	unsigned short count = 1;
 	if (version > 0) count = GST_READ_UINT16_LE(buffer + 4);
+*/
 	unsigned short temp = 0;
 	if (version > 1) temp = GST_READ_UINT16_LE(buffer + 6);
 	truecolour = !!temp;
 
+	// some files have multiple initialisations
+	if (video_data) {
+		if (video_data->code_map) free(video_data->code_map);
+		free(video_data);
+	}
+	if (video_back_buf) free(video_back_buf);
+
 	unsigned int size = width * height * (truecolour ? 2 : 1);
-	video_back_buf = (char *)malloc(size * 2);
+	video_back_buf = (guint16 *)malloc(size * 2);
 	memset(video_back_buf, 0, size * 2);
 
 	video_data = (GstMveDemuxStream *)malloc(sizeof(GstMveDemuxStream));
 	video_data->code_map = NULL;
 	video_data->width = width;
 	video_data->height = height;
-	video_data->back_buf1 = (guint8 *)video_back_buf;
-	video_data->back_buf2 = (guint8 *)video_back_buf + size;
+	video_data->back_buf1 = video_back_buf;
+	video_data->back_buf2 = video_back_buf + size/2;
 	video_data->max_block_offset = (height - 7) * width - 8;
 }
 
@@ -332,7 +341,9 @@ void MVEPlayer::segment_video_palette() {
 	host->setPalette((unsigned char *)palette - (3 * palette_start), palette_start, palette_count);
 }
 
+//appears to be unused
 void MVEPlayer::segment_video_compressedpalette() {
+#if 0
 	char *data = buffer;
 
 	unsigned int i, j;
@@ -353,6 +364,7 @@ void MVEPlayer::segment_video_compressedpalette() {
 			}
 		}
 	}
+#endif
 }
 
 void MVEPlayer::segment_video_codemap(unsigned short size) {
@@ -380,7 +392,7 @@ void MVEPlayer::segment_video_data(unsigned short size) {
 	char *data = buffer + 14;
 
 	if (flags & MVE_VIDEO_DELTA_FRAME) {
-		guint8 *temp = video_data->back_buf1;
+		guint16 *temp = video_data->back_buf1;
 		video_data->back_buf1 = video_data->back_buf2;
 		video_data->back_buf2 = temp;
 	}
@@ -397,7 +409,7 @@ void MVEPlayer::segment_video_play() {
 	} else {
 		unsigned int dest_x = (outputwidth - video_data->width) >> 1;
 		unsigned int dest_y = (outputheight - video_data->height) >> 1;
-		host->showFrame(video_data->back_buf1, video_data->width, video_data->height, 0, 0, video_data->width, video_data->height, dest_x, dest_y);
+		host->showFrame( (guint8 *) video_data->back_buf1, video_data->width, video_data->height, 0, 0, video_data->width, video_data->height, dest_x, dest_y);
 	}
 
 	video_rendered_frame = true;
@@ -412,7 +424,7 @@ void MVEPlayer::segment_audio_init(unsigned char version) {
 
 	audio_stream = host->setAudioStream();
 	if (audio_stream == -1) {
-		printf("Error: MVE player couldn't open audio. Will play silently.\n");
+		print("Error: MVE player couldn't open audio. Will play silently.\n");
 		playsound = false;
 		return;
 	}
@@ -432,9 +444,10 @@ void MVEPlayer::segment_audio_init(unsigned char version) {
 
 	min_buffer_len *= audio_num_channels;
 	if (audio_sample_size == 16) min_buffer_len *= 2;
+	if (audio_buffer) free(audio_buffer);
 	audio_buffer = (short *)malloc(min_buffer_len);
 
-/*	printf("Movie audio: Sample rate %d, %d channels, %d bit, requested buffer size 0x%02x, %s\n",
+/*	print("Movie audio: Sample rate %d, %d channels, %d bit, requested buffer size 0x%02x, %s\n",
 		audio_sample_rate, audio_num_channels, audio_sample_size, min_buffer_len, audio_compressed ? "compressed" : "uncompressed");*/
 }
 

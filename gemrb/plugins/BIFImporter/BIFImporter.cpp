@@ -18,12 +18,15 @@
  *
  */
 
-#include "win32def.h"
-#include "Compressor.h"
-#include "FileStream.h"
-#include "CachedFileStream.h"
 #include "BIFImporter.h"
+
+#include "win32def.h"
+
+#include "Compressor.h"
+#include "FileCache.h"
 #include "Interface.h"
+#include "System/SlicedStream.h"
+#include "System/FileStream.h"
 
 BIFImporter::BIFImporter(void)
 {
@@ -54,36 +57,33 @@ int BIFImporter::DecompressSaveGame(DataStream *compressed)
 	}
 	int All = compressed->Remains();
 	int Current;
+	int percent, last_percent = 20;
 	if (!All) return GEM_ERROR;
 	do {
 		ieDword fnlen, complen, declen;
 		compressed->ReadDword( &fnlen );
+		if (!fnlen) {
+			printMessage("BIFImporter", "Corrupt Save Detected\n", RED);
+			return GEM_ERROR;
+		}
 		char* fname = ( char* ) malloc( fnlen );
 		compressed->Read( fname, fnlen );
 		strlwr(fname);
 		compressed->ReadDword( &declen );
 		compressed->ReadDword( &complen );
-		PathJoin( path, core->CachePath, fname, NULL );
-		printf( "Decompressing %s\n",fname );
+		print( "Decompressing %s\n", fname );
+		DataStream* cached = CacheCompressedStream(compressed, fname, complen, true);
 		free( fname );
-		if (!core->IsAvailable( IE_COMPRESSION_CLASS_ID ))
+		if (!cached)
 			return GEM_ERROR;
-		FILE *in_cache = fopen( path, "wb" );
-		if (!in_cache) {
-			printMessage("BIFImporter", " ", RED);
-			printf( "Cannot write %s.\n", path );	
-			return GEM_ERROR;
-		}
-		Compressor* comp = ( Compressor* )
-			core->GetInterface( IE_COMPRESSION_CLASS_ID );
-		if (comp->Decompress( in_cache, compressed ) != GEM_OK) {
-			return GEM_ERROR;
-		}
-		core->FreeInterface( comp );
-		fclose( in_cache );
+		delete cached;
 		Current = compressed->Remains();
-		//starting at 40% going up to 90%
-		core->LoadProgress( 40+(All-Current)*50/All );
+		//starting at 20% going up to 70%
+		percent = (20 + (All - Current) * 50 / All);
+		if (percent - last_percent > 5) {
+			core->LoadProgress(percent);
+			last_percent = percent;
+		}
 	}
 	while(Current);
 	return GEM_OK;
@@ -100,7 +100,7 @@ int BIFImporter::CreateArchive(DataStream *compressed)
 		return GEM_ERROR;
 	}
 	char Signature[8];
-	
+
 	memcpy(Signature,"SAV V1.0",8);
 	compressed->Write(Signature, 8);
 
@@ -122,10 +122,8 @@ int BIFImporter::AddToSaveGame(DataStream *str, DataStream *uncompressed)
 	unsigned long Pos = str->GetPos(); //storing the stream position
 	str->WriteDword( &complen);
 
-	Compressor* comp = ( Compressor* )
-		core->GetInterface( IE_COMPRESSION_CLASS_ID );  
+	PluginHolder<Compressor> comp(PLUGIN_COMPRESSION_ZLIB);
 	comp->Compress( str, uncompressed );
-	core->FreeInterface( comp );
 
 	//writing compressed length (calculated)
 	unsigned long Pos2 = str->GetPos();
@@ -142,19 +140,21 @@ int BIFImporter::OpenArchive(const char* filename)
 		delete( stream );
 		stream = NULL;
 	}
-	FILE* in_cache = fopen( filename, "rb" );
-	if( !in_cache) {
+	FileStream* file = FileStream::OpenFile(filename);
+	if( !file) {
 		return GEM_ERROR;
 	}
 	char Signature[8];
-	if (fread( &Signature, 1, 8, in_cache ) != 8) {
-		fclose ( in_cache );
+	if (file->Read(Signature, 8) == GEM_ERROR) {
+		delete file;
 		return GEM_ERROR;
 	}
-	fclose( in_cache );
+	delete file;
 	//normal bif, not in cache
 	if (strncmp( Signature, "BIFFV1  ", 8 ) == 0) {
-		stream = new CachedFileStream( filename );
+		stream = CacheFile( filename );
+		if (!stream)
+			return GEM_ERROR;
 		stream->Read( Signature, 8 );
 		strcpy( path, filename );
 		ReadBIF();
@@ -162,8 +162,9 @@ int BIFImporter::OpenArchive(const char* filename)
 	}
 	//not found as normal bif
 	//checking compression type
-	FileStream* compressed = new FileStream();
-	compressed->Open( filename, true );
+	FileStream* compressed = FileStream::OpenFile( filename );
+	if (!compressed)
+		return GEM_ERROR;
 	compressed->Read( Signature, 8 );
 	if (strncmp( Signature, "BIF V1.0", 8 ) == 0) {
 		ieDword fnlen, complen, declen;
@@ -173,41 +174,12 @@ int BIFImporter::OpenArchive(const char* filename)
 		strlwr(fname);
 		compressed->ReadDword( &declen );
 		compressed->ReadDword( &complen );
-		PathJoin( path, core->CachePath, fname, NULL );
+		print( "Decompressing\n" );
+		stream = CacheCompressedStream(compressed, fname, complen);
 		free( fname );
-		in_cache = fopen( path, "rb" );
-		if (in_cache) {
-			//printf("Found in Cache\n");
-			fclose( in_cache );
-			delete( compressed );
-			stream = new CachedFileStream( path );
-			stream->Read( Signature, 8 );
-			if (strncmp( Signature, "BIFFV1  ", 8 ) == 0)
-				ReadBIF();
-			else
-				return GEM_ERROR;
-			return GEM_OK;
-		}
-		printf( "Decompressing\n" );
-		if (!core->IsAvailable( IE_COMPRESSION_CLASS_ID )) {
-			printMessage("BIFImporter", "No Compression Manager Available.", RED);
-			return GEM_ERROR;
-		}
-		in_cache = fopen( path, "wb" );
-		if (!in_cache) {
-			printMessage("BIFImporter", " ", RED);
-			printf( "Cannot write %s.\n", path );
-			return GEM_ERROR;
-		}
-		Compressor* comp = ( Compressor* )
-			core->GetInterface( IE_COMPRESSION_CLASS_ID );
-		if (comp->Decompress( in_cache, compressed ) != GEM_OK) {
-			return GEM_ERROR;
-		}
-		core->FreeInterface( comp );
-		fclose( in_cache );
 		delete( compressed );
-		stream = new CachedFileStream( path );
+		if (!stream)
+			return GEM_ERROR;
 		stream->Read( Signature, 8 );
 		if (strncmp( Signature, "BIFFV1  ", 8 ) == 0)
 			ReadBIF();
@@ -217,62 +189,62 @@ int BIFImporter::OpenArchive(const char* filename)
 	}
 
 	if (strncmp( Signature, "BIFCV1.0", 8 ) == 0) {
-		//printf("'BIFCV1.0' Compressed File Found\n");
+		//print("'BIFCV1.0' Compressed File Found\n");
 		PathJoin( path, core->CachePath, compressed->filename, NULL );
-		in_cache = fopen( path, "rb" );
-		if (in_cache) {
-			//printf("Found in Cache\n");
-			fclose( in_cache );
+		if (file_exists(path)) {
+			//print("Found in Cache\n");
 			delete( compressed );
-			stream = new CachedFileStream( path );
+			stream = FileStream::OpenFile(path);
+			if (!stream)
+				return GEM_ERROR;
 			stream->Read( Signature, 8 );
 			if (strncmp( Signature, "BIFFV1  ", 8 ) == 0) {
-				ReadBIF();				
+				ReadBIF();
 			} else
 				return GEM_ERROR;
 			return GEM_OK;
 		}
-		printf( "Decompressing\n" );
-		if (!core->IsAvailable( IE_COMPRESSION_CLASS_ID ))
+		print( "Decompressing\n" );
+		if (!core->IsAvailable( PLUGIN_COMPRESSION_ZLIB ))
 			return GEM_ERROR;
-		Compressor* comp = ( Compressor* )
-			core->GetInterface( IE_COMPRESSION_CLASS_ID );
+		PluginHolder<Compressor> comp(PLUGIN_COMPRESSION_ZLIB);
 		ieDword unCompBifSize;
 		compressed->ReadDword( &unCompBifSize );
-		printf( "\nDecompressing file: [..........]" );
+		print( "\nDecompressing file: [..........]" );
 		fflush(stdout);
-		in_cache = fopen( path, "wb" );
-		if (!in_cache) {
-			printMessage("BIFImporter", " ", RED);
-			printf( "Cannot write %s.\n", path );	
+		FileStream out;
+		if (!out.Create(path)) {
+			printMessage("BIFImporter", "Cannot write %s.\n", RED, path);
 			return GEM_ERROR;
 		}
 		ieDword finalsize = 0;
 		int laststep = 0;
 		while (finalsize < unCompBifSize) {
-			compressed->Seek( 8, GEM_CURRENT_POS );
-			if (comp->Decompress( in_cache, compressed ) != GEM_OK) {
+			ieDword complen, declen;
+			compressed->ReadDword( &declen );
+			compressed->ReadDword( &complen );
+			if (comp->Decompress( &out, compressed, complen ) != GEM_OK) {
 				return GEM_ERROR;
 			}
-			finalsize = ftell( in_cache );
+			finalsize = out.GetPos();
 			if (( int ) ( finalsize * ( 10.0 / unCompBifSize ) ) != laststep) {
 				laststep++;
-				printf( "\b\b\b\b\b\b\b\b\b\b\b" );
+				print( "\b\b\b\b\b\b\b\b\b\b\b" );
 				int l;
 
 				for (l = 0; l < laststep; l++)
-					printf( "|" );
+					print( "|" );
 				for (; l < 10; l++)//l starts from laststep
-					printf( "." );
-				printf( "]" );
+					print( "." );
+				print( "]" );
 				fflush(stdout);
 			}
 		}
-		printf( "\n" );
-		core->FreeInterface( comp );
-		fclose( in_cache );
+		print( "\n" );
 		delete( compressed );
-		stream = new CachedFileStream( path );
+		stream = FileStream::OpenFile(path);
+		if (!stream)
+			return GEM_ERROR;
 		stream->Read( Signature, 8 );
 		if (strncmp( Signature, "BIFFV1  ", 8 ) == 0)
 			ReadBIF();
@@ -290,7 +262,7 @@ DataStream* BIFImporter::GetStream(unsigned long Resource, unsigned long Type)
 		unsigned int srcResLoc = Resource & 0xFC000;
 		for (unsigned int i = 0; i < tentcount; i++) {
 			if (( tentries[i].resLocator & 0xFC000 ) == srcResLoc) {
-				return new CachedFileStream( stream, tentries[i].dataOffset,
+				return SliceStream( stream, tentries[i].dataOffset,
 							tentries[i].tileSize * tentries[i].tilesCount );
 			}
 		}
@@ -298,7 +270,7 @@ DataStream* BIFImporter::GetStream(unsigned long Resource, unsigned long Type)
 		ieDword srcResLoc = Resource & 0x3FFF;
 		for (ieDword i = 0; i < fentcount; i++) {
 			if (( fentries[i].resLocator & 0x3FFF ) == srcResLoc) {
-				return new CachedFileStream( stream, fentries[i].dataOffset,
+				return SliceStream( stream, fentries[i].dataOffset,
 							fentries[i].fileSize );
 			}
 		}
@@ -350,3 +322,4 @@ void BIFImporter::ReadBIF(void)
 GEMRB_PLUGIN(0xC7F133C, "BIF File Importer")
 PLUGIN_CLASS(IE_BIF_CLASS_ID, BIFImporter)
 END_PLUGIN()
+

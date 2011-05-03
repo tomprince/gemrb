@@ -19,6 +19,9 @@
  */
 
 /*
+ * code derived from FFMPeg
+ * @author Michael Niedermayer <michaelni@gmx.at>
+ *
  * code derived from Bink Audio decoder
  * Copyright (c) 2007-2009 Peter Ross (pross@xvid.org)
  * Copyright (c) 2009 Daniel Verkamp (daniel@drv.nu)
@@ -27,19 +30,24 @@
  * Copyright (c) 2009 Konstantin Shishkov
 */
 
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <cstdio>
-#include "Video.h"
-#include "Audio.h"
-#include "Variables.h"
+#if defined(__HAIKU__)
+#include <unistd.h>
+#endif
+
 #include "BIKPlayer.h"
-#include "ie_types.h"
+
 #include "rational.h"
 #include "binkdata.h"
 
-static Video *video = NULL;
+#include "ie_types.h"
+
+#include "Audio.h"
+#include "Variables.h"
+#include "Video.h"
+
+#include <cassert>
+#include <cstdio>
+
 static int g_truecolor;
 static ieDword *cbAtFrame = NULL;
 static ieDword *strRef = NULL;
@@ -51,12 +59,8 @@ static const int ff_wma_critical_freqs[25] = {
 	24500,
 };
 
-static uint8_t ff_cropTbl[256 + 2 * MAX_NEG_CROP] = {0, };
-
 BIKPlayer::BIKPlayer(void)
 {
-	int i;
-
 	video = core->GetVideoDriver();
 	inbuff = NULL;
 	maxRow = 0;
@@ -65,12 +69,6 @@ BIKPlayer::BIKPlayer(void)
 	//force initialisation of static tables
 	memset(bink_trees, 0, sizeof(bink_trees));
 	memset(table, 0, sizeof(table));
-
-	for(i=0;i<256;i++) ff_cropTbl[i + MAX_NEG_CROP] = i;
-	for(i=0;i<MAX_NEG_CROP;i++) {
-		ff_cropTbl[i] = 0;
-		ff_cropTbl[i + MAX_NEG_CROP + 256] = 255;
-    	}
 }
 
 BIKPlayer::~BIKPlayer(void)
@@ -189,11 +187,10 @@ int BIKPlayer::ReadHeader()
 	return 0;
 }
 
-bool BIKPlayer::Open(DataStream* stream, bool autoFree)
+bool BIKPlayer::Open(DataStream* stream)
 {
 	validVideo = false;
-	if (!Resource::Open(stream, autoFree))
-		return false;
+	str = stream;
 
 	str->Read( &header.signature, BIK_SIGNATURE_LEN );
 	if (memcmp( header.signature, BIK_SIGNATURE_DATA, 4 ) == 0) {
@@ -228,7 +225,7 @@ int BIKPlayer::Play()
 }
 
 //this code could be in the movieplayer parent class
-void get_current_time(long &sec, long &usec) {
+void static get_current_time(long &sec, long &usec) {
 #ifdef _WIN32
 	DWORD time;
 	time = GetTickCount();
@@ -285,8 +282,6 @@ bool BIKPlayer::next_frame()
 		return false;
 	}
 	binkframe frame = frames[frameCount++];
-	//frame.size = fileRead( frame.pos, inbuff, frame.size);
-	//ieDword audframesize = *(ieDword *) inbuff;
 	str->Seek(frame.pos, GEM_STREAM_START);
 	ieDword audframesize;
 	str->ReadDword(&audframesize);
@@ -435,8 +430,8 @@ int BIKPlayer::sound_init(bool need_init)
 		sample_rate *= header.channels;
 		s_frame_len *= header.channels;
 		s_channels = 1;
-	if (header.channels == 2)
-		frame_len_bits++;
+		if (header.channels == 2)
+			frame_len_bits++;
 	}
 
 	s_overlap_len   = s_frame_len / 16;
@@ -465,17 +460,17 @@ int BIKPlayer::sound_init(bool need_init)
 	s_first = 1;
 
 	for (i = 0; i < s_channels; i++)
-	s_coeffs_ptr[i] = s_coeffs + i * s_frame_len;
+		s_coeffs_ptr[i] = s_coeffs + i * s_frame_len;
 
 	if (header.audioflag&BINK_AUD_USEDCT)
-		ret = ff_dct_init(&s_trans.dct, frame_len_bits, 0);
+		ret = ff_dct_init(&s_trans.dct, frame_len_bits, 1);
 	else
 		ret = ff_rdft_init(&s_trans.rdft, frame_len_bits, IRIDFT);
 
 	return ret;
 }
 
-void BIKPlayer::ff_init_scantable(uint8_t *permutation, ScanTable *st, const uint8_t *src_scantable){
+void BIKPlayer::ff_init_scantable(ScanTable *st, const uint8_t *src_scantable){
 	int i,j;
 	int end;
 
@@ -483,7 +478,7 @@ void BIKPlayer::ff_init_scantable(uint8_t *permutation, ScanTable *st, const uin
 
 	for(i=0; i<64; i++){
 		j = src_scantable[i];
-		st->permutated[i] = permutation[j];
+		st->permutated[i] = j;
 	}
 
 	end=-1;
@@ -517,14 +512,7 @@ int BIKPlayer::video_init(int w, int h)
 		return 1;
 	}
 
-	//pixel format is PIX_FMT_YUV420P
-	//idct permutation is used in various optimisations,
-	//we go with the simplest (no permutation)
-	for(i=0;i<64;i++) {
-		c_idct_permutation[i]=i;
-	}
-
-	ff_init_scantable(c_idct_permutation, &c_scantable, bink_scan);
+	ff_init_scantable(&c_scantable, bink_scan);
 
 	bw = (header.width  + 7) >> 3;
 	bh = (header.height + 7) >> 3;
@@ -588,6 +576,7 @@ int BIKPlayer::EndVideo()
 	for (i = 0; i < BINK_NB_SRC; i++) {
 		av_freep((void **) &c_bundle[i].data);
 	}
+	video->DrawMovieSubtitle(0);
 	return 0;
 }
 static const uint8_t rle_length_tab[16] = {
@@ -604,6 +593,22 @@ const uint8_t ff_log2_tab[256]={
 		7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
 		7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
 };
+
+static inline av_const int av_log2(unsigned int v)
+{
+	int n = 0;
+	if (v & 0xffff0000) {
+		v >>= 16;
+		n += 16;
+	}
+	if (v & 0xff00) {
+		v >>= 8;
+		n += 8;
+	}
+	n += ff_log2_tab[v];
+
+	return n;
+}
 
 static inline int float_to_int16_one(const float *src){
 	float f = *src;
@@ -647,12 +652,12 @@ void BIKPlayer::DecodeBlock(short *out)
 	for (ch = 0; ch < s_channels; ch++) {
 		FFTSample *coeffs = s_coeffs_ptr[ch];
 		q = 0.0;
-		coeffs[0] = s_gb.get_float();
-		coeffs[1] = s_gb.get_float();
+		coeffs[0] = s_gb.get_float() * s_root;
+		coeffs[1] = s_gb.get_float() * s_root;
 
 		for (i = 0; i < s_num_bands; i++) {
 			int value = s_gb.get_bits(8);
-			quant[i] = (float) pow(10.0, FFMIN(value, 95) * 0.066399999);
+			quant[i] = (float) pow(10.0, FFMIN(value, 95) * 0.066399999) * s_root;
 		}
 
 		// find band (k)
@@ -696,13 +701,13 @@ void BIKPlayer::DecodeBlock(short *out)
 			}
 		}
 
-		if (header.audioflag&BINK_AUD_USEDCT)
+		if (header.audioflag&BINK_AUD_USEDCT) {
+			coeffs[0] /= 0.5;
 			ff_dct_calc (&s_trans.dct,  coeffs);
-		else
+			for (i = 0; i < s_frame_len; i++)
+				coeffs[i] *= s_frame_len / 2;
+		} else
 			ff_rdft_calc(&s_trans.rdft, coeffs);
-
-		for (i = 0; i < s_frame_len; i++)
-			coeffs[i] *= s_root;
 	}
 
 	ff_float_to_int16_interleave_c(out, (const float **)s_coeffs_ptr, s_frame_len, s_channels);
@@ -762,11 +767,15 @@ int BIKPlayer::DecodeAudioFrame(void *data, int data_size)
  * @param scan  scan order table
  * @return 0 for success, negative value in other cases
  */
-int BIKPlayer::read_dct_coeffs(DCTELEM block[64], const uint8_t *scan)
+int BIKPlayer::read_dct_coeffs(DCTELEM block[64], const uint8_t *scan, bool is_intra)
 {
 	int mode_list[128];
 	int i, t, mask, bits, ccoef, mode;
 	int list_start = 64, list_end = 64, list_pos;
+	int coef_count = 0;
+	int coef_idx[64];
+	int quant_idx;
+	const uint32_t* quant;
 
 	mode_list[list_end++] = ( 4 << 2) | 0;
 	mode_list[list_end++] = (24 << 2) | 0;
@@ -807,6 +816,7 @@ int BIKPlayer::read_dct_coeffs(DCTELEM block[64], const uint8_t *scan)
 							}
 						}
 						block[scan[ccoef]] = t;
+						coef_idx[coef_count++] = ccoef;
 					}
 				}
 				break;
@@ -826,10 +836,20 @@ int BIKPlayer::read_dct_coeffs(DCTELEM block[64], const uint8_t *scan)
 						t = -t;
 				}
 				block[scan[ccoef]] = t;
+				coef_idx[coef_count++] = ccoef;
 				mode_list[list_pos++] = 0;
 				break;
 			}
 		}
+	}
+
+	quant_idx = v_gb.get_bits(4);
+	quant = is_intra ? bink_intra_quant[quant_idx]
+	                 : bink_inter_quant[quant_idx];
+	block[0] = (block[0] * quant[0]) >> 11;
+	for (i = 0; i < coef_count; i++) {
+		int idx = coef_idx[i];
+		block[scan[idx]] = (block[scan[idx]] * quant[idx]) >> 11;
 	}
 
 	return 0;
@@ -1132,7 +1152,8 @@ int BIKPlayer::read_colors(Bundle *b)
 int BIKPlayer::read_dcs(Bundle *b, int start_bits, int has_sign)
 {
 	int i, j, len, len2, bsize, v, v2;
-	int16_t *dst = (int16_t*)b->cur_dec;
+	SET_INT_TYPE *dst = (SET_INT_TYPE*)b->cur_dec;
+	//int16_t *dst = (int16_t*)b->cur_dec;
 
 	CHECK_READ_VAL(v_gb, b, len);
 	if (has_sign) {
@@ -1142,7 +1163,8 @@ int BIKPlayer::read_dcs(Bundle *b, int start_bits, int has_sign)
 	} else {
 		v = v_gb.get_bits(start_bits);
 	}
-	*dst++ = v;
+	SET_INT_VALUE(dst, v);
+	//*dst++ = v;
 	len--;
 	for (i = 0; i < len; i += 8) {
 		len2 = FFMIN(len - i, 8);
@@ -1154,14 +1176,16 @@ int BIKPlayer::read_dcs(Bundle *b, int start_bits, int has_sign)
 					v2 = -v2;
 				}
 				v += v2;
-				*dst++ = v;
+				SET_INT_VALUE(dst, v);
+				//*dst++ = v;
 				if (v < -32768 || v > 32767) {
 					return -1;
 				}
 			}
 		} else {
 			for (j = 0; j < len2; j++) {
-				*dst++ = v;
+				SET_INT_VALUE(dst, v);
+				//*dst++ = v;
 			}
 		}
 	}
@@ -1180,8 +1204,9 @@ inline int BIKPlayer::get_value(int bundle)
 	if (bundle == BINK_SRC_X_OFF || bundle == BINK_SRC_Y_OFF) {
 		return (int8_t)*c_bundle[bundle].cur_ptr++;
 	}
-	ret = *(int16_t*)c_bundle[bundle].cur_ptr;
-	c_bundle[bundle].cur_ptr += 2;
+	GET_INT_VALUE(ret, c_bundle[bundle].cur_ptr);
+	//ret = *(int16_t*)c_bundle[bundle].cur_ptr;
+	//c_bundle[bundle].cur_ptr += 2;
 	return ret;
 }
 
@@ -1210,41 +1235,38 @@ static void get_pixels(DCTELEM *block, const uint8_t *pixels, int line_size)
 	}
 }
 
-static void put_pixels_clamped(const DCTELEM *block, uint8_t *pixels, int line_size)
+static void put_pixels_nonclamped(const DCTELEM *block, uint8_t *pixels, int line_size)
 {
 	int i;
-	uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
-
 	/* read the pixels */
 	for(i=0;i<8;i++) {
-		pixels[0] = cm[block[0]];
-		pixels[1] = cm[block[1]];
-		pixels[2] = cm[block[2]];
-		pixels[3] = cm[block[3]];
-		pixels[4] = cm[block[4]];
-		pixels[5] = cm[block[5]];
-		pixels[6] = cm[block[6]];
-		pixels[7] = cm[block[7]];
+		pixels[0] = block[0];
+		pixels[1] = block[1];
+		pixels[2] = block[2];
+		pixels[3] = block[3];
+		pixels[4] = block[4];
+		pixels[5] = block[5];
+		pixels[6] = block[6];
+		pixels[7] = block[7];
 		pixels += line_size;
 		block += 8;
 	}
 }
 
-static void add_pixels_clamped(const DCTELEM *block, uint8_t *pixels, int line_size)
+static void add_pixels_nonclamped(const DCTELEM *block, uint8_t *pixels, int line_size)
 {
 	int i;
-	uint8_t *cm = ff_cropTbl + MAX_NEG_CROP;
 
 	/* read the pixels */
 	for(i=0;i<8;i++) {
-		pixels[0] = cm[pixels[0] + block[0]];
-		pixels[1] = cm[pixels[1] + block[1]];
-		pixels[2] = cm[pixels[2] + block[2]];
-		pixels[3] = cm[pixels[3] + block[3]];
-		pixels[4] = cm[pixels[4] + block[4]];
-		pixels[5] = cm[pixels[5] + block[5]];
-		pixels[6] = cm[pixels[6] + block[6]];
-		pixels[7] = cm[pixels[7] + block[7]];
+		pixels[0] += block[0];
+		pixels[1] += block[1];
+		pixels[2] += block[2];
+		pixels[3] += block[3];
+		pixels[4] += block[4];
+		pixels[5] += block[5];
+		pixels[6] += block[6];
+		pixels[7] += block[7];
 		pixels += line_size;
 		block += 8;
 	}
@@ -1253,7 +1275,7 @@ static void add_pixels_clamped(const DCTELEM *block, uint8_t *pixels, int line_s
 static inline void copy_block(DCTELEM block[64], const uint8_t *src, uint8_t *dst, int stride)
 {
 	get_pixels(block, src, stride);
-	put_pixels_clamped(block, dst, stride);
+	put_pixels_nonclamped(block, dst, stride);
 }
 
 #define clear_block(block) memset( (block), 0, sizeof(DCTELEM)*64);
@@ -1261,89 +1283,90 @@ static inline void copy_block(DCTELEM block[64], const uint8_t *src, uint8_t *ds
 //This replaces the j_rev_dct module
 void bink_idct(DCTELEM *block)
 {
-    int i, t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, tA, tB, tC;
-    int tblock[64];
+	int i, t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, tA, tB, tC;
+	int tblock[64];
 
-    for (i = 0; i < 8; i++) {
-	t0 = block[i+ 0] + block[i+32];
-	t1 = block[i+ 0] - block[i+32];
-	t2 = block[i+16] + block[i+48];
-	t3 = block[i+16] - block[i+48];
-	t3 = ((t3 * 0xB50) >> 11) - t2;
+	for (i = 0; i < 8; i++) {
+		t0 = block[i+ 0] + block[i+32];
+		t1 = block[i+ 0] - block[i+32];
+		t2 = block[i+16] + block[i+48];
+		t3 = block[i+16] - block[i+48];
+		t3 = ((t3 * 0xB50) >> 11) - t2;
 
-	t4 = t0 - t2;
-	t5 = t0 + t2;
-	t6 = t1 + t3;
-	t7 = t1 - t3;
+		t4 = t0 - t2;
+		t5 = t0 + t2;
+		t6 = t1 + t3;
+		t7 = t1 - t3;
 
-	t0 = block[i+40] + block[i+24];
-	t1 = block[i+40] - block[i+24];
-	t2 = block[i+ 8] + block[i+56];
-	t3 = block[i+ 8] - block[i+56];
+		t0 = block[i+40] + block[i+24];
+		t1 = block[i+40] - block[i+24];
+		t2 = block[i+ 8] + block[i+56];
+		t3 = block[i+ 8] - block[i+56];
 
-	t8 = t2 + t0;
-	t9 = t3 + t1;
-	t9 = (0xEC8 * t9) >> 11;
-	tA = ((-0x14E8 * t1) >> 11) + t9 - t8;
-	tB = t2 - t0;
-	tB = ((0xB50 * tB) >> 11) - tA;
-	tC = ((0x8A9 * t3) >> 11) + tB - t9;
+		t8 = t2 + t0;
+		t9 = t3 + t1;
+		t9 = (0xEC8 * t9) >> 11;
+		tA = ((-0x14E8 * t1) >> 11) + t9 - t8;
+		tB = t2 - t0;
+		tB = ((0xB50 * tB) >> 11) - tA;
+		tC = ((0x8A9 * t3) >> 11) + tB - t9;
 
-	tblock[i+ 0] = t5 + t8;
-	tblock[i+56] = t5 - t8;
-	tblock[i+ 8] = t6 + tA;
-	tblock[i+48] = t6 - tA;
-	tblock[i+16] = t7 + tB;
-	tblock[i+40] = t7 - tB;
-	tblock[i+32] = t4 + tC;
-	tblock[i+24] = t4 - tC;
-    }
+		tblock[i+ 0] = t5 + t8;
+		tblock[i+56] = t5 - t8;
+		tblock[i+ 8] = t6 + tA;
+		tblock[i+48] = t6 - tA;
+		tblock[i+16] = t7 + tB;
+		tblock[i+40] = t7 - tB;
+		tblock[i+32] = t4 + tC;
+		tblock[i+24] = t4 - tC;
+	}
 
-    for (i = 0; i < 64; i += 8) {
-	t0 = tblock[i+0] + tblock[i+4];
-	t1 = tblock[i+0] - tblock[i+4];
-	t2 = tblock[i+2] + tblock[i+6];
-	t3 = tblock[i+2] - tblock[i+6];
-	t3 = ((t3 * 0xB50) >> 11) - t2;
+	for (i = 0; i < 64; i += 8) {
+		t0 = tblock[i+0] + tblock[i+4];
+		t1 = tblock[i+0] - tblock[i+4];
+		t2 = tblock[i+2] + tblock[i+6];
+		t3 = tblock[i+2] - tblock[i+6];
+		t3 = ((t3 * 0xB50) >> 11) - t2;
 
-	t4 = t0 - t2;
-	t5 = t0 + t2;
-	t6 = t1 + t3;
-	t7 = t1 - t3;
+		t4 = t0 - t2;
+		t5 = t0 + t2;
+		t6 = t1 + t3;
+		t7 = t1 - t3;
 
-	t0 = tblock[i+5] + tblock[i+3];
-	t1 = tblock[i+5] - tblock[i+3];
-	t2 = tblock[i+1] + tblock[i+7];
-	t3 = tblock[i+1] - tblock[i+7];
+		t0 = tblock[i+5] + tblock[i+3];
+		t1 = tblock[i+5] - tblock[i+3];
+		t2 = tblock[i+1] + tblock[i+7];
+		t3 = tblock[i+1] - tblock[i+7];
 
-	t8 = t2 + t0;
-	t9 = t3 + t1;
-	t9 = (0xEC8 * t9) >> 11;
-	tA = ((-0x14E8 * t1) >> 11) + t9 - t8;
-	tB = t2 - t0;
-	tB = ((0xB50 * tB) >> 11) - tA;
-	tC = ((0x8A9 * t3) >> 11) + tB - t9;
+		t8 = t2 + t0;
+		t9 = t3 + t1;
+		t9 = (0xEC8 * t9) >> 11;
+		tA = ((-0x14E8 * t1) >> 11) + t9 - t8;
+		tB = t2 - t0;
+		tB = ((0xB50 * tB) >> 11) - tA;
+		tC = ((0x8A9 * t3) >> 11) + tB - t9;
 
-	block[i+0] = (t5 + t8 + 0x7F) >> 8;
-	block[i+7] = (t5 - t8 + 0x7F) >> 8;
-	block[i+1] = (t6 + tA + 0x7F) >> 8;
-	block[i+6] = (t6 - tA + 0x7F) >> 8;
-	block[i+2] = (t7 + tB + 0x7F) >> 8;
-	block[i+5] = (t7 - tB + 0x7F) >> 8;
-	block[i+4] = (t4 + tC + 0x7F) >> 8;
-	block[i+3] = (t4 - tC + 0x7F) >> 8;
-    }
+		block[i+0] = (t5 + t8 + 0x7F) >> 8;
+		block[i+7] = (t5 - t8 + 0x7F) >> 8;
+		block[i+1] = (t6 + tA + 0x7F) >> 8;
+		block[i+6] = (t6 - tA + 0x7F) >> 8;
+		block[i+2] = (t7 + tB + 0x7F) >> 8;
+		block[i+5] = (t7 - tB + 0x7F) >> 8;
+		block[i+4] = (t4 + tC + 0x7F) >> 8;
+		block[i+3] = (t4 - tC + 0x7F) >> 8;
+	}
 }
 
 static void idct_put(uint8_t *dest, int line_size, DCTELEM *block)
 {
 	bink_idct(block);
-	put_pixels_clamped(block, dest, line_size);
+	put_pixels_nonclamped(block, dest, line_size);
 }
+
 static void idct_add(uint8_t *dest, int line_size, DCTELEM *block)
 {
 	bink_idct(block);
-	add_pixels_clamped(block, dest, line_size);
+	add_pixels_nonclamped(block, dest, line_size);
 }
 
 int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
@@ -1353,7 +1376,6 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 	uint8_t *dst, *prev;
 	int v, c1, c2;
 	const uint8_t *scan;
-	const uint32_t *quant;
 	int xoff, yoff;
 #pragma pack(push,16)
 	DCTELEM block[64];
@@ -1409,7 +1431,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 			prev = c_last.data[plane] + 8*by*stride;
 			for (bx = 0; bx < bw; bx++, dst += 8, prev += 8) {
 				blk = get_value(BINK_SRC_BLOCK_TYPES);
-				if ((by & 1) && blk == 1) {
+				if ((by & 1) && (blk == SCALED_BLOCK) ) {
 					bx++;
 					dst  += 8;
 					prev += 8;
@@ -1449,11 +1471,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 					case INTRA_BLOCK:
 						clear_block(block);
 						block[0] = get_value(BINK_SRC_INTRA_DC);
-						read_dct_coeffs(block, c_scantable.permutated);
-						quant = bink_intra_quant[v_gb.get_bits(4)];
-						for (i = 0; i < 64; i++) {
-							block[i] = (block[i] * quant[i]) >> 11;
-						}
+						read_dct_coeffs(block, c_scantable.permutated,true);
 						bink_idct(block);
 						for (j = 0; j < 8; j++) {
 							for (i = 0; i < 8; i++) {
@@ -1473,7 +1491,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 						for (i = 0; i < 8; i++) {
 							v = get_value(BINK_SRC_PATTERN);
 							for (j = 0; j < 8; j++, v >>= 1) {
-								PUT2x2(dst, stride, i, j, (v & 1) ? c2 : c1);
+								PUT2x2(dst, stride, j, i, (v & 1) ? c2 : c1);
 							}
 						}
 						break;
@@ -1485,7 +1503,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 						}
 						break;
 					default:
-						printf("Incorrect 16x16 block type!\n");
+						print("Incorrect 16x16 block type!\n");
 						return -1;
 					}
 					bx++;
@@ -1528,16 +1546,12 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 					clear_block(block);
 					v = v_gb.get_bits(7);
 					read_residue(block, v);
-					add_pixels_clamped(block, dst, stride);
+					add_pixels_nonclamped(block, dst, stride);
 					break;
 				case INTRA_BLOCK:
 					clear_block(block);
 					block[0] = get_value(BINK_SRC_INTRA_DC);
-					read_dct_coeffs(block, c_scantable.permutated);
-					quant = bink_intra_quant[v_gb.get_bits(4)];
-					for (i = 0; i < 64; i++) {
-						block[i] = (block[i] * quant[i]) >> 11;
-					}
+					read_dct_coeffs(block, c_scantable.permutated,true);
 					idct_put(dst, stride, block);
 					break;
 				case FILL_BLOCK:
@@ -1552,11 +1566,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 					copy_block(block, prev + xoff + yoff*stride, dst, stride);
 					clear_block(block);
 					block[0] = get_value(BINK_SRC_INTER_DC);
-					read_dct_coeffs(block, c_scantable.permutated);
-					quant = bink_inter_quant[v_gb.get_bits(4)];
-					for (i = 0; i < 64; i++) {
-						block[i] = (block[i] * quant[i]) >> 11;
-					}
+					read_dct_coeffs(block, c_scantable.permutated,false);
 					idct_add(dst, stride, block);
 					break;
 				case PATTERN_BLOCK:
@@ -1565,7 +1575,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 					for (i = 0; i < 8; i++) {
 						v = get_value(BINK_SRC_PATTERN);
 						for (j = 0; j < 8; j++, v >>= 1) {
-							dst[i + j*stride] = (v & 1) ? c2 : c1;
+							dst[i*stride+j] = (v & 1) ? c2 : c1;
 						}
 					}
 					break;
@@ -1576,7 +1586,7 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 					c_bundle[BINK_SRC_COLORS].cur_ptr += 64;
 					break;
 				default:
-					printf("Unknown block type!\n");
+					print("Unknown block type!\n");
 					return -1;
 				}
 			}
@@ -1603,5 +1613,5 @@ int BIKPlayer::DecodeVideoFrame(void *data, int data_size)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x316E2EDE, "BIK Video Player")
-PLUGIN_RESOURCE(BIKPlayer, ".mve")
+PLUGIN_RESOURCE(BIKPlayer, "mve")
 END_PLUGIN()

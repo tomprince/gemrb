@@ -20,9 +20,10 @@
  * (dynamic) part of the talk table (tlk)
  */
 
+#include "TlkOverride.h"
+
 #include <cstdio>
 #include <cassert>
-#include "TlkOverride.h"
 
 CTlkOverride::CTlkOverride()
 {
@@ -58,9 +59,11 @@ bool CTlkOverride::Init()
 	}
 
 	char Signature[8];
+
+	memset(Signature,0,8);
 	toh_str->Read( Signature, 4 );
 	if (strncmp( Signature, "TLK ", 4 ) != 0) {
-		printf( "[TLKImporter]: Not a valid TOH File.\n" );
+		printMessage("TLKImporter", "Not a valid TOH file.\n", LIGHT_RED);
 		return false;
 	}
 	toh_str->Seek( 8, GEM_CURRENT_POS );
@@ -69,7 +72,7 @@ bool CTlkOverride::Init()
 	tot_str->ReadDword( &FreeOffset );
 	tot_str->Read(Signature,4);
 	if (strncmp( Signature, "\xff\xff\xff\xff",4) !=0) {
-		printf( "[TLKImporter]: Not a valid TOT File.\n" );
+		printMessage("TLKImporter", "Not a valid TOT file.\n", LIGHT_RED);
 		return false;
 	}
 
@@ -301,13 +304,10 @@ DataStream* CTlkOverride::GetAuxHdr(bool create)
 	char nPath[_MAX_PATH];
 	char Signature[TOH_HEADER_SIZE];
 
-	sprintf( nPath, "%s%sdefault.toh", core->CachePath, SPathDelimiter );
-#ifndef WIN32
-	ResolveFilePath( nPath );
-#endif
+	PathJoin( nPath, core->CachePath, "default.toh", NULL );
 	FileStream* fs = new FileStream();
 retry:
-	if (fs->Modify( nPath, true )) {
+	if (fs->Modify(nPath)) {
 		return fs;
 	}
 	if (create) {
@@ -325,13 +325,10 @@ retry:
 DataStream* CTlkOverride::GetAuxTlk(bool create)
 {
 	char nPath[_MAX_PATH];
-	sprintf( nPath, "%s%sdefault.tot", core->CachePath, SPathDelimiter );
-#ifndef WIN32
-	ResolveFilePath( nPath );
-#endif
+	PathJoin( nPath, core->CachePath, "default.tot", NULL );
 	FileStream* fs = new FileStream();
 retry:
-	if (fs->Modify( nPath, true )) {
+	if (fs->Modify(nPath)) {
 		return fs;
 	}
 	if (create) {

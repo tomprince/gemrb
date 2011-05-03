@@ -22,7 +22,8 @@
 #ifndef JPEGIMP_H
 #define JPEGIMP_H
 
-#include "../Core/ImageMgr.h"
+#include "ImageMgr.h"
+
 #include <jpeglib.h>
 
 class JPEGImporter : public ImageMgr {
@@ -33,7 +34,7 @@ public:
 	JPEGImporter(void);
 	~JPEGImporter(void);
 	void Close();
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Sprite2D* GetSprite2D();
 	int GetWidth() { return (int) cinfo.output_width; }
 	int GetHeight() { return (int) cinfo.output_height; }

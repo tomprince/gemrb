@@ -18,7 +18,7 @@
 #
 #ToB start window, precedes the SoA window
 import GemRB
-from GUICommon import HasTOB, LoadCommonTables
+import GUICommon
 
 StartWindow = 0
 
@@ -42,17 +42,15 @@ def OnLoad():
 	elif screen_width == 1024:
 		GemRB.LoadWindowFrame("STON10L", "STON10R", "STON10T", "STON10B")
 
-	LoadCommonTables ()
-
 	#if not detected tob, we go right to the main menu
-	if not HasTOB():
+	if not GUICommon.HasTOB():
 		GemRB.SetMasterScript("BALDUR","WORLDMAP")
 		GemRB.SetVar("oldgame",1)
 		GemRB.SetNextScript("Start2")
 		return
 
 	GemRB.LoadWindowPack("START", 640, 480)
-	StartWindow = GemRB.LoadWindowObject(7)
+	StartWindow = GemRB.LoadWindow(7)
 	StartWindow.SetFrame ()
 	StartWindow.CreateLabel(0x0fff0000, 0,0,640,30, "REALMS", "", 1)
 	Label=StartWindow.GetControl(0x0fff0000)
@@ -69,9 +67,9 @@ def OnLoad():
 	ExitButton = StartWindow.GetControl(4)
 	ExitButton.SetText(13731)
 	ExitButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
-	SoAButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SoAPress")
-	ToBButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ToBPress")
-	ExitButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ExitPress")
+	SoAButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SoAPress)
+	ToBButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ToBPress)
+	ExitButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ExitPress)
 	StartWindow.SetVisible(WINDOW_VISIBLE)
 	GemRB.LoadMusicPL("Cred.mus")
 	return

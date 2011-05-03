@@ -23,7 +23,10 @@
 ###################################################
 
 import GemRB
-from GUICommon import GameIsHOW, HasTOTL
+from GUIDefines import *
+import GUICommon
+import GUICommonWindows
+import LoadScreen
 
 PartyFormationWindow = 0
 CreateCharWindow = 0
@@ -32,17 +35,20 @@ ExitWindow = 0
 def OnLoad ():
 	global PartyFormationWindow
 
+	GUICommonWindows.PortraitWindow = None
+	GUICommonWindows.SelectionChangeHandler = None
+
 	GemRB.LoadWindowPack ("GUISP", 640, 480)
-	PartyFormationWindow = GemRB.LoadWindowObject (0)
+	PartyFormationWindow = GemRB.LoadWindow (0)
 	PartyFormationWindow.SetFrame ()
 
 	ModifyCharsButton = PartyFormationWindow.GetControl (43)
-	ModifyCharsButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ModifyPress")
+	ModifyCharsButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, None) #TODO: ModifyPress
 	ModifyCharsButton.SetStatus (IE_GUI_BUTTON_DISABLED)
 	ModifyCharsButton.SetText (18816)
 
 	ExitButton = PartyFormationWindow.GetControl (30)
-	ExitButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ExitPress")
+	ExitButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ExitPress)
 	ExitButton.SetStatus (IE_GUI_BUTTON_ENABLED)
 	ExitButton.SetText (13906)
 	ExitButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
@@ -63,11 +69,13 @@ def OnLoad ():
 			Button.SetPicture (ResRef)
 			Button.SetFlags (IE_GUI_BUTTON_PICTURE, OP_OR)
 			Portraits = Portraits+1
+		Button.SetState (IE_GUI_BUTTON_LOCKED)
 
 		CreateCharButton = PartyFormationWindow.GetControl (i)
 		CreateCharButton.SetVarAssoc ("Slot", i-17)
-		CreateCharButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CreateCharPress")
+		CreateCharButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreateCharPress)
 		CreateCharButton.SetStatus (IE_GUI_BUTTON_ENABLED)
+		CreateCharButton.SetFont ("NORMAL")
 		if ResRef == "":
 			CreateCharButton.SetText (10264)
 		else:
@@ -78,25 +86,24 @@ def OnLoad ():
 	else:
 		DoneButton.SetState (IE_GUI_BUTTON_ENABLED)
 		DoneButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
-	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS,"EnterGamePress")
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, EnterGamePress)
 
-	if not GameIsHOW():
+	if not GUICommon.HasHOW():
 		GemRB.SetVar ("SaveDir",1) #using mpsave??
 		GemRB.SetVar ("PlayMode",0) #using second row??
 	else:
 		GemRB.SetGlobal ("EXPANSION_DOOR", "GLOBAL", 1) # entrance to the HOW start
-		if HasTOTL():
+		if GUICommon.HasTOTL():
 			GemRB.SetGlobal ("9101_SPAWN_HOBART", "GLOBAL", 1)
 		if GemRB.GetVar("ExpansionGame") == 1:
 			GemRB.SetGlobal ("CHAPTER", "GLOBAL", 1)
 			GemRB.SetVar ("SaveDir",1) #using mpsave
 			GemRB.SetVar ("PlayMode",2) #using second row
-			GemRB.GameSetExpansion (1)
 		else:
 			GemRB.SetVar ("SaveDir",1) #using mpsave
 			GemRB.SetVar ("PlayMode",0) #using first row
-			GemRB.GameSetExpansion (0)
 
+	LoadScreen.CloseLoadScreen()
 	PartyFormationWindow.SetVisible (WINDOW_VISIBLE)
 	return
 
@@ -104,21 +111,21 @@ def CreateCharPress ():
 	global PartyFormationWindow, CreateCharWindow
 
 	PartyFormationWindow.SetVisible (WINDOW_INVISIBLE)
-	CreateCharWindow = GemRB.LoadWindowObject (3)
+	CreateCharWindow = GemRB.LoadWindow (3)
 
 	CreateButton = CreateCharWindow.GetControl (0)
-	CreateButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CreateCharCreatePress")
+	CreateButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreateCharCreatePress)
 	CreateButton.SetStatus (IE_GUI_BUTTON_ENABLED)
 	CreateButton.SetText (13954)
 	CreateButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
 
 	DeleteButton = CreateCharWindow.GetControl (3)
-	DeleteButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CreateCharDeletePress")
+	DeleteButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreateCharDeletePress)
 	DeleteButton.SetStatus (IE_GUI_BUTTON_DISABLED)
 	DeleteButton.SetText (13957)
 
 	CancelButton = CreateCharWindow.GetControl (4)
-	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CreateCharCancelPress")
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreateCharCancelPress)
 	CancelButton.SetStatus (IE_GUI_BUTTON_ENABLED)
 	CancelButton.SetText (13727)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
@@ -158,15 +165,15 @@ def ExitPress ():
 	global PartyFormationWindow, ExitWindow
 
 	PartyFormationWindow.SetVisible (WINDOW_INVISIBLE)
-	ExitWindow = GemRB.LoadWindowObject (7)
+	ExitWindow = GemRB.LoadWindow (7)
 
 	ExitButton = ExitWindow.GetControl (1)
-	ExitButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ExitExitPress")
+	ExitButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ExitExitPress)
 	ExitButton.SetText (13906)
 	ExitButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
 
 	CancelButton = ExitWindow.GetControl (2)
-	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ExitCancelPress")
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ExitCancelPress)
 	CancelButton.SetText (13727)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 

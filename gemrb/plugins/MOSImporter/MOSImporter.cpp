@@ -18,12 +18,12 @@
  *
  */
 
-#include "win32def.h"
 #include "MOSImporter.h"
+
 #include "RGBAColor.h"
-#include "Compressor.h"
-#include "FileStream.h"
-#include "CachedFileStream.h"
+#include "win32def.h"
+
+#include "FileCache.h"
 #include "Interface.h"
 #include "Video.h"
 
@@ -44,48 +44,19 @@ MOSImporter::~MOSImporter(void)
 {
 }
 
-bool MOSImporter::Open(DataStream* stream, bool autoFree)
+bool MOSImporter::Open(DataStream* stream)
 {
-	if (!Resource::Open(stream, autoFree))
-		return false;
 	str = stream;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "MOSCV1  ", 8 ) == 0) {
-		char cpath[_MAX_PATH];
-		strcpy( cpath, core->CachePath );
-		strcat( cpath, stream->filename );
-		FILE* exist_in_cache = fopen( cpath, "rb" );
-		if (exist_in_cache) {
-			//File was previously cached, using local copy
-			if (autoFree)
-				delete( str );
-			fclose( exist_in_cache );
-			FileStream* s = new FileStream();
-			s->Open( cpath );
-			str = s;
-			str->Read( Signature, 8 );
-		} else {
-			//No file found in Cache, Decompressing and storing for further use
-			str->Seek( 4, GEM_CURRENT_POS );
-
-			if (!core->IsAvailable( IE_COMPRESSION_CLASS_ID )) {
-				printf( "No Compression Manager Available.\nCannot Load Compressed Mos File.\n" );
-				return false;
-			}	
-			FILE* newfile = fopen( cpath, "wb" );
-			Compressor* comp = ( Compressor* )
-				core->GetInterface( IE_COMPRESSION_CLASS_ID );
-			comp->Decompress( newfile, str );
-			core->FreeInterface( comp );
-			fclose( newfile );
-			if (autoFree)
-				delete( str );
-			FileStream* s = new FileStream();
-			s->Open( cpath );
-			str = s;
-			str->Read( Signature, 8 );
-		}
+		str->Seek( 4, GEM_CURRENT_POS );
+		DataStream* cached = CacheCompressedStream(stream, stream->filename);
+		delete str;
+		if (!cached)
+			return false;
+		str = cached;
+		str->Read( Signature, 8 );
 	}
 	if (strncmp( Signature, "MOS V1  ", 8 ) != 0) {
 		return false;
@@ -155,5 +126,5 @@ Sprite2D* MOSImporter::GetSprite2D()
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x167B73E, "MOS File Importer")
-PLUGIN_IE_RESOURCE(MOSImporter, ".mos", (ieWord)IE_MOS_CLASS_ID)
+PLUGIN_IE_RESOURCE(MOSImporter, "mos", (ieWord)IE_MOS_CLASS_ID)
 END_PLUGIN()

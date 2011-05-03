@@ -21,10 +21,10 @@
 #if !defined(DICTIONARY_H)
 #define DICTIONARY_H
 
-#include <ctype.h>
-#include <cstring>
-#include "win32def.h"
 #include "SClassID.h"
+#include "win32def.h"
+
+#include <cstring>
 
 /////////////////////////////////////////////////////////////////////////////
 // Dictionary<unsigned long, VALUE>

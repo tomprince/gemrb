@@ -21,17 +21,16 @@
 #ifndef GUISCRIPT_H
 #define GUISCRIPT_H
 
-#ifdef WIN32
-#ifdef _DEBUG
+// NOTE: Python.h has to be included first.
+
+#if defined(WIN32) && defined(_DEBUG)
 #undef _DEBUG
 #include <Python.h>
 #define _DEBUG
 #else
 #include <Python.h>
 #endif
-#else
-#include <Python.h>
-#endif
+
 #include "ScriptEngine.h"
 
 #define SV_BPP 0
@@ -39,28 +38,31 @@
 #define SV_HEIGHT 2
 
 class GUIScript : public ScriptEngine {
-private:
+public:
 	PyObject* pModule, * pDict;
 	PyObject* pMainDic;
+	PyObject* pGUIClasses;
 public:
 	GUIScript(void);
 	~GUIScript(void);
 	/** Initialization Routine */
 	bool Init(void);
+	/** Autodetect GameType */
+	bool Autodetect(void);
 	/** Load Script */
 	bool LoadScript(const char* filename);
 	/** Run Function */
-	bool RunFunction(const char* fname, bool error=true, int intparam=-1);
+	bool RunFunction(const char *module, const char* fname, bool report_error=true, int intparam=-1);
+	/** Exec a single File */
+	void ExecFile(const char* file);
 	/** Exec a single String */
 	void ExecString(const char* string);
 	/** lets hope this one can be here without screwing up the general interface */
 	PyObject *CallbackFunction(const char* fname, PyObject* pArgs);
+	PyObject* ConstructObject(const char* classname, int arg);
 	PyObject* ConstructObject(const char* classname, PyObject* pArgs);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
+
+extern GUIScript *gs;
 
 #endif

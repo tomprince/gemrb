@@ -21,15 +21,13 @@
 import GemRB
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import *
+import GUICommon
+import CommonTables
 
 #the different types possible
-LUPROFS_TYPE_LEVELUP = 0
-LUPROFS_TYPE_LEVELUP_BG1 = 1
+LUPROFS_TYPE_LEVELUP = 1
 LUPROFS_TYPE_DUALCLASS = 2
-LUPROFS_TYPE_CHARGEN = 3
-LUPROFS_TYPE_CHARGEN_BG1 = 4
-LUPROFS_TYPE_LEVELUP_IWD = 5
+LUPROFS_TYPE_CHARGEN = 4
 
 #refs to the script calling this
 ProfsWindow = 0
@@ -43,6 +41,7 @@ ProfsOffsetStar = 0
 ProfsOffsetPress = 0
 Profs2ndOffsetButton1 = Profs2ndOffsetStar = Profs2ndOffsetLabel = -1
 ClassNameSave = 0
+OddIDs = 0
 
 #internal variables
 ProfsPointsLeft = 0
@@ -58,20 +57,20 @@ ProfCount = 0
 ProfsTableOffset = 0
 ProfsScrollBar = None
 
-# iwd table that holds the allowed proficiency <-> class mapping
+# iwd1/bg1 table that holds the allowed proficiency <-> class mapping
 ClassWeaponsTable = None
 
 ProfsType = None
 
 def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1], classid=0, scroll=True, profTableOffset=8):
 	"""Opens the proficiency selection window.
-	
+
 	type specifies the type of selection we are doing; choices are above.
 	window specifies the window to be updated.
 	callback specifies the function to call on changes.
 	classid is sent only during dualclassing to specify the new class."""
 
-	global ProfsOffsetSum, ProfsOffsetButton1, ProfsOffsetLabel, ProfsOffsetStar
+	global ProfsOffsetSum, ProfsOffsetButton1, ProfsOffsetLabel, ProfsOffsetStar, OddIDs
 	global ProfsOffsetPress, ProfsPointsLeft, ProfsNumButtons, ProfsTopIndex
 	global ProfsScrollBar, ProfsTableOffset, ProfsType
 	global ProfsWindow, ProfsCallback, ProfsTextArea, ProfsColumn, ProfsTable, ProfCount
@@ -88,7 +87,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 	ProfsTableOffset = profTableOffset
 	ProfsType = type
 
-	if type == LUPROFS_TYPE_CHARGEN: #chargen
+	if type == LUPROFS_TYPE_CHARGEN and GUICommon.GameIsBG2(): #chargen
 		ProfsOffsetSum = 9
 		ProfsOffsetButton1 = 11
 		ProfsOffsetStar = 27
@@ -99,7 +98,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsTextArea.SetText (9588)
 		if (scroll):
 			ProfsScrollBar = ProfsWindow.GetControl (78)
-	elif type == LUPROFS_TYPE_CHARGEN_BG1: #chargen
+	elif type == LUPROFS_TYPE_CHARGEN and GUICommon.GameIsBG1(): #chargen
 		ProfsOffsetSum = 9
 		ProfsOffsetButton1 = 11
 		ProfsOffsetStar = 27
@@ -110,7 +109,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsTextArea.SetText (9588)
 		if (scroll):
 			ProfsScrollBar = ProfsWindow.GetControl (78)
-	elif type == LUPROFS_TYPE_LEVELUP: #levelup
+	elif type == LUPROFS_TYPE_LEVELUP and GUICommon.GameIsBG2(): #levelup
 		ProfsOffsetSum = 36
 		ProfsOffsetButton1 = 1
 		ProfsOffsetStar = 48
@@ -119,7 +118,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsNumButtons = 7
 		ProfsTextArea = ProfsWindow.GetControl (110)
 		ProfsScrollBar = ProfsWindow.GetControl (108)
-	elif type == LUPROFS_TYPE_LEVELUP_BG1: #levelup
+	elif type == LUPROFS_TYPE_LEVELUP and GUICommon.GameIsBG1(): #levelup
 		ProfsOffsetSum = 36
 		ProfsOffsetButton1 = 1
 		ProfsOffsetStar = 48
@@ -129,7 +128,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsTextArea = ProfsWindow.GetControl (42)
 		if (scroll):
 			ProfsScrollBar = ProfsWindow.GetControl (108)
-	elif type == LUPROFS_TYPE_LEVELUP_IWD: #levelup
+	elif type == LUPROFS_TYPE_LEVELUP and GUICommon.GameIsIWD1(): #levelup
 		ProfsOffsetSum = 36
 		ProfsOffsetButton1 = 1
 		ProfsOffsetStar = 48
@@ -142,7 +141,33 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsTextArea = ProfsWindow.GetControl (42)
 		if (scroll):
 			ProfsScrollBar = ProfsWindow.GetControl (108)
-		ClassWeaponsTable = GemRB.LoadTableObject ("clasweap")
+		OddIDs = 0
+	elif type == LUPROFS_TYPE_DUALCLASS and GUICommon.GameIsIWD1(): #dualclass
+		ProfsOffsetSum = 40
+		ProfsOffsetButton1 = 50
+		ProfsOffsetStar = 0
+		ProfsOffsetLabel = 41
+		ProfsOffsetPress = -1 #66
+		ProfsNumButtons = 15
+		Profs2ndOffsetButton1 = 78
+		Profs2ndOffsetStar = 92
+		Profs2ndOffsetLabel = 126
+		ProfsTextArea = ProfsWindow.GetControl (74)
+		ProfsTextArea.SetText (9588)
+		if (scroll):
+			ProfsScrollBar = ProfsWindow.GetControl (None)
+		OddIDs = 1
+	elif type == LUPROFS_TYPE_DUALCLASS and GUICommon.GameIsBG1(): #dualclass
+		ProfsOffsetSum = 40
+		ProfsOffsetButton1 = 50
+		ProfsOffsetStar = 0
+		ProfsOffsetLabel = 41
+		ProfsOffsetPress = -1 #FIXME
+		ProfsNumButtons = 8
+		ProfsTextArea = ProfsWindow.GetControl (74)
+		ProfsTextArea.SetText (9588)
+		if (scroll):
+			ProfsScrollBar = ProfsWindow.GetControl (None)
 	elif type == LUPROFS_TYPE_DUALCLASS: #dualclass
 		ProfsOffsetSum = 40
 		ProfsOffsetButton1 = 50
@@ -152,7 +177,8 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		ProfsNumButtons = 8
 		ProfsTextArea = ProfsWindow.GetControl (74)
 		ProfsTextArea.SetText (9588)
-		ProfsScrollBar = ProfsWindow.GetControl (78)
+		if (scroll):
+			ProfsScrollBar = ProfsWindow.GetControl (78)
 	else: #unknown
 		return
 
@@ -160,24 +186,31 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 	GemRB.SetVar ("ProfsTopIndex", 0)
 	ProfsPointsLeft = 0
 	ProfsTopIndex = 0
-	ProfsTable = GemRB.LoadTableObject ("profs")
+
+	ProfsTable = GemRB.LoadTable ("profs")
+	if GUICommon.GameIsIWD1() or GUICommon.GameIsBG1():
+		ClassWeaponsTable = GemRB.LoadTable ("clasweap")
+	else:
+		ClassWeaponsTable = None
 
 	#get the class name
-	IsDual = IsDualClassed (pc, 1)
+	IsDual = GUICommon.IsDualClassed (pc, 1)
 	if classid: #for dual classes when we can't get the class dualing to
 		Class = classid
 	elif IsDual[0]:
-		Class = ClassTable.GetValue (IsDual[2], 5)
+		Class = CommonTables.Classes.GetValue (IsDual[2], 5)
 	else:
 		Class = GemRB.GetPlayerStat (pc, IE_CLASS)
-	ClassName = ClassTable.FindValue (5, Class)
-	ClassName = ClassTable.GetRowName (ClassName)
+	ClassName = CommonTables.Classes.FindValue (5, Class)
+	ClassName = CommonTables.Classes.GetRowName (ClassName)
+	if ClassName == "SORCERER":
+		ClassName = "MAGE"
 	ClassNameSave = ClassName
 
 	#find the class with the greatest prof potential
 	FastestProf = 0
 	ProfsRate = 100
-	IsMulti = IsMultiClassed (pc, 1)
+	IsMulti = GUICommon.IsMultiClassed (pc, 1)
 	if IsMulti[0] > 1:
 		for i in range (1, IsMulti[0]+1):
 			TmpRate = ProfsTable.GetValue (IsMulti[i]-1, 1)
@@ -190,29 +223,24 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 	#figure out how many prof points we have
 	if sum (level1) == 0: #character is being generated (either chargen or dual)
 		ProfsPointsLeft = ProfsTable.GetValue (ClassName, "FIRST_LEVEL")
-		
+
 	#we need these 2 number to floor before subtracting
 	ProfsPointsLeft += level2[FastestProf]/ProfsRate - level1[FastestProf]/ProfsRate
 
 	#setup prof vars for passing between functions
-	ProfsTable = GemRB.LoadTableObject ("weapprof")
-	Kit = GetKitIndex (pc)
-	if Kit and type != LUPROFS_TYPE_DUALCLASS and IsMulti[0]<2 and not IsDual[0]:
-		#if we do kit with dualclass, we'll get the old kit
-		#also don't want to worry about kitted multis
-		ProfsColumn = KitListTable.GetValue (Kit, 5)
+	ProfsTable = GemRB.LoadTable ("weapprof")
+
+	# if we have the classweapons table, use it
+	if ClassWeaponsTable:
+		ProfsColumn = ClassWeaponsTable.GetRowIndex (ClassName)
 	else:
-		#sorcerers don't have a column, so ref mages
-		if ClassName == "SORCERER":
-			ProfsColumn = ProfsTable.GetColumnIndex ("MAGE")
+		Kit = GUICommon.GetKitIndex (pc)
+		if Kit and type != LUPROFS_TYPE_DUALCLASS and IsMulti[0]<2 and not IsDual[0]:
+			#if we do kit with dualclass, we'll get the old kit
+			#also don't want to worry about kitted multis
+			ProfsColumn = CommonTables.KitList.GetValue (Kit, 5)
 		else:
-			if GameIsIWD() or GameIsHOW():
-				# these two have a nice table (unlike the rest we had to override)
-				# but it is transposed when compared
-				ClassWeapTable = GemRB.LoadTableObject ("clasweap")
-				ProfsColumn = ClassWeapTable.GetRowIndex (ClassName)
-			else:
-				ProfsColumn = ProfsTable.GetColumnIndex (ClassName)
+			ProfsColumn = ProfsTable.GetColumnIndex (ClassName)
 
 	#setup some basic counts
 	RowCount = ProfsTable.GetRowCount () - ProfsTableOffset + 1
@@ -229,9 +257,9 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		#we only need the low 3 bits for profeciencies on levelup; otherwise
 		#we just set them all to 0
 		currentprof = 0
-		if type == LUPROFS_TYPE_LEVELUP or type == LUPROFS_TYPE_LEVELUP_BG1 or type == LUPROFS_TYPE_LEVELUP_IWD:
+		if type == LUPROFS_TYPE_LEVELUP:
 			stat = ProfsTable.GetValue (i+ProfsTableOffset, 0)
-			if GameIsBG1():
+			if GUICommon.GameIsBG1():
 				stat = stat + IE_PROFICIENCYBASTARDSWORD
 			currentprof = GemRB.GetPlayerStat (pc, stat)&0x07
 		else:
@@ -242,13 +270,13 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		GemRB.SetVar ("ProfBase "+str(i), currentprof)
 
 		#see if we can assign to this prof
-		if GameIsIWD() or GameIsHOW():
-			maxprof = ClassWeapTable.GetValue (ProfsColumn, i) # this table has profs as rows
+		if ClassWeaponsTable:
+			maxprof = ClassWeaponsTable.GetValue (ProfsColumn, i) # this table has profs as rows
 		else:
 			maxprof = ProfsTable.GetValue(i+ProfsTableOffset, ProfsColumn)
 		if maxprof > currentprof:
 			ProfsAssignable += maxprof-currentprof
-	
+
 	#correct the profs left if we can't assign that much
 	if ProfsPointsLeft > ProfsAssignable:
 		ProfsPointsLeft = ProfsAssignable
@@ -259,7 +287,7 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 		if ProfsOffsetPress != -1:
 			Button=ProfsWindow.GetControl(i+ProfsOffsetPress)
 			Button.SetVarAssoc("Prof", i)
-			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ProfsJustPress")
+			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, ProfsJustPress)
 
 		cid = i*2+ProfsOffsetButton1
 		if Profs2ndOffsetButton1 != -1 and i > 7:
@@ -267,15 +295,15 @@ def SetupProfsWindow (pc, type, window, callback, level1=[0,0,0], level2=[1,1,1]
 
 		Button=ProfsWindow.GetControl(cid)
 		Button.SetVarAssoc("Prof", i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ProfsLeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, ProfsLeftPress)
 
 		Button=ProfsWindow.GetControl(cid+1)
 		Button.SetVarAssoc("Prof", i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ProfsRightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, ProfsRightPress)
 
 	if(ProfsScrollBar):
 		# proficiencies scrollbar
-		ProfsScrollBar.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, "ProfsScrollBarPress")
+		ProfsScrollBar.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, ProfsScrollBarPress)
 		ProfsScrollBar.SetDefaultScrollBar ()
 		ProfsScrollBar.SetVarAssoc ("ProfsTopIndex", ProfCount)
 	ProfsRedraw (1)
@@ -291,7 +319,7 @@ def ProfsRedraw (first=0):
 	ProfSumLabel = ProfsWindow.GetControl(0x10000000+ProfsOffsetSum)
 	ProfSumLabel.SetText(str(ProfsPointsLeft))
 	SkipProfs = []
-	
+
 	for i in range(ProfsNumButtons):
 		Pos=ProfsTopIndex+i
 		ProfName = ProfsTable.GetValue(Pos+ProfsTableOffset, 1) #we add the bg1 skill count offset
@@ -310,7 +338,7 @@ def ProfsRedraw (first=0):
 			Button2.SetState(IE_GUI_BUTTON_DISABLED)
 			Button1.SetFlags(IE_GUI_BUTTON_NO_IMAGE,OP_OR)
 			Button2.SetFlags(IE_GUI_BUTTON_NO_IMAGE,OP_OR)
-			if GameIsBG2() and (i==0 or ((i-1) in SkipProfs)):
+			if GUICommon.GameIsBG2() and (i==0 or ((i-1) in SkipProfs)):
 				SkipProfs.append (i)
 		else:
 			Button1.SetState(IE_GUI_BUTTON_ENABLED)
@@ -320,7 +348,10 @@ def ProfsRedraw (first=0):
 
 		cid = 0x10000000 + ProfsOffsetLabel + i
 		if Profs2ndOffsetLabel != -1 and i > 7:
-			cid = 0x10000000 + Profs2ndOffsetLabel + i - 8
+			if OddIDs:
+				cid = 0x10000000 + Profs2ndOffsetLabel + 2*(i - 8)
+			else:
+				cid = 0x10000000 + Profs2ndOffsetLabel + i - 8
 
 		Label=ProfsWindow.GetControl (cid)
 		Label.SetText(ProfName)
@@ -359,7 +390,7 @@ def ProfsJustPress():
 	Pos = GemRB.GetVar ("Prof")+ProfsTopIndex
 	ProfsTextArea.SetText (ProfsTable.GetValue(Pos+ProfsTableOffset, 2) )
 	return
-	
+
 def ProfsRightPress():
 	"""Decrease the current proficiency by one."""
 
@@ -387,16 +418,16 @@ def ProfsLeftPress():
 	ProfsTextArea.SetText(ProfsTable.GetValue(Pos+ProfsTableOffset, 2) )
 	if ProfsPointsLeft == 0:
 		return
-	if GameIsIWD() or GameIsHOW():
-		ProfMaxTable = GemRB.LoadTableObject ("profsmax")
+	if GUICommon.GameIsIWD1() or GUICommon.GameIsBG1():
+		ProfMaxTable = GemRB.LoadTable ("profsmax")
 		MaxProf = ProfMaxTable.GetValue(ClassNameSave, "OTHER_LEVELS")
 	else:
 		MaxProf = ProfsTable.GetValue(Pos+ProfsTableOffset, ProfsColumn)
 	if MaxProf>5:
 		MaxProf = 5
 	# FIXME: use profsmax.2da (in all games? could be problematic for weapon styles)
-	if (MaxProf>2) and (ProfsType == LUPROFS_TYPE_CHARGEN_BG1):
-		MaxProf = 2
+	#if (MaxProf>2) and GUICommon.GameIsBG1():
+	#	MaxProf = 2
 
 	ActPoint = GemRB.GetVar("Prof "+str(Pos) )
 	if ActPoint >= MaxProf:
@@ -414,11 +445,11 @@ def ProfsSave (pc, type=LUPROFS_TYPE_LEVELUP):
 	ProfCount = ProfsTable.GetRowCount () - ProfsTableOffset
 	for i in range(ProfCount): # skip bg1 weapprof.2da proficiencies
 		ProfID = ProfsTable.GetValue (i+ProfsTableOffset, 0)
-		if GameIsBG1():
+		if GUICommon.GameIsBG1():
 			ProfID = ProfID + IE_PROFICIENCYBASTARDSWORD
 		SaveProf = GemRB.GetVar ("Prof "+str(i))
 
-		if type == LUPROFS_TYPE_CHARGEN:
+		if type == LUPROFS_TYPE_CHARGEN and GUICommon.GameIsBG2():
 			GemRB.DispelEffect (pc, "Proficiency", ProfID)
 		else:
 			if type != LUPROFS_TYPE_DUALCLASS:
@@ -429,7 +460,7 @@ def ProfsSave (pc, type=LUPROFS_TYPE_LEVELUP):
 				SaveProf = (OldProf << 3) | SaveProf
 
 		GemRB.SetPlayerStat (pc, ProfID, SaveProf)
-		if type == LUPROFS_TYPE_LEVELUP or type == LUPROFS_TYPE_CHARGEN:
+		if GUICommon.GameIsBG2() and (type == LUPROFS_TYPE_LEVELUP or type == LUPROFS_TYPE_CHARGEN):
 			if SaveProf:
 				GemRB.ApplyEffect (pc, "Proficiency", SaveProf, ProfID)
 	return
@@ -439,7 +470,7 @@ def ProfsNullify ():
 
 	global ProfsTable
 	if not ProfsTable:
-		ProfsTable = GemRB.LoadTableObject ("weapprof")
+		ProfsTable = GemRB.LoadTable ("weapprof")
 	for i in range (ProfsTable.GetRowCount()-ProfsTableOffset+1): #skip bg1 profs
 		GemRB.SetVar ("Prof "+str(i), 0)
 		GemRB.SetVar ("ProfBase "+str(i), 0)

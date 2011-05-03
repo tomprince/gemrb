@@ -18,9 +18,11 @@
  *
  */
 
-#include "win32def.h"
-#include "Interface.h"
 #include "EFFImporter.h"
+
+#include "win32def.h"
+
+#include "Interface.h"
 
 EFFImporter::EFFImporter(void)
 {
@@ -54,6 +56,18 @@ bool EFFImporter::Open(DataStream* stream, bool autoFree)
 	}
 	str->Seek( -8, GEM_CURRENT_POS );
 	return true;
+}
+
+//level resistance is checked when DiceSides or DiceThrown
+//are greater than 0 (sometimes they used -1 for our amusement)
+//if level>than maximum affected or level<than minimum affected, then the
+//effect is resisted
+// copy the info into the EFFV2 fields (separate), so it is clearer
+inline static void fixAffectedLevels(Effect *fx) {
+	if (fx->DiceSides > 0 || fx->DiceThrown > 0) {
+		fx->MinAffectedLevel = fx->DiceThrown;
+		fx->MaxAffectedLevel = fx->DiceSides;
+	}
 }
 
 Effect* EFFImporter::GetEffect(Effect *fx)
@@ -99,6 +113,7 @@ Effect* EFFImporter::GetEffectV1(Effect *fx)
 	str->ReadDword( &fx->SavingThrowBonus );
 	str->ReadWord( &fx->IsVariable );
 	str->ReadWord( &fx->IsSaveForHalfDamage );
+	fixAffectedLevels( fx );
 
 	fx->PosX=0xffffffff;
 	fx->PosY=0xffffffff;
@@ -129,7 +144,9 @@ Effect* EFFImporter::GetEffectV20(Effect *fx)
 	str->ReadWord( &fx->IsVariable ); //if this field was set to 1, this is a variable
 	str->ReadWord( &fx->IsSaveForHalfDamage ); //if this field was set to 1, save for half damage
 	str->ReadDword( &fx->PrimaryType );
-	str->Seek( 12, GEM_CURRENT_POS );
+	str->Seek( 4, GEM_CURRENT_POS );
+	str->ReadDword( &fx->MinAffectedLevel );
+	str->ReadDword( &fx->MaxAffectedLevel );
 	str->ReadDword( &fx->Resistance );
 	str->ReadDword( &fx->Parameter3 );
 	str->ReadDword( &fx->Parameter4 );
@@ -155,11 +172,77 @@ Effect* EFFImporter::GetEffectV20(Effect *fx)
 	} else {
 		str->Seek( 32, GEM_CURRENT_POS);
 	}
-	str->Seek( 8, GEM_CURRENT_POS );
+	str->ReadDword( &fx->CasterLevel );
+	str->Seek( 4, GEM_CURRENT_POS );
 	str->ReadDword( &fx->SecondaryType );
 	str->Seek( 60, GEM_CURRENT_POS );
 
 	return fx;
+}
+
+void EFFImporter::PutEffectV2(DataStream *stream, const Effect *fx) {
+	ieDword tmpDword1,tmpDword2;
+	char filling[60];
+
+	memset(filling,0,sizeof(filling) );
+
+	stream->Write( filling,8 ); //signature
+	stream->WriteDword( &fx->Opcode);
+	stream->WriteDword( &fx->Target);
+	stream->WriteDword( &fx->Power);
+	stream->WriteDword( &fx->Parameter1);
+	stream->WriteDword( &fx->Parameter2);
+	stream->WriteWord( &fx->TimingMode);
+	stream->WriteWord( &fx->unknown2);
+	stream->WriteDword( &fx->Duration);
+	stream->WriteWord( &fx->Probability1);
+	stream->WriteWord( &fx->Probability2);
+	if (fx->IsVariable) {
+		stream->Write( filling,8 );
+	} else {
+		stream->WriteResRef(fx->Resource);
+	}
+	stream->WriteDword( &fx->DiceThrown );
+	stream->WriteDword( &fx->DiceSides );
+	stream->WriteDword( &fx->SavingThrowType );
+	stream->WriteDword( &fx->SavingThrowBonus );
+	stream->WriteWord( &fx->IsVariable );
+	stream->Write( filling,2 ); // SaveForHalfDamage
+	stream->WriteDword( &fx->PrimaryType );
+	stream->Write( filling,12 ); // MinAffectedLevel, MaxAffectedLevel, Resistance
+	stream->WriteDword( &fx->Resistance );
+	stream->WriteDword( &fx->Parameter3 );
+	stream->WriteDword( &fx->Parameter4 );
+	stream->Write( filling,8 );
+	if (fx->IsVariable) {
+		stream->Write( filling,16 );
+	} else {
+		stream->WriteResRef(fx->Resource2);
+		stream->WriteResRef(fx->Resource3);
+	}
+	tmpDword1 = (ieDword) fx->PosX;
+	tmpDword2 = (ieDword) fx->PosY;
+	stream->WriteDword( &tmpDword1 );
+	stream->WriteDword( &tmpDword2 );
+	//FIXME: these two points are actually different
+	stream->WriteDword( &tmpDword1 );
+	stream->WriteDword( &tmpDword2 );
+	stream->WriteDword( &fx->SourceType );
+	stream->WriteResRef( fx->Source );
+	stream->WriteDword( &fx->SourceFlags );
+	stream->WriteDword( &fx->Projectile );
+	tmpDword1 = (ieDword) fx->InventorySlot;
+	stream->WriteDword( &tmpDword1 );
+	if (fx->IsVariable) {
+		//resource1-4 are used as a continuous memory
+		stream->Write(fx->Resource, 32);
+	} else {
+		stream->Write( filling,32 );
+	}
+	stream->WriteDword( &fx->CasterLevel);
+	stream->Write( filling,4);
+	stream->WriteDword( &fx->SecondaryType );
+	stream->Write( filling,60 );
 }
 
 #include "plugindef.h"

@@ -21,30 +21,23 @@
 #ifndef PROIMPORTER_H
 #define PROIMPORTER_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "ProjectileMgr.h"
 
 #include "ie_types.h"
+
 #include "Projectile.h"
-#include "ProjectileMgr.h"
 
 
 class PROImporter : public ProjectileMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	int version;
 
 public:
 	PROImporter(void);
 	~PROImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Projectile* GetProjectile(Projectile *s);
-	void release(void)
-	{
-		delete this;
-	}
 private:
 	void GetAreaExtension(ProjectileExtension *s);
 };

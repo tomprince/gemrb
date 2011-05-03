@@ -18,7 +18,8 @@
 #
 #character generation, alignment (GUICG3)
 import GemRB
-from GUICommon import ClassTable
+from GUIDefines import *
+import CommonTables
 
 AlignmentWindow = 0
 TextAreaControl = 0
@@ -30,13 +31,13 @@ def OnLoad():
 	global AlignmentTable
 	
 	Class = GemRB.GetVar("Class")-1
-	KitName = ClassTable.GetRowName(Class)
+	KitName = CommonTables.Classes.GetRowName(Class)
 
-	AlignmentOk = GemRB.LoadTableObject("ALIGNMNT")
+	AlignmentOk = GemRB.LoadTable("ALIGNMNT")
 
 	GemRB.LoadWindowPack("GUICG", 800, 600)
-	AlignmentTable = GemRB.LoadTableObject("aligns")
-	AlignmentWindow = GemRB.LoadWindowObject(3)
+	AlignmentTable = GemRB.LoadTable("aligns")
+	AlignmentWindow = GemRB.LoadWindow(3)
 	for i in range(9):
 		Button = AlignmentWindow.GetControl(i+2)
 		Button.SetFlags(IE_GUI_BUTTON_RADIOBUTTON,OP_OR)
@@ -47,7 +48,7 @@ def OnLoad():
 		Button = AlignmentWindow.GetControl(i+2)
 		if AlignmentOk.GetValue(KitName, AlignmentTable.GetValue(i, 4) ) != 0:
 			Button.SetState(IE_GUI_BUTTON_ENABLED)
-			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "AlignmentPress")
+			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, AlignmentPress)
 			Button.SetVarAssoc("Alignment", i+1)
 
 	BackButton = AlignmentWindow.GetControl(13)
@@ -61,8 +62,8 @@ def OnLoad():
 	TextAreaControl = AlignmentWindow.GetControl(11)
 	TextAreaControl.SetText(9602)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	AlignmentWindow.SetVisible(WINDOW_VISIBLE)
 	return

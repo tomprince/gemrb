@@ -18,12 +18,10 @@
 #
 # common character generation display code
 import GemRB
+import GUICommon
+#import GUIClasses
 from ie_stats import *
 from GUIDefines import *
-from GUICommon import *
-from GUIClasses import *
-
-from GUICommon import CloseOtherWindow
 
 class CharGen:
 	def __init__(self,stages,startText,importFn,resetButton=False):
@@ -61,7 +59,7 @@ class CharGen:
 			CharGenWindow = self.window
 		else:
 			GemRB.LoadWindowPack ("GUICG", 640, 480)
-			CharGenWindow = GemRB.LoadWindowObject (0)
+			CharGenWindow = GemRB.LoadWindow (0)
 			CharGenWindow.SetFrame ()
 	
 		step = self.step
@@ -83,7 +81,7 @@ class CharGen:
 				if i == step:
 					button.SetState(IE_GUI_BUTTON_ENABLED)
 					button.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
-					button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "NextPress")
+					button.SetEvent (IE_GUI_BUTTON_ON_PRESS, NextPress)
 				else:
 					button.SetState(IE_GUI_BUTTON_DISABLED)
 			i = i + 1
@@ -95,8 +93,15 @@ class CharGen:
 			BackButton.SetState (IE_GUI_BUTTON_ENABLED)
 		else:
 			BackButton.SetState(IE_GUI_BUTTON_DISABLED)
-		BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "BackPress")
+		BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, BackPress)
 		BackButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
+
+		AcceptButton = CharGenWindow.GetControl (8)
+		playmode = GemRB.GetVar ("PlayMode")
+		if playmode>=0:
+			AcceptButton.SetText (11962)
+		else:
+			AcceptButton.SetText (13956)
 
 		#set scrollbar
 		ScrollBar = CharGenWindow.GetControl (10)
@@ -106,7 +111,7 @@ class CharGen:
 		ImportButton = CharGenWindow.GetControl (13)
 		ImportButton.SetText (13955)
 		ImportButton.SetState (IE_GUI_BUTTON_ENABLED)
-		ImportButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ImportPress")
+		ImportButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ImportPress)
 
 		#set cancel and start over
 		CancelButton = CharGenWindow.GetControl (15)
@@ -115,7 +120,7 @@ class CharGen:
 		else:
 			CancelButton.SetText (8159) # Start over
 		CancelButton.SetState (IE_GUI_BUTTON_ENABLED)
-		CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CancelPress")
+		CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CancelPress)
 
 		#set and fill overview
 		TextAreaControl = CharGenWindow.GetControl (9)
@@ -147,7 +152,7 @@ class CharGen:
 			(name,setFn,commentFn,unsetFn,guardFn) = self.stages[self.step]
 			if(guardFn and not guardFn()):
 				return False
-			if(callable(setFn)):
+			if(hasattr(setFn, "__call__")):
 				setFn()
 			else:
 				GemRB.SetNextScript(setFn)
@@ -180,7 +185,7 @@ class CharGen:
 
 	def back(self):
 		"""Moves to the previous step. Unsets last"""
-		CloseOtherWindow(None)
+		GUICommon.CloseOtherWindow(None)
 		self.unset(self.step)
 		if len(self.stages[self.step]) == 3:
 			#short, return to other short
@@ -200,7 +205,7 @@ class CharGen:
 	
 	def next(self):
 		"""Calls the next setter."""
-		CloseOtherWindow(None)
+		GUICommon.CloseOtherWindow(None)
 		self.step = self.step + 1
 		while(not self.setScript()):
 			self.step = self.step + 1
@@ -228,7 +233,7 @@ class CharGen:
 			return
 		else:
 			raise ValueError("bad arg type: "+str(type(to)) + " " + str(to))
-		CloseOtherWindow(None)
+		GUICommon.CloseOtherWindow(None)
 		while(not self.setScript()):
 			self.step = self.step + 1
 					 	
@@ -248,6 +253,7 @@ def BackPress():
 	"""Moves to the previous step."""
 	global CharGenMaster
 	print "back"
+	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_OR)
 	CharGenMaster.back()
 	
 def NextPress():

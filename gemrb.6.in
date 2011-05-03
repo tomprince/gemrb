@@ -1,0 +1,393 @@
+.\"Title and section
+.TH GEMRB 6
+
+.\"###################################################
+.SH NAME 
+GemRB
+\- emulator for Infinity Engine-based games
+
+.\"###################################################
+.SH SYNOPSIS
+.B gemrb
+[\-c
+.IR CONFIG-FILE ]
+.br
+.B torment
+.br
+
+.\"###################################################
+.SH DESCRIPTION
+.B GemRB
+is an emulator for Infinity Engine-based games, fine RPGs like Baldur's Gate,
+Icewind Dale and Planescape: Torment.
+
+.B GemRB
+reimplements only the game engine. To actually play anything, you have to have
+the data from the original game(s), installed or unpackaged where GemRB can find it.
+See the
+.I GamePath
+and
+.I CDn
+settings in the engine configuration file below. A full install is recommended.
+
+.\"###################################################
+.SH OPTIONS
+.TP
+.BI \-c " FILE"
+Use the specified configuration file
+.IR FILE " instead"
+of the default
+.IR gemrb.cfg .  
+
+.B Note:
+You can also use the program's name as a mean to select the configuration file.
+For example, if the program's name is 
+.I torment 
+instead of
+.IR gemrb ,
+the engine first seaches for 
+.I torment.cfg 
+and only if it's not found it searches for 
+.IR gemrb.cfg .
+
+To use this feature, just create a symbolic link
+.I torment
+pointing to the
+.I gemrb
+binary and then run
+.IR torment
+instead.
+
+.\"###################################################
+.SH Configuration File
+.PD 0
+A configuration file consists of pairs
+.IR PARAMETER=VALUE ,
+each on its own line. The case of PARAMETER is not significant, 
+GameType is the same as GAMETYPE. If the same PARAMETER is defined 
+more than once, only the last occurence is used.
+
+Empty lines and lines starting with `#' (hash sign) are ignored.
+
+.B Parameters:
+
+.TP
+.BR GameType =(bg1|bg2|iwd|iwd2|how|pst)
+Type of the game. The value is a name of subdirectory in override/ 
+and GUIScripts/ directories
+with game type-specific files and scripts. It is at present also used
+for various tweaks hardcoded in the GemRB engine.
+
+.TP
+.BR GameName =STRING
+Arbitrary name of the game. It will be displayed in the window's title bar.
+
+.TP
+.BR GamePath =PATH
+Path to the directory where the original game is installed. If you can't
+install the game under MS Windows or with WINE, you can try to unpack the data files
+with the
+.I unshield
+program found at 
+.IR http://synce.sourceforge.net .
+
+.TP
+.BR CD1 =PATH
+.TP
+.BR CD2 =PATH
+.TP
+.BR CDn =...
+Path to the data files for the game's particular CDs.
+
+.\".TP
+.\".BR INIConfig =FILE
+.\"Name of the game's INI file, relative to 
+.\".IR GamePath .
+.\"E.g. for Baldur's Gate game it is baldur.ini.
+
+
+.TP
+.BR Width =INT
+Game window width (in pixels).
+
+.B WARNING:
+This is not arbitrary but depends on the game data. For custom resolutions
+the widescreen mod needs to be used.
+
+.TP
+.BR Height =INT
+Game window height (in pixels).
+
+.B WARNING:
+This is not arbitrary but depends on the game data. For custom resolutions
+the widescreen mod needs to be used.
+
+.TP
+.BR Bpp =INT
+Color depth of the game window (in bits per pixel).
+
+.TP
+.BR Fullscreen =(0|1)
+Whether the game should run in fullscreen mode.
+
+.\".TP
+.\".BR ForceStereo =(0|1)
+.\"Some older games such as BG1 and PST need this parameter to be 
+.\".IR 1 .
+.\"For other game types set it to
+.\".IR 0 .
+
+.TP
+.BR TooltipDelay =INT
+Delay (in miliseconds) before tooltips are displayed when the mouse is not moving.
+A reasonable number for this option is e.g.
+.IR 500 .
+The default is
+.IR 100 .
+
+.TP
+.BR VolumeAmbients =INT
+Volume of ambient sounds in percents. The default is
+.IR 100 .
+
+.TP
+.BR VolumeMovie =INT
+Volume during movie playback in percents. The default is
+.IR 100 .
+
+.TP
+.BR VolumeMusic =INT
+Volume of background music in percents. The default is
+.IR 100 .
+
+.TP
+.BR VolumeSFX =INT
+Volume of sound effects in percents. The default is
+.IR 100 .
+
+.TP
+.BR VolumeVoices =INT
+Volume of PC or NPC voices in percents. The default is
+.IR 100 .
+
+
+.TP
+.BR SkipIntroVideos =(0|1)
+This parameter is meant for developers. If set to
+.IR 1 ,
+the intro and logo videos are skipped to save developer's nerves. The default is
+.IR 0 .
+
+.TP
+.BR DrawFPS =(0|1)
+This parameter is meant for developers. If set to
+.IR 1 ,
+the current FPS (Frames per Second) value is drawn in the top left window corner. The default is
+.IR 0 .
+
+.TP
+.BR FogOfWar =(0|1)
+If set to
+.IR 1 ,
+the unexplored parts of an area are blacked out. It is enabled by default.
+
+.TP
+.BR EnableCheatKeys =(0|1)
+This parameter is meant for developers. If set to
+.IR 1 ,
+certain keys allow you to inspect the internal state of objects, do forbidden things, etc.
+The keys are listed in the
+.I CheatKeys.txt
+file. Do NOT use this option unless you want to make your hands dirty :-). The default is
+.IR 0 .
+
+.TP
+.BR ScriptDebugMode =(n)
+This parameter is meant for developers. It is a combination of bit values
+
+.IR 1
+- count references,
+
+.IR 2
+- display cutscene warnings,
+
+.IR 4
+- display variable warnings,
+
+.IR 8
+- display action warnings,
+
+.IR 16
+- display trigger warnings.
+
+The default is
+.IR 0 .
+
+.TP
+.BR CaseSensitive =(0|1)
+When 
+this parameter is set to 
+.IR 1 ,
+the engine will try to find files regardless of their names' case at the cost
+of a slight speed penalty. This is especially important when using
+game files on CD-ROMs, where the files can't be renamed. Like 
+many Windows programs, the original games use inconsistent mix
+of lower/upper case letters for naming and referencing their files. 
+
+Set this parameter to 
+.I 1
+on Unix-like systems.
+
+.TP
+.BR DelayPlugin =FILENAME
+Named plugin will be loaded after other (nondelayed) plugins were loaded.
+.IR FILENAME 
+is a name without path, but with extension, for example
+.IR libNullSound.so 
+or
+.IR libNullSound.dll .
+You can use this parameter more than once.
+
+.TP
+.BR SkipPlugin =FILENAME
+Named plugin will not be loaded.
+.IR FILENAME 
+is a name without path, but with extension, for example
+.IR libNullSound.so 
+or
+.IR libNullSound.dll .
+You can use this parameter more than once.
+
+.TP
+.BR AudioDriver =(openal|sdlaudio|none)
+Use the specified plugin as the audio driver. The default is openal, while
+.I none
+will disable all audio.
+
+.TP
+.BR SaveAsOriginal =(0|1)
+Set this parameter to
+.IR 1 ,
+if you want to keep the save game compatible with the original engine. It is enabled by default.
+
+.TP
+.BR CachePath =PATH
+User-writable directory where the engine caches uncompressed and temporary
+files.
+
+.TP
+.BR GemRBPath =PATH
+Path to the GemRB installation. (To be obsoleted; preset at build time).
+
+.TP
+.BR GUIScriptsPath =PATH
+Path to the directory with scripts controlling the game's GUI. 
+
+.TP
+.BR SavePath =PATH
+Path to the directory with save games. Note that this directory has to
+contain 
+.I save/
+and/or eventually
+.I mpsave/
+subdirectories and that only these subdirectories contain the actual
+saved games.
+
+.I SavePath
+defaults to
+.IR GamePath .
+
+.TP
+.BR GameOnCD =(0|1)
+defaults to
+.IR 0 .
+
+
+.TP
+.BR GameDataPath =PATH
+Path to the original game's installed data files, relative to GamePath.
+Usually it's 
+.IR data .
+
+
+.TP
+.BR GameOverridePath =PATH
+Path to the original game's override dir, relative to GamePath.
+Usually it's 
+.IR override .
+Original games use this directory to place last-minute patches.
+
+.TP
+.BR GemRBOverridePath =PATH
+Path where GemRB looks for its game override directory.
+It defaults to
+.IR GemRBPath .
+The original games hardcoded this information in the engine.
+
+
+.\"###################################################
+.SH FILES
+.PD 0
+.TP 20
+.B @SYSCONF_DIR@/gemrb.cfg
+system-wide configuration file
+
+.TP
+.B @DATA_DIR@/override/
+directory with 
+.BR GemRB -distributed
+data files. These used to be hardcoded in the original engine. The files
+are sorted into directories for specific games.
+
+.TP
+.B @DATA_DIR@/GUIScripts/
+directory with Python scripts providing GUI setup and interaction. The files
+are sorted into directories for specific games.
+
+.TP
+.B ~/.gemrb/gemrb.cfg
+.TP
+.B ~/.gemrb/override/
+.TP
+.B ~/.gemrb/GUIScripts/
+user's own configuration and data files.
+.TP
+.B ~/.gemrb/cache/
+cache directory
+.PD
+
+.\"###################################################
+.SH BUGS
+Many.
+.B GemRB
+is still in an early development stage and not nearly complete. 
+
+If you stumble over something which is supposed to work, either make a bug report
+at http://sourceforge.net/projects/gemrb or come to IRC channel 
+.I #GemRB
+at FreeNode.
+
+.\"###################################################
+.SH AUTHOR
+The GemRB Project development team at http://gemrb.sourceforge.net
+
+.\"###################################################
+.SH COPYING
+Copyright (C) 2003-2008 The GemRB Project
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+.\"###################################################
+.\"End of file gemrb.man

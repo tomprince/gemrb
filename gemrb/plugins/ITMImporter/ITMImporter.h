@@ -21,13 +21,11 @@
 #ifndef ITMIMPORTER_H
 #define ITMIMPORTER_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "ItemMgr.h"
 
 #include "ie_types.h"
+
 #include "Item.h"
-#include "ItemMgr.h"
 
 #define ITM_VER_BG 10
 #define ITM_VER_PST 11
@@ -36,18 +34,13 @@
 class ITMImporter : public ItemMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	int version;
 
 public:
 	ITMImporter(void);
 	~ITMImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Item* GetItem(Item *s);
-	void release(void)
-	{
-		delete this;
-	}
 private:
 	void GetExtHeader(Item *s, ITMExtHeader* eh);
 	void GetFeature(Effect *f);

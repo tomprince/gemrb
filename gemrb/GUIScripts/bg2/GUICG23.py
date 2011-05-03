@@ -26,7 +26,7 @@ def OnLoad ():
 	global BioWindow, EditControl
 
 	GemRB.LoadWindowPack ("GUICG", 640, 480)
-	BioWindow = GemRB.LoadWindowObject (23)
+	BioWindow = GemRB.LoadWindow (23)
 
 	EditControl = BioWindow.GetControl (3)
 	BIO = GemRB.GetToken("BIO")
@@ -50,9 +50,9 @@ def OnLoad ():
 	CancelButton.SetText (12896)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
-	OkButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OkPress")
-	ClearButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "ClearPress")
-	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CancelPress")
+	OkButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, OkPress)
+	ClearButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, ClearPress)
+	CancelButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CancelPress)
 	BioWindow.SetVisible (WINDOW_VISIBLE)
 	return
 

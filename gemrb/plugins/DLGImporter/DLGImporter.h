@@ -22,6 +22,7 @@
 #define DLGIMPORTER_H
 
 #include "DialogMgr.h"
+
 #include "globals.h"
 
 /*
@@ -52,7 +53,6 @@ struct VarOffset {
 class DLGImporter : public DialogMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	ieDword StatesCount;
 	ieDword StatesOffset;
 	ieDword TransitionsCount;
@@ -69,22 +69,16 @@ private:
 public:
 	DLGImporter(void);
 	~DLGImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
-	Dialog* GetDialog();
+	bool Open(DataStream* stream);
+	Dialog* GetDialog() const;
 private:
-	DialogState* GetDialogState(Dialog *d, unsigned int index);
-	DialogTransition* GetTransition(unsigned int index);
-	DialogString* GetStateTrigger(unsigned int index);
-	DialogString* GetTransitionTrigger(unsigned int index);
-	DialogString* GetAction(unsigned int index);
-	char** GetStrings(char* string, unsigned int& count);
+	DialogState* GetDialogState(Dialog *d, unsigned int index) const;
+	DialogTransition* GetTransition(unsigned int index) const;
+	Condition* GetStateTrigger(unsigned int index) const;
+	Condition* GetTransitionTrigger(unsigned int index) const;
+	std::vector<Action*> GetAction(unsigned int index) const;
 	DialogTransition** GetTransitions(unsigned int firstIndex,
-		unsigned int count);
-public:
-	void release(void)
-	{
-		delete this;
-	}
+		unsigned int count) const;
 };
 
 #endif

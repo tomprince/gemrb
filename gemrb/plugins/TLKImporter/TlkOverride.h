@@ -25,8 +25,10 @@
 #define TLKOVERRIDE_H
 
 #include "globals.h"
+
 #include "Interface.h"
-#include "FileStream.h"
+#include "System/FileStream.h"
+
 #ifdef CACHE_TLK_OVERRIDE
 #include <map>
 

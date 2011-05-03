@@ -65,28 +65,27 @@
 
 ###################################################
 import GemRB
+import GUICommon
+import CommonTables
+import GUICommonWindows
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import CloseOtherWindow, StrModTable, StrModExTable, ClassTable
-from GUICommon import RaceTable, NextLevelTable
-from GUICommonWindows import GetActorPortrait, SetSelectionChangeHandler, RunSelectionChangeHandler
-from GUIWORLD import OpenReformPartyWindow
+import GUIWORLD
 
 ###################################################
 LevelUpWindow = None
 RecordsWindow = None
 InformationWindow = None
 BiographyWindow = None
-statevents =("OnRecordsHelpStrength","OnRecordsHelpIntelligence","OnRecordsHelpWisdom","OnRecordsHelpDexterity","OnRecordsHelpConstitution","OnRecordsHelpCharisma")
 
 ###################################################
 def OpenRecordsWindow ():
 	global RecordsWindow
 	global StatTable
 
-	StatTable = GemRB.LoadTableObject("abcomm")
+	StatTable = GemRB.LoadTable("abcomm")
 	
-	if CloseOtherWindow (OpenRecordsWindow):
+	if GUICommon.CloseOtherWindow (OpenRecordsWindow):
 		GemRB.HideGUI ()
 		if InformationWindow: OpenInformationWindow ()
 		
@@ -94,32 +93,33 @@ def OpenRecordsWindow ():
 			RecordsWindow.Unload ()
 		RecordsWindow = None
 		GemRB.SetVar ("OtherWindow", -1)
-		SetSelectionChangeHandler (None)
+		GUICommonWindows.SetSelectionChangeHandler (None)
 
 		GemRB.UnhideGUI ()
 		return	
 
 	GemRB.HideGUI ()
 	GemRB.LoadWindowPack ("GUIREC")
-	RecordsWindow = Window = GemRB.LoadWindowObject (3)
+	RecordsWindow = Window = GemRB.LoadWindow (3)
 	GemRB.SetVar ("OtherWindow", RecordsWindow.ID)
 
 
 	# Information
 	Button = Window.GetControl (7)
 	Button.SetText (4245)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenInformationWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenInformationWindow)
 	
 	# Reform Party
 	Button = Window.GetControl (8)
 	Button.SetText (4244)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenReformPartyWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, GUIWORLD.OpenReformPartyWindow)
 
 	# Level Up
 	Button = Window.GetControl (9)
 	Button.SetText (4246)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenLevelUpWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenLevelUpWindow)
 
+	statevents = (OnRecordsHelpStrength, OnRecordsHelpIntelligence, OnRecordsHelpWisdom, OnRecordsHelpDexterity, OnRecordsHelpConstitution, OnRecordsHelpCharisma)
 	# stat buttons
 	for i in range (6):
 		Button = Window.GetControl (31 + i)
@@ -127,15 +127,15 @@ def OpenRecordsWindow ():
 		Button.SetSprites("", 0, 0, 0, 0, 0)
 		Button.SetState (IE_GUI_BUTTON_LOCKED)
 		Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, statevents[i])
-		Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, "OnRecordsButtonLeave")
+		Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, OnRecordsButtonLeave)
 
 	# AC button
 	Button = Window.GetControl (37)
 	Button.SetFlags(IE_GUI_BUTTON_NO_IMAGE, OP_SET)
 	Button.SetSprites("", 0, 0, 0, 0, 0)
 	Button.SetState (IE_GUI_BUTTON_LOCKED)
-	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, "OnRecordsHelpArmorClass")
-	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, "OnRecordsButtonLeave")
+	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, OnRecordsHelpArmorClass)
+	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, OnRecordsButtonLeave)
 
 
 	# HP button
@@ -143,11 +143,11 @@ def OpenRecordsWindow ():
 	Button.SetFlags (IE_GUI_BUTTON_NO_IMAGE, OP_SET)
 	Button.SetSprites ("", 0, 0, 0, 0, 0)
 	Button.SetState (IE_GUI_BUTTON_LOCKED)
-	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, "OnRecordsHelpHitPoints")
-	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, "OnRecordsButtonLeave")
+	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, OnRecordsHelpHitPoints)
+	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, OnRecordsButtonLeave)
 
 
-	SetSelectionChangeHandler (UpdateRecordsWindow)
+	GUICommonWindows.SetSelectionChangeHandler (UpdateRecordsWindow)
 	UpdateRecordsWindow ()
 
 	GemRB.UnhideGUI ()
@@ -193,7 +193,7 @@ def UpdateRecordsWindow ():
 	Image = Window.GetControl (2)
 	Image.SetState (IE_GUI_BUTTON_LOCKED)
 	Image.SetFlags(IE_GUI_BUTTON_NO_IMAGE | IE_GUI_BUTTON_PICTURE, OP_SET)
-	Image.SetPicture (GetActorPortrait (pc, 'STATS'))
+	Image.SetPicture (GUICommonWindows.GetActorPortrait (pc, 'STATS'))
 
 	# armorclass
 	Label = Window.GetControl (0x1000000b)
@@ -242,17 +242,19 @@ def UpdateRecordsWindow ():
 		Label.SetText (str (stats[i]))
 
 	# race
-	# FIXME: for some strange reason, Morte's race is 1 (Human)
-	# in the save files, instead of 45 (Morte)
+	# HACK: for some strange reason, Morte's race is 1 (Human), instead of 45 (Morte)
 	print "species: %d  race: %d" %(GemRB.GetPlayerStat (pc, IE_SPECIES), GemRB.GetPlayerStat (pc, IE_RACE))
-	text = RaceTable.GetValue (GemRB.GetPlayerStat (pc, IE_RACE) - 1, 0)
+	#be careful, some saves got this field corrupted
+	race = GemRB.GetPlayerStat (pc, IE_SPECIES) - 1
+
+	text = CommonTables.Races.GetValue (race, 0)
 	
 	Label = Window.GetControl (0x10000014)
 	Label.SetText (text)
 
 
 	# sex
-	GenderTable = GemRB.LoadTableObject ("GENDERS")
+	GenderTable = GemRB.LoadTable ("GENDERS")
 	text = GenderTable.GetValue (GemRB.GetPlayerStat (pc, IE_SEX) - 1, 0)
 	
 	Label = Window.GetControl (0x10000015)
@@ -260,7 +262,7 @@ def UpdateRecordsWindow ():
 
 
 	# class
-	text = ClassTable.GetValue (GemRB.GetPlayerStat (pc, IE_CLASS) - 1, 0)
+	text = CommonTables.Classes.GetValue (GemRB.GetPlayerStat (pc, IE_CLASS) - 1, 0)
 
 	Label = Window.GetControl (0x10000016)
 	Label.SetText (text)
@@ -268,30 +270,30 @@ def UpdateRecordsWindow ():
 	# alignment
 	align = GemRB.GetPlayerStat (pc, IE_ALIGNMENT)
 	ss = GemRB.LoadSymbol ("ALIGN")
-	sym = GemRB.GetSymbolValue (ss, align)
+	sym = ss.GetValue (align)
 
-	AlignmentTable = GemRB.LoadTableObject ("ALIGNS")
+	AlignmentTable = GemRB.LoadTable ("ALIGNS")
 	alignment_help = GemRB.GetString (AlignmentTable.GetValue (sym, 'DESC_REF'))
 	frame = (3 * int (align / 16) + align % 16) - 4
 	
 	Button = Window.GetControl (5)
 	Button.SetState (IE_GUI_BUTTON_LOCKED)
 	Button.SetSprites ('STALIGN', 0, frame, 0, 0, 0)
-	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, "OnRecordsHelpAlignment")
-	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, "OnRecordsButtonLeave")
+	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, OnRecordsHelpAlignment)
+	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, OnRecordsButtonLeave)
 
 
 	# faction
 	faction = GemRB.GetPlayerStat (pc, IE_FACTION)
-	FactionTable = GemRB.LoadTableObject ("FACTIONS")
+	FactionTable = GemRB.LoadTable ("FACTIONS")
 	faction_help = GemRB.GetString (FactionTable.GetValue (faction, 0))
 	frame = FactionTable.GetValue (faction, 1)
 	
 	Button = Window.GetControl (6)
 	Button.SetState (IE_GUI_BUTTON_LOCKED)
 	Button.SetSprites ('STFCTION', 0, frame, 0, 0, 0)
-	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, "OnRecordsHelpFaction")
-	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, "OnRecordsButtonLeave")
+	Button.SetEvent (IE_GUI_MOUSE_OVER_BUTTON, OnRecordsHelpFaction)
+	Button.SetEvent (IE_GUI_MOUSE_LEAVE_BUTTON, OnRecordsButtonLeave)
 	
 	# help, info textarea
 	stats_overview = GetStatOverview (pc)
@@ -309,22 +311,10 @@ def OnRecordsButtonLeave ():
 
 def OnRecordsHelpFaction ():
 	Window = RecordsWindow
-	#Help = GemRB.GetVar ("ControlHelp")
 	Help = GemRB.GetString (20106) + "\n\n" + faction_help
 	TextArea = Window.GetControl (0)
 	TextArea.SetText (Help)
 	return
-	
-	# 20106 faction
-
-	# 34584 no align 1/8
-	# 34588 Dustmen 4/8 
-	# 34585 godsmen 8/8
-	# 34587 Sensates 3/8
-	# 34589 Anarchists 5/8
-	# 34590 Xaositects 6/8
-	# 3789 indeps 7/8
-	# 34586 Mercykillers 2/8
 
 def OnRecordsHelpArmorClass ():
 	Window = RecordsWindow
@@ -346,20 +336,6 @@ def OnRecordsHelpAlignment ():
 	TextArea = Window.GetControl (0)
 	TextArea.SetText (Help)
 	return
-	
-	# 20105 alignment
-
-	# 33657 LG desc
-	# 33927 NG
-	# 33928 CG
-	# 33929 LN
-	# 33948 TN
-	# 33949 CN
-	# 33950 LE
-	# 33951 NE
-	# 33952 CE
-
-	# 33930 - attr comments
 
 #Bio:
 # 38787 no
@@ -382,8 +358,8 @@ def OnRecordsHelpStrength ():
 	s = GemRB.GetPlayerStat (pc, IE_STR)
 	e = GemRB.GetPlayerStat (pc, IE_STREXTRA)
 
-	x = StrModTable.GetValue(s, 0) + StrModExTable.GetValue(e, 0)
-	y = StrModTable.GetValue(s, 1) + StrModExTable.GetValue(e, 1)
+	x = CommonTables.StrMod.GetValue(s, 0) + CommonTables.StrModEx.GetValue(e, 0)
+	y = CommonTables.StrMod.GetValue(s, 1) + CommonTables.StrModEx.GetValue(e, 1)
 	if x==0:
 		x=y
 		y=0
@@ -392,7 +368,6 @@ def OnRecordsHelpStrength ():
 	TextArea.SetText(18489)
 	TextArea.Append("\n\n"+GemRB.StatComment(StatTable.GetValue(s,0),x,y) )
 
-	# Unloading tables
 	return
 
 def OnRecordsHelpDexterity ():
@@ -400,7 +375,7 @@ def OnRecordsHelpDexterity ():
 	TextArea = Window.GetControl (0)
 
 	# Loading table of modifications
-	Table = GemRB.LoadTableObject("dexmod")
+	Table = GemRB.LoadTable("dexmod")
 
 	# These are used to get the stats
 	pc = GemRB.GameGetSelectedPCSingle ()
@@ -448,7 +423,7 @@ def OnRecordsHelpConstitution ():
 	TextArea = Window.GetControl (0)
 
 	# Loading table of modifications
-	Table = GemRB.LoadTableObject("hpconbon")
+	Table = GemRB.LoadTable("hpconbon")
 
 	# These are used to get the stats
 	pc = GemRB.GameGetSelectedPCSingle ()
@@ -480,10 +455,10 @@ def OnRecordsHelpCharisma ():
 def GetCharacterHeader (pc):
 	global avatar_header
 
-	BioTable = GemRB.LoadTableObject ("bios")
+	BioTable = GemRB.LoadTable ("bios")
 
 	Class = GemRB.GetPlayerStat (pc, IE_CLASS) - 1
-	Multi = ClassTable.GetValue (Class, 4)
+	Multi = CommonTables.Classes.GetValue (Class, 4)
 	Specific = "%d"%GemRB.GetPlayerStat (pc, IE_SPECIFIC)
 
 	#Nameless is Specific == 1
@@ -491,7 +466,7 @@ def GetCharacterHeader (pc):
 
 	# Nameless is a special case (dual class)
 	if Specific == 1:
-		avatar_header['PrimClass'] = ClassTable.GetRowName (Class)
+		avatar_header['PrimClass'] = CommonTables.Classes.GetRowName (Class)
 		avatar_header['SecoClass'] = "*"
 
 		avatar_header['SecoLevel'] = 0
@@ -523,33 +498,33 @@ def GetCharacterHeader (pc):
 			else:
 				#fighter/thief
 				Class = 3
-			avatar_header['SecoClass'] = ClassTable.GetRowName (Class)
+			avatar_header['SecoClass'] = CommonTables.Classes.GetRowName (Class)
 
 			avatar_header['PrimNextLevXP'] = GetNextLevelExp (avatar_header['PrimLevel'], avatar_header['PrimClass'])
 			avatar_header['SecoNextLevXP'] = GetNextLevelExp (avatar_header['SecoLevel'], avatar_header['SecoClass'])
 
 			# Converting to the displayable format
-			avatar_header['SecoClass'] = GemRB.GetString (ClassTable.GetValue (avatar_header['SecoClass'], "NAME_REF"))
+			avatar_header['SecoClass'] = GemRB.GetString (CommonTables.Classes.GetValue (avatar_header['SecoClass'], "NAME_REF"))
 		else:
 			avatar_header['SecoLevel'] = 0
-			avatar_header['PrimClass'] = ClassTable.GetRowName (Class)
+			avatar_header['PrimClass'] = CommonTables.Classes.GetRowName (Class)
 			avatar_header['SecoClass'] = "*"
 			avatar_header['PrimNextLevXP'] = GetNextLevelExp (avatar_header['PrimLevel'], avatar_header['PrimClass'])
 			avatar_header['SecoNextLevXP'] = 0
 
 	# Converting to the displayable format
-	avatar_header['PrimClass'] = GemRB.GetString (ClassTable.GetValue (avatar_header['PrimClass'], "NAME_REF"))
+	avatar_header['PrimClass'] = GemRB.GetString (CommonTables.Classes.GetValue (avatar_header['PrimClass'], "NAME_REF"))
 
 
 
 def GetNextLevelExp (Level, Class):
 	if (Level < 20):
-		NextLevel = NextLevelTable.GetValue (Class, str (Level + 1))
+		NextLevel = CommonTables.NextLevel.GetValue (Class, str (Level + 1))
 	else:
-		After21ExpTable = GemRB.LoadTableObject ("LVL21PLS")
+		After21ExpTable = GemRB.LoadTable ("LVL21PLS")
 		ExpGap = After21ExpTable.GetValue (Class, 'XPGAP')
 		LevDiff = Level - 19
-		Lev20Exp = NextLevelTable.GetValue (Class, "20")
+		Lev20Exp = CommonTables.NextLevel.GetValue (Class, "20")
 		NextLevel = Lev20Exp + (LevDiff * ExpGap)
 
 	return NextLevel
@@ -565,29 +540,32 @@ def GetStatOverview (pc):
 	stats = []
 
 	# Displaying Class, Level, Experience and Next Level Experience
-	# FIXME: This looks ugly
 	if (avatar_header['SecoLevel'] == 0):
-		DispLevel = GemRB.GetString (48156) + ': ' + str (avatar_header['PrimLevel']) + "\n"
-		DispXP = GemRB.GetString (19673) + ': ' + str (avatar_header['XP']) + "\n"
-		DispNextLevel = GemRB.GetString (19674) + ': ' + str (avatar_header['PrimNextLevXP']) + "\n"
-		Main = avatar_header['PrimClass'] + "\n" + DispLevel + DispXP + DispNextLevel + "\n"
+		stats.append ((avatar_header['PrimClass'], "", 'd'))
+		stats.append ((48156, avatar_header['PrimLevel'], ''))
+		stats.append ((19673, avatar_header['XP'], ''))
+		stats.append ((19674, avatar_header['PrimNextLevXP'], ''))
 	else:
-		DispPrimClass = avatar_header['PrimClass'] + "\n"
-		DispPrimLevel = GemRB.GetString (48156) + ': ' + str (avatar_header['PrimLevel']) + "\n"
-		DispXP = GemRB.GetString (19673) + ': ' + str (avatar_header['XP']) + "\n"
-		DispPrimNextLevel = GemRB.GetString (19674) + ': ' + str (avatar_header['PrimNextLevXP']) + "\n"
-
-		DispSecoClass = avatar_header['SecoClass'] + "\n"
-		DispSecoLevel = GemRB.GetString (48156) + ': ' + str (avatar_header['SecoLevel']) + "\n"
-		DispSecoNextLevel = GemRB.GetString (19674) + ': ' + str (avatar_header['SecoNextLevXP']) + "\n"
-		Main = GemRB.GetString (19414) + "\n\n" + DispPrimClass + DispPrimLevel + DispXP + DispPrimNextLevel + "\n"
-		Main = Main + DispSecoClass + DispSecoLevel + DispXP + DispSecoNextLevel + "\n"
+		stats.append ((19414, "", ''))
+		stats.append (None)
+		stats.append ((avatar_header['PrimClass'], "", 'd'))
+		stats.append ((48156, avatar_header['PrimLevel'], ''))
+		stats.append ((19673, avatar_header['XP'], ''))
+		stats.append ((19674, avatar_header['PrimNextLevXP'], ''))
+		stats.append (None)
+		stats.append ((avatar_header['SecoClass'], "", 'd'))
+		stats.append ((48156, avatar_header['SecoLevel'], ''))
+		stats.append ((19673, avatar_header['XP'], ''))
+		stats.append ((19674, avatar_header['SecoNextLevXP'], ''))
 
 	# 59856 Current State
-	StatesTable = GemRB.LoadTableObject ("states")
+	stats.append (None)
+	StatesTable = GemRB.LoadTable ("states")
 	StateID = GS (IE_STATE_ID)
 	State = GemRB.GetString (StatesTable.GetValue (str (StateID), "NAME_REF"))
-	CurrentState = won + GemRB.GetString (59856) + woff + "\n" + State + "\n\n"
+	stats.append ((won + GemRB.GetString (59856) + woff, "", 'd'))
+	stats.append ((State, "", 'd'))
+	stats.append (None)
 
 	# 67049 AC Bonuses
 	stats.append (67049)
@@ -727,6 +705,8 @@ def GetStatOverview (pc):
 				continue
 			if type == '+':
 				res.append (GemRB.GetString (strref) + ' '+ '+' * val)
+			elif type == 'd': #strref is an already resolved string
+				res.append (strref)
 			elif type == 'x':
 				res.append (GemRB.GetString (strref) + ': x' + str (val))
 			else:
@@ -743,7 +723,7 @@ def GetStatOverview (pc):
 				res.append ("")
 				lines = 0
 
-	return Main + CurrentState + "\n".join (res)
+	return "\n".join (res)
 	pass
 
 
@@ -763,7 +743,7 @@ def OpenInformationWindow ():
 		GemRB.UnhideGUI()
 		return
 
-	InformationWindow = Window = GemRB.LoadWindowObject (5)
+	InformationWindow = Window = GemRB.LoadWindow (5)
 	GemRB.SetVar ("FloatWindow", InformationWindow.ID)
 
 
@@ -784,7 +764,7 @@ def OpenInformationWindow ():
 
 
 	# class
-	text = ClassTable.GetValue (GemRB.GetPlayerStat (pc, IE_CLASS) - 1, 0)
+	text = CommonTables.Classes.GetValue (GemRB.GetPlayerStat (pc, IE_CLASS) - 1, 0)
 
 	Label = Window.GetControl (0x1000000A)
 	Label.SetText (text)
@@ -871,12 +851,12 @@ def OpenInformationWindow ():
 	# Biography
 	Button = Window.GetControl (1)
 	Button.SetText (4247)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenBiographyWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenBiographyWindow)
 
 	# Done
 	Button = Window.GetControl (0)
 	Button.SetText (1403)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenInformationWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenInformationWindow)
 	Button.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	GemRB.UnhideGUI ()
@@ -899,13 +879,13 @@ def OpenBiographyWindow ():
 		InformationWindow.ShowModal (MODAL_SHADOW_GRAY)
 		return
 
-	BiographyWindow = Window = GemRB.LoadWindowObject (12)
+	BiographyWindow = Window = GemRB.LoadWindow (12)
 	GemRB.SetVar ("FloatWindow", BiographyWindow.ID)
 
 	# These are used to get the bio
 	pc = GemRB.GameGetSelectedPCSingle ()
 
-	BioTable = GemRB.LoadTableObject ("bios")
+	BioTable = GemRB.LoadTable ("bios")
 	Specific = "%d"%GemRB.GetPlayerStat (pc, IE_SPECIFIC)
 	BioText = int (BioTable.GetValue (Specific, 'BIO'))
 
@@ -916,7 +896,7 @@ def OpenBiographyWindow ():
 	# Done
 	Button = Window.GetControl (2)
 	Button.SetText (1403)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenBiographyWindow")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenBiographyWindow)
 	Button.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 	
 	GemRB.UnhideGUI ()
@@ -947,7 +927,8 @@ def AcceptLevelUp():
 		GemRB.SetPlayerStat (pc, IE_LEVEL, GemRB.GetPlayerStat (pc, IE_LEVEL)+NumOfPrimLevUp)
 	else:
 		GemRB.SetPlayerStat (pc, IE_LEVEL, GemRB.GetPlayerStat (pc, IE_LEVEL)+NumOfPrimLevUp)
-		GemRB.SetPlayerStat (pc, IE_LEVEL2, GemRB.GetPlayerStat (pc, IE_LEVEL2)+NumOfSecoLevUp)
+		if avatar_header['SecoLevel'] != 0:
+			GemRB.SetPlayerStat (pc, IE_LEVEL2, GemRB.GetPlayerStat (pc, IE_LEVEL2)+NumOfSecoLevUp)
 	UpdateRecordsWindow ()
 
 
@@ -969,18 +950,18 @@ def OpenLevelUpWindow ():
 		GemRB.UnhideGUI()
 		return
 
-	LevelUpWindow = Window = GemRB.LoadWindowObject (4)
+	LevelUpWindow = Window = GemRB.LoadWindow (4)
 	GemRB.SetVar ("FloatWindow", LevelUpWindow.ID)
 
 	# Accept
 	Button = Window.GetControl (0)
 	Button.SetText (4192)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "AcceptLevelUp")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, AcceptLevelUp)
 
 	pc = GemRB.GameGetSelectedPCSingle ()
 
 	# These are used to identify Nameless One
-	BioTable = GemRB.LoadTableObject ("bios")
+	BioTable = GemRB.LoadTable ("bios")
 	Specific = "%d"%GemRB.GetPlayerStat (pc, IE_SPECIFIC)
 	AvatarName = BioTable.GetValue (Specific, "PC")
 
@@ -999,7 +980,7 @@ def OpenLevelUpWindow ():
 	Thac0 = 0
 	WeapProfGained = 0
 
-	ClasWeapTable = GemRB.LoadTableObject ("weapprof")
+	ClasWeapTable = GemRB.LoadTable ("weapprof")
 	WeapProfType = -1
 	CurrWeapProf = -1
 	#This does not apply to Nameless since he uses unused slots system
@@ -1020,7 +1001,7 @@ def OpenLevelUpWindow ():
 	# Since Nameless one is not covered, hammer and club can't occur
 	# What is the avatar's class (Which we can use to lookup XP)
 	ClassRow = GemRB.GetPlayerStat (pc, IE_CLASS)-1
-	Class = ClassTable.GetRowName (ClassRow)
+	Class = CommonTables.Classes.GetRowName (ClassRow)
 
 	# name
 	Label = Window.GetControl (0x10000000)
@@ -1028,7 +1009,7 @@ def OpenLevelUpWindow ():
 
 	# class
 	Label = Window.GetControl (0x10000001)
-	Label.SetText (ClassTable.GetValue (ClassRow, 0))
+	Label.SetText (CommonTables.Classes.GetValue (ClassRow, 0))
 
 	# Armor Class
 	Label = Window.GetControl (0x10000023)
@@ -1069,9 +1050,9 @@ def OpenLevelUpWindow ():
 		if Specific == "1":
 			# Saving Throws
 			# Nameless One gets the best possible throws from all the classes except Priest
-			FigSavThrTable = GemRB.LoadTableObject ("SAVEWAR")
-			MagSavThrTable = GemRB.LoadTableObject ("SAVEWIZ")
-			ThiSavThrTable = GemRB.LoadTableObject ("SAVEROG")
+			FigSavThrTable = GemRB.LoadTable ("SAVEWAR")
+			MagSavThrTable = GemRB.LoadTable ("SAVEWIZ")
+			ThiSavThrTable = GemRB.LoadTable ("SAVEROG")
 			# For Nameless, we also need to know his levels in every class, so that we pick
 			# the right values from the corresponding tables. Also we substract one, so
 			# that we may use them as column indices in tables.
@@ -1122,7 +1103,7 @@ def OpenLevelUpWindow ():
 
 			# Saving Throws
 			# Loading the right saving throw table
-			SavThrTable = GemRB.LoadTableObject (ClassTable.GetValue (Class, "SAVE"))
+			SavThrTable = GemRB.LoadTable (CommonTables.Classes.GetValue (Class, "SAVE"))
 			# Updating the current saving throws. They are changed only if the
 			# new ones are better than current. The smaller the number, the better.
 			# We need to substract one from the NextLevel, so that we get right values.
@@ -1173,7 +1154,7 @@ def OpenLevelUpWindow ():
 				WeapProfGained += 1
 
 		# Saving Throws
-		FigSavThrTable = GemRB.LoadTableObject ("SAVEWAR")
+		FigSavThrTable = GemRB.LoadTable ("SAVEWAR")
 		if PrimNextLevel < 22:
 			for i in range (5):
 				Throw = FigSavThrTable.GetValue (i, PrimNextLevel - 1)
@@ -1184,11 +1165,11 @@ def OpenLevelUpWindow ():
 		if GemRB.GetPlayerStat (pc, IE_CLASS) == 7:
 			# avatar is Fighter/Mage (Dak'kon)
 			Class = "MAGE"
-			SavThrTable = GemRB.LoadTableObject ("SAVEWIZ")
+			SavThrTable = GemRB.LoadTable ("SAVEWIZ")
 		else:
 			# avatar is Fighter/Thief (Annah)
 			Class = "THIEF"
-			SavThrTable = GemRB.LoadTableObject ("SAVEROG")
+			SavThrTable = GemRB.LoadTable ("SAVEROG")
 		
 		SecoNextLevel = avatar_header['SecoLevel']
 		while avatar_header['XP'] >= GetNextLevelExp (SecoNextLevel, Class):
@@ -1266,7 +1247,7 @@ def OpenLevelUpWindow ():
 	Window.ShowModal (MODAL_SHADOW_GRAY)
 
 def GetSingleClassHP (Class, Level):
-	HPTable = GemRB.LoadTableObject (ClassTable.GetValue (Class, "HP"))
+	HPTable = GemRB.LoadTable (CommonTables.Classes.GetValue (Class, "HP"))
 
 	# We need to check if Level is larger than 20, since after that point
 	# the table runs out, and the formula remain the same.
@@ -1284,7 +1265,7 @@ def GetSingleClassHP (Class, Level):
 	return GemRB.Roll (Rolls, Sides, Modif)
 
 def GetConHPBonus (pc, numPrimLevels, numSecoLevels, levelUpType):
-	ConHPBonTable = GemRB.LoadTableObject ("HPCONBON")
+	ConHPBonTable = GemRB.LoadTable ("HPCONBON")
 
 	con = str (GemRB.GetPlayerStat (pc, IE_CON))
 	if levelUpType == 0:
@@ -1296,7 +1277,7 @@ def GetConHPBonus (pc, numPrimLevels, numSecoLevels, levelUpType):
 	return ConHPBonTable.GetValue (con, "WARRIOR") * numPrimLevels / 2 + ConHPBonTable.GetValue (con, "OTHER") * numSecoLevels / 2
 
 def GetThac0 (Class, Level):
-	Thac0Table = GemRB.LoadTableObject ("THAC0")
+	Thac0Table = GemRB.LoadTable ("THAC0")
 	# We need to check if Level is larger than 60, since after that point
 	# the table runs out, and the value remains the same.
 	if Level > 60:

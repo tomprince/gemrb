@@ -42,6 +42,13 @@
 #define RPD_WIS 8
 #define RPD_CHA 9
 #define RPD_SLOW 10
+//HoW specific disease types
+#define RPD_MOLD 11
+#define RPD_MOLD2 12 
+//iwd2 specific disease types
+#define RPD_CONTAGION 13
+#define RPD_PEST 14
+#define RPD_DOLOR 15
 
 //appply spell on condition
 #define COND_GOTHIT 0
@@ -52,8 +59,10 @@
 #define COND_HELPLESS 5
 #define COND_POISONED 6
 #define COND_ATTACKED 7
-#define COND_HIT 8
-#define COND_ALWAYS 9
+#define COND_NEAR4 8
+#define COND_NEAR10 9
+#define COND_EVERYROUND 10
+#define COND_TOOKDAMAGE 11
 
 //resources for the seven eyes effect
 #define EYE_MIND   0

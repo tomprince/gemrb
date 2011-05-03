@@ -18,44 +18,42 @@
  *
  */
 
-#include "win32def.h"
 #include "CHUImporter.h"
-#include "Interface.h"
-#include "Button.h"
-#include "Label.h"
-#include "Progressbar.h"
-#include "Slider.h"
-#include "ScrollBar.h"
-#include "TextArea.h"
-#include "TextEdit.h"
-#include "AnimationFactory.h"
-#include "ImageMgr.h"
+
 #include "RGBAColor.h"
+#include "win32def.h"
+
+#include "AnimationFactory.h"
+#include "GameData.h"
+#include "ImageMgr.h"
+#include "Interface.h"
+#include "GUI/Button.h"
+#include "GUI/Label.h"
+#include "GUI/Progressbar.h"
+#include "GUI/ScrollBar.h"
+#include "GUI/Slider.h"
+#include "GUI/TextArea.h"
+#include "GUI/TextEdit.h"
+#include "GUI/Window.h"
 
 CHUImporter::CHUImporter()
 {
 	str = NULL;
-	autoFree = false;
 }
 
 CHUImporter::~CHUImporter()
 {
-	if (autoFree) {
-		delete str;
-	}
+	delete str;
 }
 
 /** This function loads all available windows from the 'stream' parameter. */
-bool CHUImporter::Open(DataStream* stream, bool autoFree)
+bool CHUImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (this->autoFree) {
-		delete str;
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "CHUIV1  ", 8 ) != 0) {
@@ -100,13 +98,10 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 
 	Window* win = new Window( WindowID, XPos, YPos, Width, Height );
 	if (BackGround == 1) {
-		ImageMgr* mos = ( ImageMgr* )
-			gamedata->GetResource( MosFile, &ImageMgr::ID );
+		ResourceHolder<ImageMgr> mos(MosFile);
 		if (mos != NULL) {
 			win->SetBackGround( mos->GetSprite2D(), true );
-			core->FreeInterface( mos );
-		} else
-			printMessage( "CHUImporter","Cannot Load BackGround, skipping\n",YELLOW );
+		}
 	}
 	if (!core->IsAvailable( IE_BAM_CLASS_ID )) {
 		printMessage( "CHUImporter","No BAM Importer Available, skipping controls\n",LIGHT_RED );
@@ -139,14 +134,24 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				btn->Height = Height;
 				btn->ControlType = ControlType;
 				ieResRef BAMFile;
-				ieWord Cycle, UnpressedIndex, PressedIndex,
-				SelectedIndex, DisabledIndex;
+				ieByte Cycle, tmp;
+				ieDword Flags;
+				ieByte UnpressedIndex, x1;
+				ieByte PressedIndex, x2;
+				ieByte SelectedIndex, y1;
+				ieByte DisabledIndex, y2;
 				str->ReadResRef( BAMFile );
-				str->ReadWord( &Cycle );
-				str->ReadWord( &UnpressedIndex );
-				str->ReadWord( &PressedIndex );
-				str->ReadWord( &SelectedIndex );
-				str->ReadWord( &DisabledIndex );
+				str->Read( &Cycle, 1 );
+				str->Read( &tmp, 1 );
+				Flags = ((ieDword) tmp)<<8;
+				str->Read( &UnpressedIndex, 1 );
+				str->Read( &x1, 1 );
+				str->Read( &PressedIndex, 1 );
+				str->Read( &x2, 1 );
+				str->Read( &SelectedIndex, 1 );
+				str->Read( &y1, 1 );
+				str->Read( &DisabledIndex, 1 );
+				str->Read( &y2, 1 );
 				btn->Owner = win;
 				/** Justification comes from the .chu, other bits are set by script */
 				if (!Width) {
@@ -156,10 +161,14 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 					btn->SetFlags(IE_GUI_BUTTON_CAPS, BM_OR);
 				}
 
-				btn->SetFlags( Cycle&0xff00, BM_OR );
+				btn->SetFlags( Flags, BM_OR );
+				if (Flags & IE_GUI_BUTTON_ANCHOR) {
+					btn->SetAnchor(x1 | (x2<<8), y1 | (y2<<8));
+				}
+
 				if (strnicmp( BAMFile, "guictrl\0", 8 ) == 0) {
 					if (UnpressedIndex == 0) {
-						printMessage("CHUImporter", "Special Button Control, Skipping Image Loading\n",GREEN );
+						//printMessage("CHUImporter", "Special Button Control, Skipping Image Loading\n",GREEN );
 						win->AddControl( btn );
 						break;
 					}
@@ -170,18 +179,18 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				if (!bam ) {
 					printMessage( "CHUImporter","Cannot Load Button Images, skipping control\n",LIGHT_RED );
 					/* IceWind Dale 2 has fake BAM ResRefs for some Buttons,
-					   this will handle bad ResRefs */
+					this will handle bad ResRefs */
 					win->AddControl( btn );
 					break;
 				}
 				/** Cycle is only a byte for buttons */
 				Sprite2D* tspr = bam->GetFrame( UnpressedIndex, (unsigned char) Cycle );
 				btn->SetImage( IE_GUI_BUTTON_UNPRESSED, tspr );
-				tspr = bam->GetFrame( PressedIndex, (unsigned char) Cycle );
+				tspr = bam->GetFrame( PressedIndex, Cycle );
 				btn->SetImage( IE_GUI_BUTTON_PRESSED, tspr );
 				//ignorebuttonframes is a terrible hack
 				if (core->HasFeature( GF_IGNORE_BUTTON_FRAMES) ) {
-					if (bam->GetCycleSize( (unsigned char) Cycle) == 4 )
+					if (bam->GetCycleSize(Cycle) == 4 )
 						SelectedIndex=2;
 				}
 				tspr = bam->GetFrame( SelectedIndex, (unsigned char) Cycle );
@@ -215,7 +224,7 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				str->ReadWord( &KnobYPos );
 				str->ReadWord( &CapXPos );
 				str->ReadWord( &CapYPos );
-				Progressbar* pbar = new Progressbar(KnobStepsCount, true ); 
+				Progressbar* pbar = new Progressbar(KnobStepsCount, true );
 				pbar->ControlID = ControlID;
 				pbar->XPos = XPos;
 				pbar->YPos = YPos;
@@ -227,18 +236,14 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				Sprite2D* img = NULL;
 				Sprite2D* img2 = NULL;
 				if ( MOSFile[0] ) {
-					ImageMgr* mos = ( ImageMgr* )
-						gamedata->GetResource( MOSFile, &ImageMgr::ID );
+					ResourceHolder<ImageMgr> mos(MOSFile);
 					img = mos->GetSprite2D();
-					core->FreeInterface( mos );
 				}
 				if ( MOSFile2[0] ) {
-					ImageMgr* mos = ( ImageMgr* )
-						gamedata->GetResource( MOSFile2, &ImageMgr::ID );
+					ResourceHolder<ImageMgr> mos(MOSFile2);
 					img2 = mos->GetSprite2D();
-					core->FreeInterface( mos );
 				}
-				
+
 				pbar->SetImage( img, img2 );
 				if( KnobStepsCount ) {
 					/* getting the bam */
@@ -248,11 +253,9 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 						pbar->SetAnimation(af->GetCycle( Cycle & 0xff ) );
 				}
 				else {
-					ImageMgr* mos = ( ImageMgr* )
-						gamedata->GetResource( BAMFile, &ImageMgr::ID );
+					ResourceHolder<ImageMgr> mos(BAMFile);
 					Sprite2D* img3 = mos->GetSprite2D();
 					pbar->SetBarCap( img3 );
-					core->FreeInterface( mos );
 				}
 				win->AddControl( pbar );
 			}
@@ -279,11 +282,9 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				sldr->ControlType = ControlType;
 				sldr->Width = Width;
 				sldr->Height = Height;
-				ImageMgr* mos = ( ImageMgr* )
-					gamedata->GetResource( MOSFile, &ImageMgr::ID );
+				ResourceHolder<ImageMgr> mos(MOSFile);
 				Sprite2D* img = mos->GetSprite2D();
 				sldr->SetImage( IE_GUI_SLIDER_BACKGROUND, img);
-				core->FreeInterface( mos );
 
 				AnimationFactory* bam = ( AnimationFactory* )
 					gamedata->GetFactoryResource( BAMFile,
@@ -295,7 +296,7 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 					sldr->SetImage( IE_GUI_SLIDER_GRABBEDKNOB, img );
 				}
 				else {
-					 sldr->SetState(IE_GUI_SLIDER_BACKGROUND);
+					sldr->SetState(IE_GUI_SLIDER_BACKGROUND);
 				}
 				win->AddControl( sldr );
 			}
@@ -307,37 +308,46 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				ieResRef BGMos;
 				ieResRef FontResRef, CursorResRef;
 				ieWord maxInput;
-	      ieWord CurCycle, CurFrame;
-	      ieWord PosX, PosY;
+				ieWord CurCycle, CurFrame;
+				ieWord PosX, PosY;
+				ieWord Pos2X, Pos2Y;
+				ieVariable Initial;
 
 				str->ReadResRef( BGMos );
+				//These are two more MOS resrefs, probably unused
 				str->Seek( 16, GEM_CURRENT_POS );
 				str->ReadResRef( CursorResRef );
-	      str->ReadWord( &CurCycle );
-	      str->ReadWord( &CurFrame );
-	      str->ReadWord( &PosX );
-	      str->ReadWord( &PosY );
-				str->Seek( 4, GEM_CURRENT_POS );
+				str->ReadWord( &CurCycle );
+				str->ReadWord( &CurFrame );
+				str->ReadWord( &PosX );
+				str->ReadWord( &PosY );
+				//FIXME: I still don't know what to do with this point
+				//Contrary to forum posts, it is definitely not a scrollbar ID
+				str->ReadWord( &Pos2X );
+				str->ReadWord( &Pos2Y );
 				str->ReadResRef( FontResRef );
-				str->Seek( 34, GEM_CURRENT_POS );
+				//this field is still unknown or unused
+				str->Seek( 2, GEM_CURRENT_POS );
+				//This is really a text field, but apparently the original engine
+				//always writes it over, and never uses it
+				str->Read( Initial, 32 );
+				Initial[32]=0;
 				str->ReadWord( &maxInput );
 				Font* fnt = core->GetFont( FontResRef );
-	      
+
 				AnimationFactory* bam = ( AnimationFactory* )
 					gamedata->GetFactoryResource( CursorResRef,
 							IE_BAM_CLASS_ID,
 							IE_NORMAL );
 				Sprite2D *cursor = NULL;
-	      if (bam) {
+				if (bam) {
 					cursor = bam->GetFrame( CurCycle, CurFrame );
-	      }
+				}
 
-				ImageMgr* mos = ( ImageMgr* )
-					gamedata->GetResource( BGMos, &ImageMgr::ID );
+				ResourceHolder<ImageMgr> mos(BGMos);
 				Sprite2D *img = NULL;
 				if(mos) {
 					img = mos->GetSprite2D();
-					core->FreeInterface( mos );
 				}
 
 				TextEdit* te = new TextEdit( maxInput, PosX, PosY );
@@ -350,6 +360,8 @@ Window* CHUImporter::GetWindow(unsigned int wid)
 				te->SetFont( fnt );
 				te->SetCursor( cursor );
 				te->SetBackGround( img );
+				//The original engine always seems to ignore this textfield
+				//te->SetText (Initial );
 				win->AddControl( te );
 			}
 			break;

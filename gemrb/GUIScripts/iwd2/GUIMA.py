@@ -23,10 +23,9 @@
 ###################################################
 
 import GemRB
+import GUICommon
 import GUICommonWindows
 from GUIDefines import *
-from GUICommon import CloseOtherWindow
-from GUICommonWindows import *
 
 MapWindow = None
 NoteWindow = None
@@ -40,7 +39,7 @@ def RevealMap ():
 	global MapWindow
 	global OldPortraitWindow, OldOptionsWindow
 
-	if CloseOtherWindow (ShowMap):
+	if GUICommon.CloseOtherWindow (ShowMap):
 		if MapWindow:
 			MapWindow.Unload ()
 		if OptionsWindow:
@@ -51,7 +50,7 @@ def RevealMap ():
 		MapWindow = None
 		#this window type should block the game
 		GemRB.SetVar ("OtherWindow", -1)
-		GemRB.SetVisible (0, WINDOW_VISIBLE)
+		GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 		GemRB.UnhideGUI ()
 		GUICommonWindows.PortraitWindow = OldPortraitWindow
 		OldPortraitWindow = None
@@ -72,7 +71,7 @@ def ShowMap ():
 	global MapWindow, OptionsWindow, PortraitWindow
 	global OldPortraitWindow, OldOptionsWindow
 
-	if CloseOtherWindow (ShowMap):
+	if GUICommon.CloseOtherWindow (ShowMap):
 		if MapWindow:
 			MapWindow.Unload ()
 		if OptionsWindow:
@@ -83,7 +82,7 @@ def ShowMap ():
 		MapWindow = None
 		#this window type should block the game
 		GemRB.SetVar ("OtherWindow", -1)
-		GemRB.SetVisible (0, WINDOW_VISIBLE)
+		GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 		GemRB.UnhideGUI ()
 		GUICommonWindows.PortraitWindow = OldPortraitWindow
 		OldPortraitWindow = None
@@ -92,18 +91,18 @@ def ShowMap ():
 		return
 
 	GemRB.HideGUI ()
-	GemRB.SetVisible (0, WINDOW_INVISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_INVISIBLE)
 
 	GemRB.LoadWindowPack ("GUIMAP", 640, 480)
-	MapWindow = Window = GemRB.LoadWindowObject (2)
+	MapWindow = Window = GemRB.LoadWindow (2)
 	#this window type blocks the game normally, but map window doesn't
 	GemRB.SetVar ("OtherWindow", MapWindow.ID)
 	#saving the original portrait window
 	OldOptionsWindow = GUICommonWindows.OptionsWindow
-	OptionsWindow = GemRB.LoadWindowObject (0)
-	SetupMenuWindowControls (OptionsWindow, 0, "ShowMap")
+	OptionsWindow = GemRB.LoadWindow (0)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 0, ShowMap)
 	OldPortraitWindow = GUICommonWindows.PortraitWindow
-	PortraitWindow = OpenPortraitWindow ()
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow ()
 	OptionsWindow.SetFrame ()
 
 	# World Map
@@ -122,7 +121,7 @@ def ShowMap ():
 	Map = Window.GetControl (2)
 	GemRB.SetVar ("ShowMapNotes",IE_GUI_MAP_REVEAL_MAP)
 	Map.SetVarAssoc ("ShowMapNotes", IE_GUI_MAP_REVEAL_MAP)
-	Map.SetEvent (IE_GUI_MAP_ON_PRESS, "RevealMap")
+	Map.SetEvent (IE_GUI_MAP_ON_PRESS, RevealMap)
 	Window.SetVisible (WINDOW_VISIBLE)
 	OptionsWindow.SetVisible (WINDOW_GRAYED)
 	PortraitWindow.SetVisible (WINDOW_GRAYED)
@@ -138,7 +137,7 @@ def OpenMapWindow ():
 	global MapWindow, OptionsWindow, PortraitWindow
 	global OldPortraitWindow, OldOptionsWindow
 
-	if CloseOtherWindow (OpenMapWindow):
+	if GUICommon.CloseOtherWindow (OpenMapWindow):
 		if MapWindow:
 			MapWindow.Unload ()
 		if OptionsWindow:
@@ -148,32 +147,32 @@ def OpenMapWindow ():
 
 		MapWindow = None
 		GemRB.SetVar ("OtherWindow", -1)
-		GemRB.SetVisible (0, WINDOW_VISIBLE)
+		GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 		GemRB.UnhideGUI ()
 		GUICommonWindows.PortraitWindow = OldPortraitWindow
 		OldPortraitWindow = None
 		GUICommonWindows.OptionsWindow = OldOptionsWindow
 		OldOptionsWindow = None
-		SetSelectionChangeHandler (None)
+		GUICommonWindows.SetSelectionChangeHandler (None)
 		return
 
 	GemRB.HideGUI ()
-	GemRB.SetVisible (0, WINDOW_INVISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_INVISIBLE)
 
 	GemRB.LoadWindowPack ("GUIMAP", 800, 600)
-	MapWindow = Window = GemRB.LoadWindowObject (2)
+	MapWindow = Window = GemRB.LoadWindow (2)
 	GemRB.SetVar ("OtherWindow", MapWindow.ID)
 	#saving the original portrait window
 	OldPortraitWindow = GUICommonWindows.PortraitWindow
-	PortraitWindow = OpenPortraitWindow ()
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow ()
 	OldOptionsWindow = GUICommonWindows.OptionsWindow
-	OptionsWindow = GemRB.LoadWindowObject (0)
-	SetupMenuWindowControls (OptionsWindow, 0, "OpenMapWindow")
+	OptionsWindow = GemRB.LoadWindow (0)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 0, OpenMapWindow)
 	OptionsWindow.SetFrame ()
 
 	# World Map
 	Button = Window.GetControl (1)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenWorldMapWindowInside")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenWorldMapWindowInside)
 
 	# Hide or Show mapnotes
 	Button = Window.GetControl (3)
@@ -189,19 +188,16 @@ def OpenMapWindow ():
 	Window.CreateMapControl (2, 0, 0, 0, 0, 0x10000003, "FLAG1")
 	Map = Window.GetControl (2)
 	Map.SetVarAssoc ("ShowMapNotes", IE_GUI_MAP_VIEW_NOTES)
-	Map.SetEvent (IE_GUI_MAP_ON_RIGHT_PRESS, "AddNoteWindow")
-	Map.SetEvent (IE_GUI_MAP_ON_DOUBLE_PRESS, "LeftDoublePressMap")
+	Map.SetEvent (IE_GUI_MAP_ON_RIGHT_PRESS, AddNoteWindow)
+	Map.SetEvent (IE_GUI_MAP_ON_DOUBLE_PRESS, LeftDoublePressMap)
 	OptionsWindow.SetVisible(WINDOW_VISIBLE)
 	PortraitWindow.SetVisible(WINDOW_VISIBLE)
 	Window.SetVisible(WINDOW_VISIBLE)
 
-	# 'None' is assumed to return to game, so until someone fixes the SelectionChangeHandler..
-	# (test this by switching a few times between map screen and e.g. inventory)
-	SetSelectionChangeHandler(lambda: None)
+	GUICommonWindows.SetSelectionChangeHandler(None)
 
 def LeftDoublePressMap ():
 	OpenMapWindow()
-	print "MoveToPoint"
 	return
 
 def CloseNoteWindow ():
@@ -249,36 +245,37 @@ def AddNoteWindow ():
 
 	Label = MapWindow.GetControl (0x10000003)
 	Text = Label.QueryText ()
-	NoteWindow = GemRB.LoadWindowObject (5)
+	NoteWindow = GemRB.LoadWindow (5)
+	#convert to multiline, destroy unwanted resources
 	NoteLabel = NoteWindow.GetControl (1)
-	NoteLabel = NoteLabel.ConvertEdit (1)
+	#0 is the default Scrollbar ID
+	NoteLabel = NoteLabel.ConvertEdit (0)
 	NoteLabel.SetText (Text)
 	NoteLabel.SetStatus (IE_GUI_CONTROL_FOCUSED)
+	print "Just set this:", NoteLabel.QueryText()
 
 	for i in range(8):
 		Label = NoteWindow.GetControl (4+i)
 		Label.SetSprites ("FLAG1", i,0,1,2,0)
 		Label.SetFlags (IE_GUI_BUTTON_RADIOBUTTON, OP_SET)
 		Label.SetVarAssoc ("Color", i)
-		Label.SetEvent (IE_GUI_BUTTON_ON_PRESS, "SetFocusBack")
-
-	#convert to multiline, destroy unwanted resources
+		Label.SetEvent (IE_GUI_BUTTON_ON_PRESS, SetFocusBack)
 
 	#set
 	Label = NoteWindow.GetControl (0)
-	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS,"SetMapNote")
+	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS, SetMapNote)
 	Label.SetText (11973)
 	Label.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
 
 	#cancel
 	Label = NoteWindow.GetControl (2)
-	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS,"CloseNoteWindow")
+	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS, CloseNoteWindow)
 	Label.SetText (13727)
 	Label.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	#remove
 	Label = NoteWindow.GetControl (3)
-	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS,"RemoveMapNote")
+	Label.SetEvent (IE_GUI_BUTTON_ON_PRESS, RemoveMapNote)
 	Label.SetText (13957)
 
 	MapWindow.SetVisible (WINDOW_GRAYED)
@@ -286,6 +283,11 @@ def AddNoteWindow ():
 	return
 
 def OpenWorldMapWindowInside ():
+	global MapWindow
+
+	OpenMapWindow () #closes mapwindow
+	MapWindow = -1
+	print "MapWindow=",MapWindow
 	WorldMapWindowCommon (-1)
 	return
 
@@ -297,6 +299,10 @@ def MoveToNewArea ():
 	global WorldMapWindow, WorldMapControl
 
 	tmp = WorldMapControl.GetDestinationArea (1)
+	if tmp["Distance"]==-1:
+		print "Invalid target", tmp
+		return
+
 	CloseWorldMapWindow ()
 	GemRB.CreateMovement (tmp["Destination"], tmp["Entrance"], tmp["Direction"])
 	return
@@ -318,7 +324,7 @@ def CloseWorldMapWindow ():
 	global WorldMapWindow, WorldMapControl
 	global OldPortraitWindow, OldOptionsWindow
 
-	assert CloseOtherWindow (CloseWorldMapWindow)
+	assert GUICommon.CloseOtherWindow (CloseWorldMapWindow)
 
 	if WorldMapWindow:
 		WorldMapWindow.Unload ()
@@ -333,7 +339,7 @@ def CloseWorldMapWindow ():
 	GUICommonWindows.OptionsWindow = OldOptionsWindow
 	OldOptionsWindow = None
 	GemRB.SetVar ("OtherWindow", -1)
-	GemRB.SetVisible (0, WINDOW_VISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_VISIBLE)
 	GemRB.UnhideGUI ()
 	return
 
@@ -342,37 +348,37 @@ def WorldMapWindowCommon (Travel):
 	global OptionsWindow, PortraitWindow
 	global OldPortraitWindow, OldOptionsWindow
 
-	if CloseOtherWindow (CloseWorldMapWindow):
+	if GUICommon.CloseOtherWindow (CloseWorldMapWindow):
 		return
 
 	GemRB.HideGUI ()
-	GemRB.SetVisible (0, WINDOW_INVISIBLE)
+	GUICommon.GameWindow.SetVisible(WINDOW_INVISIBLE)
 
 	GemRB.LoadWindowPack ("GUIWMAP",800, 600)
-	WorldMapWindow = Window = GemRB.LoadWindowObject (2)
+	WorldMapWindow = Window = GemRB.LoadWindow (2)
 
 	#(fuzzie just copied this from the map window code..)
 	GemRB.SetVar ("OtherWindow", WorldMapWindow.ID)
 	#saving the original portrait window
 	OldPortraitWindow = GUICommonWindows.PortraitWindow
-	PortraitWindow = OpenPortraitWindow ()
+	PortraitWindow = GUICommonWindows.OpenPortraitWindow ()
 	OldOptionsWindow = GUICommonWindows.OptionsWindow
-	OptionsWindow = GemRB.LoadWindowObject (0)
-	SetupMenuWindowControls (OptionsWindow, 0, "OpenMapWindow")
+	OptionsWindow = GemRB.LoadWindow (0)
+	GUICommonWindows.SetupMenuWindowControls (OptionsWindow, 0, OpenMapWindow)
 	OptionsWindow.SetFrame ()
 
 	Window.CreateWorldMapControl (4, 0, 62, 640, 418, Travel, "infofont")
 	WorldMapControl = Window.GetControl (4)
 	WorldMapControl.SetAnimation ("WMDAG")
-	WorldMapControl.SetEvent (IE_GUI_WORLDMAP_ON_PRESS, "MoveToNewArea")
-	WorldMapControl.SetEvent (IE_GUI_MOUSE_ENTER_WORLDMAP, "ChangeTooltip")
+	WorldMapControl.SetEvent (IE_GUI_WORLDMAP_ON_PRESS, MoveToNewArea)
+	WorldMapControl.SetEvent (IE_GUI_MOUSE_ENTER_WORLDMAP, ChangeTooltip)
 
 	# Done
 	Button = Window.GetControl (0)
 	if Travel>=0:
-		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenWorldMapWindow")
+		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenWorldMapWindow)
 	else:
-		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "OpenMapWindow")
+		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, OpenMapWindow)
 	Window.SetVisible (WINDOW_VISIBLE)
 
 ###################################################

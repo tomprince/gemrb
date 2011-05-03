@@ -18,9 +18,10 @@
  *
  */
 
-#include "win32def.h"
-#include "globals.h"
 #include "ZLibManager.h"
+
+#include "globals.h"
+#include "win32def.h"
 
 #include <zlib.h>
 
@@ -34,11 +35,11 @@ ZLibManager::~ZLibManager(void)
 }
 
 
-#define INPUTSIZE  4096
-#define OUTPUTSIZE 4096
+#define INPUTSIZE  8192
+#define OUTPUTSIZE 8192
 
 // ZLib Decompression Routine
-int ZLibManager::Decompress(FILE* dest, DataStream* source)
+int ZLibManager::Decompress(DataStream* dest, DataStream* source, unsigned int size_guess) const
 {
 	unsigned char bufferin[INPUTSIZE], bufferout[OUTPUTSIZE];
 	z_stream stream;
@@ -59,10 +60,21 @@ int ZLibManager::Decompress(FILE* dest, DataStream* source)
 		stream.avail_out = OUTPUTSIZE;
 		if (stream.avail_in == 0) {
 			stream.next_in = bufferin;
-			//Read doesn't allow partial reads, but provides Remains
-			stream.avail_in = source->Remains();
+			if (size_guess) {
+				stream.avail_in = size_guess;
+			}
+			if (!stream.avail_in || stream.avail_in > source->Remains()) {
+				//Read doesn't allow partial reads, but provides Remains
+				stream.avail_in = source->Remains();
+			}
 			if (stream.avail_in > INPUTSIZE) {
 				stream.avail_in=INPUTSIZE;
+			}
+			if (size_guess) {
+				if (size_guess < stream.avail_in)
+					size_guess = 0;
+				else
+					size_guess -= stream.avail_in;
 			}
 			if (source->Read( bufferin, stream.avail_in) != (int) stream.avail_in) {
 				return GEM_ERROR;
@@ -72,8 +84,7 @@ int ZLibManager::Decompress(FILE* dest, DataStream* source)
 		if (( result != Z_OK ) && ( result != Z_STREAM_END )) {
 			return GEM_ERROR;
 		}
-		if (fwrite( bufferout, 1, OUTPUTSIZE - stream.avail_out, dest ) <
-			OUTPUTSIZE - stream.avail_out) {
+		if (dest->Write(bufferout, OUTPUTSIZE - stream.avail_out) == GEM_ERROR) {
 			return GEM_ERROR;
 		}
 		if (result == Z_STREAM_END) {
@@ -87,7 +98,7 @@ int ZLibManager::Decompress(FILE* dest, DataStream* source)
 	}
 }
 
-int ZLibManager::Decompress(char *dest, unsigned long destlen, char *src, unsigned long srclen)
+int ZLibManager::Decompress(char *dest, unsigned long destlen, char *src, unsigned long srclen) const
 {
 	unsigned long actuallen = destlen;
 	int result = uncompress((unsigned char*)dest,&actuallen,(unsigned char*)src,srclen);
@@ -96,7 +107,7 @@ int ZLibManager::Decompress(char *dest, unsigned long destlen, char *src, unsign
 	return GEM_OK;
 }
 
-int ZLibManager::Compress(DataStream* dest, DataStream* source)
+int ZLibManager::Compress(DataStream* dest, DataStream* source) const
 {
 	unsigned char bufferin[INPUTSIZE], bufferout[OUTPUTSIZE];
 	z_stream stream;
@@ -152,5 +163,5 @@ int ZLibManager::Compress(DataStream* dest, DataStream* source)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x2477C688, "ZLib Compression Manager")
-PLUGIN_CLASS(IE_COMPRESSION_CLASS_ID, ZLibManager)
+PLUGIN_CLASS(PLUGIN_COMPRESSION_ZLIB, ZLibManager)
 END_PLUGIN()

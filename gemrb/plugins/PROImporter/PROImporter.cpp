@@ -18,41 +18,37 @@
  *
  */
 
-#include "win32def.h"
-#include "Interface.h"
-#include "EffectMgr.h"
 #include "PROImporter.h"
+
+#include "win32def.h"
+
+#include "EffectMgr.h"
+#include "Interface.h"
 
 PROImporter::PROImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 }
 
 PROImporter::~PROImporter(void)
 {
-	if (autoFree) {
-		delete str;
-	}
+	delete str;
 	str = NULL;
 }
 
-bool PROImporter::Open(DataStream* stream, bool autoFree)
+bool PROImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (this->autoFree) {
-		delete str;
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "PRO V1.0", 8 ) == 0) {
 		version = 10;
 	} else {
-		printf( "[PROImporter]: This file is not a valid PRO File\n" );
+		print( "[PROImporter]: This file is not a valid PRO File\n" );
 		return false;
 	}
 
@@ -71,14 +67,20 @@ Projectile* PROImporter::GetProjectile(Projectile *s)
 	str->ReadDword( &s->SFlags ); //spark, ignore center, looping sound etc
 	str->ReadResRef( s->SoundRes1 );
 	str->ReadResRef( s->SoundRes2 );
-	str->ReadResRef( s->SoundRes3 );
+	str->ReadResRef( s->TravelVVC ); //no original game data uses this feature
 	str->ReadDword( &s->SparkColor );//enabled by PSF_SPARK
 	str->ReadDword( &s->ExtFlags ) ; //gemrb extension flags
 	str->ReadDword( &s->StrRef );    //gemrb extension strref
 	str->ReadDword( &s->RGB );       //gemrb extension rgb pulse
 	str->ReadWord( &s->ColorSpeed ); //gemrb extension rgb speed
 	str->ReadWord( &s->Shake );      //gemrb extension screen shake
-	str->Seek(196, GEM_CURRENT_POS); //skipping unused (unknown) bytes
+	str->ReadWord( &s->IDSValue);    //gemrb extension IDS targeting
+	str->ReadWord( &s->IDSType);     //gemrb extension IDS targeting
+	str->ReadWord( &s->IDSValue2);   //gemrb extension IDS targeting
+	str->ReadWord( &s->IDSType2);    //gemrb extension IDS targeting
+	str->ReadResRef( s->FailSpell);  //gemrb extension fail effect
+	str->ReadResRef( s->SuccSpell);  //gemrb extension implicit effect
+	str->Seek(172, GEM_CURRENT_POS); //skipping unused (unknown) bytes
 	//we should stand at offset 0x100 now
 	str->ReadDword( &s->TFlags ); //other projectile flags
 	str->ReadResRef( s->BAMRes1 );
@@ -125,23 +127,43 @@ void PROImporter::GetAreaExtension(ProjectileExtension *e)
 	//the area puff type (flames, puffs, clouds) fireball.ids
 	//gemrb uses areapro.2da for this
 	//It overrides Spread, VVCRes, Secondary, SoundRes, AreaSound, APFlags
-	str->Read( &e->ExplType,1);
-	str->ReadWord( &e->ExplColor);
-	str->ReadWord( &e->ExplProjIdx);
-	//i don't know why is this here
-	if (e->ExplProjIdx) {
-		e->ExplProjIdx--;
+	str->Read( &e->ExplType,1 );
+	str->ReadWord( &e->ExplColor );
+	//this index is off by one in the .pro files, consolidating it here
+	str->ReadWord( &tmp);
+	if (tmp) {
+		tmp--;
 	}
+	e->ExplProjIdx = tmp;
 
 	str->ReadResRef( e->VVCRes );
-	str->ReadWord( &e->ConeWidth);
 	str->ReadWord( &tmp);
-	str->ReadResRef( e->Spread);
-	str->ReadResRef( e->Secondary);
-	str->ReadResRef( e->AreaSound);
-	str->ReadDword( &e->APFlags);
+	//limit the cone width to 359 degrees (for full compatibility)
+	if (tmp>359) {
+		tmp=359;
+	}
+	e->ConeWidth = tmp;
+	str->ReadWord( &tmp);
+
+	//These are GemRB specific, not used in the original engine
+	str->ReadResRef( e->Spread );
+	str->ReadResRef( e->Secondary );
+	str->ReadResRef( e->AreaSound );
+	str->ReadDword( &e->APFlags );
+	str->ReadWord( &e->DiceCount );
+	str->ReadWord( &e->DiceSize );
+	str->ReadWord( &e->TileX );
+	str->ReadWord( &e->TileY );
+
+	if (!e->TileX) {
+		e->TileX=64;
+	}
+	if (!e->TileY) {
+		e->TileY=64;
+	}
+
 	//we skip the rest
-	str->Seek(188, GEM_CURRENT_POS);
+	str->Seek(180, GEM_CURRENT_POS);
 }
 
 #include "plugindef.h"

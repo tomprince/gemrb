@@ -32,14 +32,10 @@
 
 #include "common.h"
 
-//#define DEBUG
 /* dct code */
 typedef short DCTELEM;
 typedef int DWTELEM;
 typedef short IDWTELEM;
-
-/* pixel operations */
-#define MAX_NEG_CROP 1024
 
 /**
  * Scantable.
@@ -51,10 +47,6 @@ typedef struct ScanTable{
 } ScanTable;
 
 void ff_init_scantable(uint8_t *, ScanTable *st, const uint8_t *src_scantable);
-
-void ff_emulated_edge_mc(uint8_t *buf, uint8_t *src, int linesize,
-                         int block_w, int block_h,
-                         int src_x, int src_y, int w, int h);
 
 /**
  * Empty mmx state.

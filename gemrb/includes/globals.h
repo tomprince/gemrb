@@ -34,36 +34,34 @@
 
 #include "ie_types.h"
 
-#define VERSION_GEMRB "0.6.0"
+#define VERSION_GEMRB "0.6.4-git"
 
 #define GEMRB_STRING "GemRB v" VERSION_GEMRB
 
+#ifdef ANDROID
+# define PACKAGE "GemRB"
+# define S_IEXEC  S_IXUSR
+# define S_IREAD  S_IRUSR
+# define S_IWRITE S_IWUSR
+#endif
+
 #ifndef GLOBALS_ONLY_DEFS
 
-#include "stdlib.h"
-#include "stdio.h"
+#include "RGBAColor.h"
+#include "SClassID.h"
 #include "errors.h"
 #include "win32def.h"
-#include "SClassID.h"
-#include "RGBAColor.h"
+
 #include "Region.h"
-#include "Sprite2D.h"
-#include "VideoMode.h"
-#include "VideoModes.h"
-#include "DataStream.h"
-#include "AnimStructures.h"
+#include "System/DataStream.h"
+#include "System/String.h"
+
+#include <cstdio>
+#include <cstdlib>
 
 #endif //GLOBALS_ONLY_DEFS
 
 //Global Variables
-
-#ifdef WIN32
-#define PathDelimiter '\\'
-#define SPathDelimiter "\\"
-#else
-#define PathDelimiter '/'
-#define SPathDelimiter "/"
-#endif
 
 #define IE_NORMAL 0
 #define IE_SHADED 1
@@ -82,10 +80,6 @@
 #define BM_OR   2
 #define BM_XOR  3
 #define BM_NAND 4 //gemrb extension
-
-//IDS Importer Defines
-#define IDS_VALUE_NOT_LOCATED -65535 // GetValue returns this if text is not found in arrays ... this needs to be a unique number that does not exist in the value[] array
-#define GEM_ENCRYPTION_KEY "\x88\xa8\x8f\xba\x8a\xd3\xb9\xf5\xed\xb1\xcf\xea\xaa\xe4\xb5\xfb\xeb\x82\xf9\x90\xca\xc9\xb5\xe7\xdc\x8e\xb7\xac\xee\xf7\xe0\xca\x8e\xea\xca\x80\xce\xc5\xad\xb7\xc4\xd0\x84\x93\xd5\xf0\xeb\xc8\xb4\x9d\xcc\xaf\xa5\x95\xba\x99\x87\xd2\x9d\xe3\x91\xba\x90\xca"
 
 /////feature flags
 #define  GF_HAS_KAPUTZ           	0 //pst
@@ -125,7 +119,7 @@
 #define  GF_IWD2_DEATHVARFORMAT  	34 //iwd branch (maybe pst)
 #define  GF_RESDATA_INI         	35 //pst
 #define  GF_OVERRIDE_CURSORPOS  	36 //pst, iwd2
-#define  GF_BREAKABLE_WEAPONS     	37 //bg1, not bg2 and iwd2, maybe others
+#define  GF_BREAKABLE_WEAPONS     	37 //only bg1
 #define  GF_3ED_RULES              	38 //iwd2
 #define  GF_LEVELSLOT_PER_CLASS    	39 //iwd2
 #define  GF_SELECTIVE_MAGIC_RES    	40 //bg2, iwd2, (how)
@@ -133,8 +127,25 @@
 #define  GF_AREA_VISITED_VAR    	42 //iwd, iwd2
 #define  GF_PROPER_BACKSTAB     	43 //bg2, iwd2, how?
 #define  GF_ONSCREEN_TEXT       	44 //pst
-//update this
-#define GF_COUNT 45
+#define  GF_SPECIFIC_DMG_BONUS		45 //how, iwd2
+#define  GF_STRREF_SAVEGAME       	46 //iwd2
+#define  GF_WISDOM_BONUS      	 	47 //pst
+#define  GF_BIOGRAPHY_RES               48 //iwd branch
+#define  GF_NO_BIOGRAPHY                49 //pst
+#define  GF_STEAL_IS_ATTACK             50 //bg2 for sure
+#define  GF_CUTSCENE_AREASCRIPTS	51 //bg1, maybe more
+#define  GF_FLEXIBLE_WMAP               52 //iwd
+#define  GF_AUTOSEARCH_HIDDEN           53 //all except iwd2
+#define  GF_PST_STATE_FLAGS             54 //pst complicates this
+#define  GF_NO_DROP_CAN_MOVE            55 //bg1
+#define  GF_JOURNAL_HAS_SECTIONS        56 //bg2
+#define  GF_CASTING_SOUNDS              57 //all except pst and bg1
+#define  GF_CASTING_SOUNDS2             58 //bg2
+#define  GF_FORCE_AREA_SCRIPT           59 //how and iwd2 (maybe iwd1)
+#define  GF_AREA_OVERRIDE               60 //pst maze and other hardcode
+#define  GF_NO_NEW_VARIABLES            61 //pst
+//update this or bad things can happen
+#define GF_COUNT 62
 
 //the number of item usage fields (used in CREItem and STOItem)
 #define CHARGE_COUNTERS  3
@@ -150,48 +161,28 @@
 class Scriptable;
 class Actor;
 
-/* this function will work with pl/cz special characters */
-
-extern unsigned char pl_uppercase[256];
-extern unsigned char pl_lowercase[256];
-
-GEM_EXPORT void strnlwrcpy(char* d, const char *s, int l);
-GEM_EXPORT void strnuprcpy(char* d, const char *s, int l);
-GEM_EXPORT void strnspccpy(char* d, const char *s, int l);
-#ifndef HAVE_STRNLEN
-GEM_EXPORT int strnlen(const char* string, int maxlen);
-#endif
-GEM_EXPORT unsigned char GetOrient(Point &s, Point &d);
-GEM_EXPORT unsigned int Distance(Point pos, Point pos2);
-GEM_EXPORT unsigned int Distance(Point pos, Scriptable *b);
-GEM_EXPORT unsigned int PersonalDistance(Point pos, Scriptable *b);
+GEM_EXPORT unsigned char GetOrient(const Point &s, const Point &d);
+GEM_EXPORT unsigned int Distance(const Point pos, const Point pos2);
+GEM_EXPORT unsigned int Distance(const Point pos, Scriptable *b);
+GEM_EXPORT unsigned int SquaredMapDistance(const Point pos, Scriptable *b);
+GEM_EXPORT unsigned int PersonalDistance(const Point pos, Scriptable *b);
+GEM_EXPORT unsigned int SquaredPersonalDistance(const Point pos, Scriptable *b);
 GEM_EXPORT unsigned int Distance(Scriptable *a, Scriptable *b);
+GEM_EXPORT unsigned int SquaredDistance(Scriptable *a, Scriptable *b);
 GEM_EXPORT unsigned int PersonalDistance(Scriptable *a, Scriptable *b);
+GEM_EXPORT unsigned int SquaredPersonalDistance(Scriptable *a, Scriptable *b);
+GEM_EXPORT unsigned int SquaredMapDistance(Scriptable *a, Scriptable *b);
 GEM_EXPORT int EARelation(Scriptable *a, Actor *b);
-GEM_EXPORT bool dir_exists(const char* path);
-GEM_EXPORT int strlench(const char* string, char ch);
-#ifndef HAVE_STRNDUP
-GEM_EXPORT char* strndup(const char* s, size_t l);
-#endif
 
 #ifndef WIN32
-GEM_EXPORT char* strupr(char* string);
-GEM_EXPORT char* strlwr(char* string);
-#endif
-
-#ifdef WIN32
-#define GetTime(store) store = GetTickCount()
-#else
 #include <sys/time.h>
-#define GetTime(store) \
-	{ \
-		struct timeval tv; \
-		gettimeofday(&tv, NULL); \
-		store = (tv.tv_usec/1000) + (tv.tv_sec*1000); \
-	}
+inline unsigned long GetTickCount()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_usec/1000) + (tv.tv_sec*1000);
+}
 #endif
-
-//struct ActorBlock;
 
 inline int MIN(int a, int b)
 {
@@ -205,11 +196,18 @@ inline int MAX(int a, int b)
 
 inline bool valid_number(const char* string, long& val)
 {
-        char* endpr;
+	char* endpr;
 
-        val = (long) strtoul( string, &endpr, 0 );
-        return ( const char * ) endpr != string;
+	val = (long) strtoul( string, &endpr, 0 );
+	return ( const char * ) endpr != string;
 }
+
+//we need 32+6 bytes at least, because we store 'context' in the variable
+//name too
+#define MAX_VARIABLE_LENGTH  40
+
+//the maximum supported game CD count
+#define MAX_CD               6
 
 #endif //! GLOBALS_H
 

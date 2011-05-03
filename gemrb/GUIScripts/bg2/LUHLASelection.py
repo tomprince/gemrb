@@ -18,12 +18,10 @@
 #
 
 import GemRB
-from math import ceil
 from GUIDefines import *
 from ie_stats import *
-from GUICommon import HasSpell
-from GUIREC import GetKitIndex
-from GUICommonWindows import IsDualClassed, KitListTable, ClassTable
+import GUICommon
+import CommonTables
 
 # HLA selection
 HLAWindow = 0		# << HLA selection window
@@ -56,7 +54,7 @@ def OpenHLAWindow (actor, numclasses, classes, levels):
 	HLACount = GemRB.GetVar ("HLACount")
 
 	# we use the same window as sorcerer spell selection
-	HLAWindow = GemRB.LoadWindowObject (8)
+	HLAWindow = GemRB.LoadWindow (8)
 
 	# get all our HLAs (stored in HLAAbilities)
 	GetHLAs ()
@@ -68,7 +66,7 @@ def OpenHLAWindow (actor, numclasses, classes, levels):
 	# create the done button
 	HLADoneButton = HLAWindow.GetControl (28)
 	HLADoneButton.SetState(IE_GUI_BUTTON_DISABLED)
-	HLADoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "HLADonePress")
+	HLADoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, HLADonePress)
 	HLADoneButton.SetText(11973)
 	HLADoneButton.SetFlags(IE_GUI_BUTTON_DEFAULT, OP_OR)
 
@@ -88,9 +86,9 @@ def OpenHLAWindow (actor, numclasses, classes, levels):
 			HLAWindow.CreateScrollBar (1000, 290,142, 16,252)
 			ScrollBar = HLAWindow.GetControl (1000)
 			ScrollBar.SetSprites ("GUISCRCW", 0, 0,1,2,3,5,4)
-			ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, "HLAShowAbilities")
+			ScrollBar.SetEvent (IE_GUI_SCROLLBAR_ON_CHANGE, HLAShowAbilities)
 			#with enhanced GUI we have 5 rows of 5 abilities (the last one is 'the extra slot')
-			ScrollBar.SetVarAssoc ("HLATopIndex", int ( ceil ( ( len (HLAAbilities)-25 ) / 5.0 ) ) + 1 )
+			ScrollBar.SetVarAssoc ("HLATopIndex", GUICommon.ceildiv ( ( len (HLAAbilities)-25 ) , 5 ) + 1 )
 			ScrollBar.SetDefaultScrollBar ()
 
 	# draw our HLAs and show the window
@@ -126,7 +124,7 @@ def HLADonePress ():
 			GemRB.ApplySpell(pc, HLARef[3:])
 		elif HLARef[:2] == "GA":
 			# make sure it isn't already learned
-			SpellIndex = HasSpell (pc, HLAType, HLALevel, HLARef[3:])
+			SpellIndex = GUICommon.HasSpell (pc, HLAType, HLALevel, HLARef[3:])
 			if SpellIndex < 0: # gotta learn it
 				GemRB.LearnSpell (pc, HLARef[3:], 8)
 			else: # memorize it again
@@ -174,7 +172,7 @@ def HLAShowAbilities ():
 		SpellButton.SetTooltip(Spell['SpellName'])
 		SpellButton.SetSpellIcon(HLARef, 1)
 		SpellButton.SetVarAssoc("ButtonPressed", i)
-		SpellButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "HLASelectPress")
+		SpellButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, HLASelectPress)
 		SpellButton.SetSprites("GUIBTBUT", 0,0,1,2,3)
 		SpellButton.SetFlags(IE_GUI_BUTTON_PICTURE, OP_OR)
 
@@ -298,8 +296,8 @@ def GetHLAs ():
 	global HLAAbilities, HLANewAbilities, HLACount
 
 	# get some needed values
-	Kit = GetKitIndex (pc)
-	IsDual = IsDualClassed (pc, 0)
+	Kit = GUICommon.GetKitIndex (pc)
+	IsDual = GUICommon.IsDualClassed (pc, 0)
 	IsDual = IsDual[0] > 0
 	MaxHLACount = 0
 
@@ -308,23 +306,23 @@ def GetHLAs ():
 	HLANewAbilities = []
 
 	# the HLA table lookup table
-	HLAAbbrTable = GemRB.LoadTableObject ("luabbr")
+	HLAAbbrTable = GemRB.LoadTable ("luabbr")
 
 	# get all the HLAs for each class
 	for i in range (NumClasses):
-		ClassIndex = ClassTable.FindValue (5, Classes[i])
-		ClassName = ClassTable.GetRowName (ClassIndex)
+		ClassIndex = CommonTables.Classes.FindValue (5, Classes[i])
+		ClassName = CommonTables.Classes.GetRowName (ClassIndex)
 		CurrentLevel = Level[i]
 
 		if Kit != 0 and NumClasses == 1 and not IsDual: # kitted single-class
-			KitName = KitListTable.GetValue (Kit, 0)
+			KitName = CommonTables.KitList.GetValue (Kit, 0)
 			HLAClassTable = "lu" + HLAAbbrTable.GetValue (KitName, "ABBREV")
 			ClassName = KitName
 		else: # everyone else
 			HLAClassTable = "lu" + HLAAbbrTable.GetValue (ClassName, "ABBREV")
 
 		# actually load the table
-		HLAClassTable = GemRB.LoadTableObject (HLAClassTable)
+		HLAClassTable = GemRB.LoadTable (HLAClassTable)
 		print "HLA Class/Kit:",ClassName
 
 		# save all our HLAs from this class

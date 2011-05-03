@@ -37,16 +37,19 @@
 #define EA_ALLY			4
 #define EA_CONTROLLED  		5
 #define EA_CHARMED 		6
+#define EA_CONTROLLABLE         15
 #define EA_GOODBUTRED  		28
 #define EA_GOODBUTBLUE 		29
 #define EA_GOODCUTOFF  		30
 #define EA_NOTGOOD 		31
 #define EA_ANYTHING		126
 #define EA_NEUTRAL 		128
+#define EA_NOTNEUTRAL  	198
 #define EA_NOTEVIL 		199
 #define EA_EVILCUTOFF  		200
 #define EA_EVILBUTGREEN		201
 #define EA_EVILBUTBLUE 		202
+#define EA_CHARMEDPC            254
 #define EA_ENEMY   		255
 
 //GENERAL values
@@ -100,10 +103,10 @@
 #define STATE_HELPLESS   0x00000020
 #define STATE_FROZEN     0x00000040
 #define STATE_PETRIFIED  0x00000080
-#define STATE_D3         0x00000100
+#define STATE_EXPLODING  0x00000100
 #define STATE_PST_MIRROR 0x00000100
-#define STATE_D4         0x00000200
-#define STATE_D5         0x00000400
+#define STATE_FLAME      0x00000200
+#define STATE_ACID       0x00000400
 #define STATE_DEAD       0x00000800
 #define STATE_SILENCED   0x00001000
 #define STATE_CHARMED    0x00002000
@@ -136,7 +139,8 @@
 #define STATE_EMBALM     0x40000000
 #define STATE_CONFUSED   0x80000000
 
-#define STATE_STILL      0xc8       //not animated
+#define STATE_STILL      (STATE_STUNNED | STATE_FROZEN | STATE_PETRIFIED) //not animated
+
 #define STATE_CANTMOVE   0x80180fef
 #define STATE_CANTLISTEN 0x80080fef
 #define STATE_CANTSTEAL  0x00180fc0 //can't steal from
@@ -154,12 +158,26 @@
 #define EXTSTATE_EYE_SPIRIT  0x00000100
 #define EXTSTATE_EYE_FORT    0x00000200
 #define EXTSTATE_EYE_STONE   0x00000400
+#define EXTSTATE_ANIMAL_RAGE 0x00000800
+#define EXTSTATE_NO_HP       0x00001000  //disable hp info in berserk mode
+#define EXTSTATE_BERSERK     0x00002000
 #define EXTSTATE_NO_BACKSTAB 0x00004000
+#define EXTSTATE_FLOATTEXTS  0x00008000  //weapon chatting (IWD)
+#define EXTSTATE_UNSTUN      0x00010000  //receiving damage will unstun
 #define EXTSTATE_DEAF        0x00020000
+#define EXTSTATE_CHAOTICCMD  0x00040000
+#define EXTSTATE_MISCAST     0x00080000
+#define EXTSTATE_PAIN        0x00100000
+#define EXTSTATE_MALISON     0x00200000
+#define EXTSTATE_BLOODRAGE   0x00400000
+#define EXTSTATE_CATSGRACE   0x00800000
+#define EXTSTATE_MOLD        0x01000000
+#define EXTSTATE_SHROUD      0x02000000
 #define EXTSTATE_NO_WAKEUP   0x80000000  //original HoW engine put this on top of eye_mind
 #define EXTSTATE_SEVEN_EYES  0x000007f0
 
 //Multiclass flags
+#define MC_SHOWLONGNAME         0x0001
 #define MC_REMOVE_CORPSE        0x0002
 #define MC_KEEP_CORPSE          0x0004
 #define MC_WAS_FIGHTER		0x0008
@@ -172,10 +190,10 @@
 #define MC_FALLEN_PALADIN	0x0200
 #define MC_FALLEN_RANGER	0x0400
 #define MC_EXPORTABLE           0x0800
-
+#define MC_HIDE_HP              0x1000 
 #define MC_PLOT_CRITICAL        0x2000  //if dies, it means game over
 #define MC_BEENINPARTY          0x8000
-#define MC_HIDDEN               0x10000
+#define MC_HIDDEN               0x10000 //iwd
 
 #define MC_NO_TALK              0x80000 //ignore dialoginterrupt
 
@@ -424,11 +442,12 @@
 #define IE_ENABLEOFFSCREENAI    183 // bg2 has this on this spot
 #define IE_EXISTANCEDELAY       184 // affects the displaying of EXISTANCE strings
 #define IE_ATTACKNUMBERDOUBLE   185 // used by haste option 2
-#define IE_DISABLECHUNKING      186 //
+#define IE_DISABLECHUNKING      186 // no permanent death
 #define IE_NOTURNABLE           187 // immune to turn
-//188 IE_NOTINTERRUPTABLE
+//the IE sets this stat the same time as stat 150
+//188 IE_SUMMONDISABLE2
 #define IE_CHAOSSHIELD          189 // defense against wild surge
-#define IE_NPCBUMP              190 // not entirely sure what is this
+#define IE_NPCBUMP              190 // allow npcs to be bumped?
 #define IE_CANUSEANYITEM        191
 #define IE_ALWAYSBACKSTAB       192
 #define IE_SEX_CHANGED          193 // modified by opcode 0x47
@@ -438,6 +457,7 @@
 #define IE_DISABLETIMESTOP      197
 #define IE_NOSEQUESTER          198 // this doesn't work in IE, but intended
 #define IE_STONESKINSGOLEM	199
+//actually this stat is not used for level drain
 #define IE_LEVELDRAIN		200
 #define IE_AVATARREMOVAL        201
 
@@ -469,7 +489,7 @@
 #define IE_MC_FLAGS		215
 #define IE_CLASSLEVELSUM	216 //iwd2
 #define IE_ALIGNMENT		217
-//#define IE_UNSELECTABLE		218
+#define IE_CASTING		218
 #define IE_ARMOR_TYPE		219
 #define IE_TEAM			220
 #define IE_FACTION		221

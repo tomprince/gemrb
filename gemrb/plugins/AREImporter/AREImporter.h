@@ -22,13 +22,15 @@
 #define AREIMPORTER_H
 
 #include "MapMgr.h"
+
+#include "Map.h" // proIterator
 class Animation;
 class AnimationFactory;
+class EffectQueue;
 
 class AREImporter : public MapMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	int bigheader;
 	ieResRef WEDResRef;
 	ieDword LastSave;
@@ -56,16 +58,12 @@ private:
 public:
 	AREImporter(void);
 	~AREImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	bool ChangeMap(Map *map, bool day_or_night);
 	Map* GetMap(const char* ResRef, bool day_or_night);
 	int GetStoredFileSize(Map *map);
 	/* stores an area in the Cache (swaps it out) */
 	int PutArea(DataStream *stream, Map *map);
-	void release(void)
-	{
-		delete this;
-	}
 private:
 	void ReadEffects(DataStream *ds, EffectQueue *fx, ieDword EffectsCount);
 	CREItem* GetItem();

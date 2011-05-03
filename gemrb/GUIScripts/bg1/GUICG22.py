@@ -18,9 +18,11 @@
 #
 #character generation, class kit (GUICG22)
 import GemRB
-
-from CharGenCommon import * 
-from GUICommon import CloseOtherWindow, RaceTable, KitListTable, ClassTable
+from GUIDefines import *
+from ie_stats import *
+import CharGenCommon
+import GUICommon
+import CommonTables
 
 
 KitWindow = 0
@@ -33,25 +35,25 @@ def OnLoad():
 	global KitWindow, TextAreaControl, DoneButton
 	global SchoolList, ClassID
 
-	if CloseOtherWindow(OnLoad):
+	if GUICommon.CloseOtherWindow(OnLoad):
 		if(KitWindow):
 			KitWindow.Unload()
 			KitWindow = None
 		return
 
-	GemRB.LoadWindowPack("GUICG")
-	RaceName = RaceTable.GetRowName(GemRB.GetVar("Race")-1 )
+	GemRB.LoadWindowPack("GUICG", 640, 480)
+	RaceName = CommonTables.Races.GetRowName(GemRB.GetVar("Race")-1 )
 	Class = GemRB.GetVar("Class")-1
-	ClassName = ClassTable.GetRowName(Class)
-	ClassID = ClassTable.GetValue(Class, 5)
-	KitTable = GemRB.LoadTableObject("kittable")
+	ClassName = CommonTables.Classes.GetRowName(Class)
+	ClassID = CommonTables.Classes.GetValue(Class, 5)
+	KitTable = GemRB.LoadTable("kittable")
 	KitTableName = KitTable.GetValue(ClassName, RaceName)
-	KitTable = GemRB.LoadTableObject(KitTableName,1)
+	KitTable = GemRB.LoadTable(KitTableName,1)
 
-	SchoolList = GemRB.LoadTableObject("magesch")
+	SchoolList = GemRB.LoadTable("magesch")
 
 	#there is only a specialist mage window for bg1
-	KitWindow = GemRB.LoadWindowObject(12)
+	KitWindow = GemRB.LoadWindow(12)
 
 	for i in range(8):
 		Button = KitWindow.GetControl(i+2)
@@ -71,7 +73,7 @@ def OnLoad():
 				KitName = SchoolList.GetValue(i, 0)
 			else:
 				Kit = 0
-				KitName = ClassTable.GetValue(GemRB.GetVar("Class")-1, 0)
+				KitName = CommonTables.Classes.GetValue(GemRB.GetVar("Class")-1, 0)
 
 		else:
 			Kit = KitTable.GetValue(i,0)
@@ -81,16 +83,16 @@ def OnLoad():
 				KitName = SchoolList.GetValue(Kit, 0)
 			else:
 				if Kit:
-					KitName = KitListTable.GetValue(Kit, 1)
+					KitName = CommonTables.KitList.GetValue(Kit, 1)
 				else:
-					KitName = ClassTable.GetValue(GemRB.GetVar("Class")-1, 0)
+					KitName = CommonTables.Classes.GetValue(GemRB.GetVar("Class")-1, 0)
 
 		Button.SetState(IE_GUI_BUTTON_ENABLED)
 		Button.SetText(KitName)
 		Button.SetVarAssoc("Class Kit",Kit)
 		if i==0:
 			GemRB.SetVar("Class Kit",Kit)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "KitPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, KitPress)
 
 	BackButton = KitWindow.GetControl(12)
 	BackButton.SetText(15416)
@@ -101,8 +103,8 @@ def OnLoad():
 	TextAreaControl = KitWindow.GetControl(11)
 	TextAreaControl.SetText(17247)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CharGenCommon.BackPress)
 	#KitPress()
 	KitWindow.ShowModal(MODAL_SHADOW_NONE)
 	return
@@ -110,12 +112,12 @@ def OnLoad():
 def KitPress():
 	Kit = GemRB.GetVar("Class Kit")
 	if Kit == 0:
-		KitName = ClassTable.GetValue(GemRB.GetVar("Class")-1, 1)
+		KitName = CommonTables.Classes.GetValue(GemRB.GetVar("Class")-1, 1)
 	else:
 		if ClassID==1:
 			KitName = SchoolList.GetValue(Kit, 1)
 		else:
-			KitName = KitListTable.GetValue(Kit, 3)
+			KitName = CommonTables.KitList.GetValue(Kit, 3)
 	TextAreaControl.SetText(KitName)
 	DoneButton.SetState(IE_GUI_BUTTON_ENABLED)
 	return
@@ -123,11 +125,13 @@ def KitPress():
 def NextPress():
 	#class	
 	ClassIndex = GemRB.GetVar ("Class")-1
-	Class = ClassTable.GetValue (ClassIndex, 5)
+	Class = CommonTables.Classes.GetValue (ClassIndex, 5)
 	MyChar = GemRB.GetVar ("Slot")
 	GemRB.SetPlayerStat (MyChar, IE_CLASS, Class)
 	KitIndex = GemRB.GetVar ("Class Kit")
+	if Class == 1:
+		GemRB.SetVar("MAGESCHOOL", KitIndex)
 	#the same as the unusable field
-	Kit = KitListTable.GetValue(KitIndex, 6)
+	Kit = CommonTables.KitList.GetValue(KitIndex, 6)
 	GemRB.SetPlayerStat (MyChar, IE_KIT, Kit)
-	next()
+	CharGenCommon.next()

@@ -20,6 +20,7 @@
 # Options.py - scripts to control options windows mostly from GUIOPT winpack
 
 import GemRB
+from GUIDefines import *
 
 OptionsWindow = 0
 
@@ -27,10 +28,10 @@ def OnLoad():
 	global OptionsWindow
 	GemRB.LoadWindowPack("GUIOPT", 800, 600)
 
-	MessageBarWindow = GemRB.LoadWindowObject(0)
+	MessageBarWindow = GemRB.LoadWindow(0)
 	MessageBarWindow.SetVisible(WINDOW_VISIBLE) #This will startup the window as grayed
 
-	CharactersBarWindow = GemRB.LoadWindowObject(1)
+	CharactersBarWindow = GemRB.LoadWindow(1)
 	CharactersBarWindow.SetVisible(WINDOW_VISIBLE)
 
 	GemRB.DrawWindows()
@@ -43,7 +44,7 @@ def OnLoad():
 	if CharactersBarWindow:
 		CharactersBarWindow.Unload()
 
-	OptionsWindow = GemRB.LoadWindowObject(13)
+	OptionsWindow = GemRB.LoadWindow(13)
 	OptionsWindow.SetFrame ()
 
 	VersionLabel = OptionsWindow.GetControl(0x1000000B)
@@ -57,18 +58,18 @@ def OnLoad():
 	ReturnButton = OptionsWindow.GetControl(11)
 
 	GraphicsButton.SetText(17162)
-	GraphicsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "GraphicsPress")
+	GraphicsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, GraphicsPress)
 	SoundButton.SetText(17164)
-	SoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SoundPress")
+	SoundButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SoundPress)
 	GamePlayButton.SetText(17165)
-	GamePlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "GamePlayPress")
+	GamePlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, GamePlayPress)
 	MoviesButton.SetText(15415)
-	MoviesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MoviePress")
+	MoviesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, MoviePress)
 	KeyboardButton.SetText(33468)
-	KeyboardButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "KeyboardPress")
+	KeyboardButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, None) #TODO: KeyboardPress
 
 	ReturnButton.SetText(10308)
-	ReturnButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ReturnPress")
+	ReturnButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ReturnPress)
 	ReturnButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	OptionsWindow.SetVisible(WINDOW_VISIBLE)

@@ -18,40 +18,32 @@
  *
  */
 
-#include "win32def.h"
-#include "Interface.h"
 #include "2DAImporter.h"
-#include "FileStream.h"
+
+#include "win32def.h"
+
+#include "Interface.h"
+#include "System/FileStream.h"
 
 #define MAXLENGTH 4096      //if a 2da has longer lines, change this
 #define SIGNLENGTH 256      //if a 2da has longer default value, change this
 
 p2DAImporter::p2DAImporter(void)
 {
-	str = NULL;
-	autoFree = false;
 }
 
 p2DAImporter::~p2DAImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
 	for (unsigned int i = 0; i < ptrs.size(); i++) {
 		free( ptrs[i] );
 	}
 }
 
-bool p2DAImporter::Open(DataStream* stream, bool autoFree)
+bool p2DAImporter::Open(DataStream* str)
 {
-	if (stream == NULL) {
+	if (str == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
-	str = stream;
-	this->autoFree = autoFree;
 	char Signature[SIGNLENGTH];
 	str->CheckEncrypted();
 
@@ -108,6 +100,7 @@ bool p2DAImporter::Open(DataStream* stream, bool autoFree)
 			row++;
 		}
 	}
+	delete str;
 	return true;
 }
 

@@ -23,7 +23,7 @@
 ###################################################
 import GemRB
 from GUIDefines import *
-from GUICommon import CloseOtherWindow
+import GUICommon
 
 ###################################################
 JournalWindow = None
@@ -36,13 +36,13 @@ def OpenJournalWindow ():
 	global StartTime, StartYear
 	global JournalWindow, Chapter
 
-	Table = GemRB.LoadTableObject("YEARS")
+	Table = GemRB.LoadTable("YEARS")
 	#StartTime is the time offset for ingame time, beginning from the startyear
 	StartTime = Table.GetValue("STARTTIME", "VALUE") / 4500
 	#StartYear is the year of the lowest ingame date to be printed
 	StartYear = Table.GetValue("STARTYEAR", "VALUE")
 
-	if CloseOtherWindow (OpenJournalWindow):
+	if GUICommon.CloseOtherWindow (OpenJournalWindow):
 		GemRB.HideGUI ()
 		if JournalWindow:
 			JournalWindow.Unload ()
@@ -54,15 +54,15 @@ def OpenJournalWindow ():
 		
 	GemRB.HideGUI ()
 	GemRB.LoadWindowPack ("GUIJRNL", 800, 600)
-	JournalWindow = Window = GemRB.LoadWindowObject (2)
+	JournalWindow = Window = GemRB.LoadWindow (2)
 	GemRB.SetVar("OtherWindow", JournalWindow.ID)
 
 	
 	Button = Window.GetControl (3)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "JournalPrevSectionPress")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, JournalPrevSectionPress)
 
 	Button = Window.GetControl (4)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "JournalNextSectionPress")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, JournalNextSectionPress)
 
 	Chapter = GemRB.GetGameVar("chapter")
 	UpdateJournalWindow ()

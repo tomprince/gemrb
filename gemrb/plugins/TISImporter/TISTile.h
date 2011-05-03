@@ -22,9 +22,10 @@
 #ifndef TISTILE_H
 #define TISTILE_H
 
-#include "../../includes/RGBAColor.h"
-#include "../Core/Video.h"
-#include "../Core/Sprite2D.h"
+#include "RGBAColor.h"
+
+#include "Video.h"
+#include "Sprite2D.h"
 
 Sprite2D* TileToSprite(RevColor RevCol[256], void* pixels);
 Sprite2D* EmptySprite();

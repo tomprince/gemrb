@@ -18,7 +18,8 @@
 #
 #character generation, race (GUICG2)
 import GemRB
-from GUICommon import RaceTable
+from GUIDefines import *
+import CommonTables
 
 RaceWindow = 0
 TextAreaControl = 0
@@ -30,11 +31,11 @@ def OnLoad():
 	global SubRacesTable
 	
 	GemRB.LoadWindowPack("GUICG", 800 ,600)
-	RaceWindow = GemRB.LoadWindowObject (8)
+	RaceWindow = GemRB.LoadWindow (8)
 
-	RaceCount = RaceTable.GetRowCount ()
+	RaceCount = CommonTables.Races.GetRowCount ()
 	
-	SubRacesTable = GemRB.LoadTableObject ("SUBRACES")
+	SubRacesTable = GemRB.LoadTable ("SUBRACES")
 
 	for i in range(2,9):
 		Button = RaceWindow.GetControl (i)
@@ -42,10 +43,10 @@ def OnLoad():
 		
 	for i in range(7):
 		Button = RaceWindow.GetControl (i+2)
-		Button.SetText (RaceTable.GetValue (i,0) )
+		Button.SetText (CommonTables.Races.GetValue (i,0) )
 		Button.SetState (IE_GUI_BUTTON_ENABLED)
-		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS,"RacePress")
-		Button.SetVarAssoc ("BaseRace",RaceTable.GetValue (i, 3) )
+		Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, RacePress)
+		Button.SetVarAssoc ("BaseRace", CommonTables.Races.GetValue (i, 3) )
 
 	BackButton = RaceWindow.GetControl (11) 
 	BackButton.SetText (15416)
@@ -59,19 +60,19 @@ def OnLoad():
 	TextAreaControl = RaceWindow.GetControl (9)
 	TextAreaControl.SetText (17237)
 
-	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, BackPress)
 	RaceWindow.SetVisible(WINDOW_VISIBLE)
 	return
 
 def RacePress():
-	global RaceWindow, RaceTable, SubRacesTable
+	global RaceWindow, SubRacesTable
 	Race = GemRB.GetVar ("BaseRace")
 	GemRB.SetVar ("Race", Race)
-	RaceID = RaceTable.GetRowName (RaceTable.FindValue (3, Race) )
+	RaceID = CommonTables.Races.GetRowName (CommonTables.Races.FindValue (3, Race) )
 	HasSubRaces = SubRacesTable.GetValue (RaceID, "PURE_RACE")
 	if HasSubRaces == 0:
-		TextAreaControl.SetText (RaceTable.GetValue (RaceID,"DESC_REF") )
+		TextAreaControl.SetText (CommonTables.Races.GetValue (RaceID,"DESC_REF") )
 		DoneButton.SetState (IE_GUI_BUTTON_ENABLED)
 		return
 	if RaceWindow:

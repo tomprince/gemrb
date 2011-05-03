@@ -163,7 +163,7 @@ IDS
 0xa1	Cure:Panic
 0xa2	Cure:Hold
 0xa3	FreeAction
-0xa4	SlowPoisonDamageRate
+0xa4	Cure:Intoxication
 0xa5	PauseTarget
 0xa6	MagicResistanceModifier
 0xa7	MissileHitModifier
@@ -181,7 +181,7 @@ IDS
 0xb3	DamageVsCreature
 0xb4	CantUseItem
 0xb5	CantUseItemType
-0xb6	Unknown
+0xb6	ApplyEffectItem
 0xb7	ApplyEffectItemType
 0xb8	DontJumpModifier
 0xb9	State:Hold2
@@ -266,7 +266,7 @@ IDS
 0x108	StaticCharge
 0x109	CloakOfFear
 0x10a	MovementRateModifier3
-0x10b	RemoveConfusion
+0x10b	Cure:Confusion
 0x10c	EyeOfTheMind
 0x10d	EyeOfTheSword
 0x10e	EyeOfTheMage

@@ -4,8 +4,7 @@ SPEC_FILES = \
         gemrb.spec \
         gemrb.spec.in
 
-EXTRA_DIST = admin/setup.sh \
-	CMakeLists.txt \
+EXTRA_DIST = CMakeLists.txt \
 	cmake_config.h.in \
 	cmake_uninstall.cmake.in \
 	$(SPEC_FILES)
@@ -28,7 +27,7 @@ MAINTAINERCLEANFILES = \
 	admin/mkinstalldirs \
 	admin/py-compile
 
-dist_man6_MANS = gemrb.6
+dist_man6_MANS = gemrb.6.in
 
 install-data-hook:
 	rm -f $(DESTDIR)$(bindir)/plugins/libgemrb_core.so

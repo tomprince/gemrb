@@ -18,7 +18,8 @@
 #
 #character generation, ability (GUICG4)
 import GemRB
-from GUICommon import RaceTable, ClassTable, KitListTable
+from GUIDefines import *
+import CommonTables
 
 AbilityWindow = 0
 TextAreaControl = 0
@@ -33,20 +34,20 @@ KitIndex = 0
 def CalcLimits(Abidx):
 	global Minimum, Maximum, Add
 
-	Abracead = GemRB.LoadTableObject("ABRACEAD")
+	Abracead = GemRB.LoadTable("ABRACEAD")
 	RaceID = GemRB.GetVar("Race")
-	RowIndex = RaceTable.FindValue(3, RaceID)
-	RaceName = RaceTable.GetRowName(RowIndex)
+	RowIndex = CommonTables.Races.FindValue(3, RaceID)
+	RaceName = CommonTables.Races.GetRowName(RowIndex)
 
 	Minimum = 3
 	Maximum = 18
 
-	Abclasrq = GemRB.LoadTableObject("ABCLASRQ")
+	Abclasrq = GemRB.LoadTable("ABCLASRQ")
 	tmp = Abclasrq.GetValue(KitIndex, Abidx)
 	if tmp!=0 and tmp>Minimum:
 		Minimum = tmp
 
-	Abracerq = GemRB.LoadTableObject("ABRACERQ")
+	Abracerq = GemRB.LoadTable("ABRACERQ")
 	Race = Abracerq.GetRowIndex(RaceName)
 	tmp = Abracerq.GetValue(Race, Abidx*2)
 	if tmp!=0 and tmp>Minimum:
@@ -106,30 +107,30 @@ def OnLoad():
 	Kit = GemRB.GetVar("Class Kit")
 	Class = GemRB.GetVar("Class")-1
 	if Kit == 0:
-		KitName = ClassTable.GetRowName(Class)
+		KitName = CommonTables.Classes.GetRowName(Class)
 	else:
 		#rowname is just a number, first value row what we need here
-		KitName = KitListTable.GetValue(Kit, 0) 
+		KitName = CommonTables.KitList.GetValue(Kit, 0)
 
-	Abclasrq = GemRB.LoadTableObject("ABCLASRQ")
+	Abclasrq = GemRB.LoadTable("ABCLASRQ")
 	KitIndex = Abclasrq.GetRowIndex(KitName)
 
 	GemRB.LoadWindowPack("GUICG", 800 ,600)
-	AbilityTable = GemRB.LoadTableObject("ability")
-	AbilityWindow = GemRB.LoadWindowObject(4)
+	AbilityTable = GemRB.LoadTable("ability")
+	AbilityWindow = GemRB.LoadWindow(4)
 
 	RollPress()
 	for i in range(0,6):
 		Button = AbilityWindow.GetControl(i+30)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "JustPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, JustPress)
 		Button.SetVarAssoc("Ability", i)
 
 		Button = AbilityWindow.GetControl(i*2+16)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, LeftPress)
 		Button.SetVarAssoc("Ability", i )
 
 		Button = AbilityWindow.GetControl(i*2+17)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "RightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RightPress)
 		Button.SetVarAssoc("Ability", i )
 
 	BackButton = AbilityWindow.GetControl(36)
@@ -144,8 +145,8 @@ def OnLoad():
 	TextAreaControl = AbilityWindow.GetControl(29)
 	TextAreaControl.SetText(17247)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	AbilityWindow.SetVisible(WINDOW_VISIBLE)
 	return
 

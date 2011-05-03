@@ -18,7 +18,10 @@
 #
 #character generation, alignment (GUICG3)
 import GemRB
-from GUICommon import *
+import GUICommon
+import CommonTables
+from ie_stats import *
+from GUIDefines import *
 
 AlignmentWindow = 0
 TextAreaControl = 0
@@ -31,20 +34,20 @@ def OnLoad():
 	global AlignmentTable, MyChar
 	
 	MyChar = GemRB.GetVar ("Slot")
-	Kit = GetKitIndex (MyChar)
+	Kit = GUICommon.GetKitIndex (MyChar)
 	Class = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-	Class = ClassTable.FindValue (5, Class)
+	Class = CommonTables.Classes.FindValue (5, Class)
 	if Kit == 0:
-		KitName = ClassTable.GetRowName(Class)
+		KitName = CommonTables.Classes.GetRowName(Class)
 	else:
 		#rowname is just a number, first value row what we need here
-		KitName = KitListTable.GetValue(Kit, 0)
+		KitName = CommonTables.KitList.GetValue(Kit, 0)
 
-	AlignmentOk = GemRB.LoadTableObject("ALIGNMNT")
+	AlignmentOk = GemRB.LoadTable("ALIGNMNT")
 
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	AlignmentTable = GemRB.LoadTableObject("aligns")
-	AlignmentWindow = GemRB.LoadWindowObject(3)
+	AlignmentTable = GemRB.LoadTable("aligns")
+	AlignmentWindow = GemRB.LoadWindow(3)
 
 	for i in range(9):
 		Button = AlignmentWindow.GetControl(i+2)
@@ -56,7 +59,7 @@ def OnLoad():
 		Button = AlignmentWindow.GetControl(i+2)
 		if AlignmentOk.GetValue(KitName, AlignmentTable.GetValue(i, 4) ) != 0:
 			Button.SetState(IE_GUI_BUTTON_ENABLED)
-			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "AlignmentPress")
+			Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, AlignmentPress)
 			Button.SetVarAssoc("Alignment", i)
 
 	BackButton = AlignmentWindow.GetControl(13)
@@ -69,8 +72,8 @@ def OnLoad():
 	TextAreaControl = AlignmentWindow.GetControl(11)
 	TextAreaControl.SetText(9602)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	AlignmentWindow.SetVisible(WINDOW_VISIBLE)
 	return
@@ -97,11 +100,11 @@ def NextPress():
 	#       reputation
 	#       alignment abilities
 	Alignment = GemRB.GetVar ("Alignment")
-	AlignmentTable = GemRB.LoadTableObject ("aligns")
+	AlignmentTable = GemRB.LoadTable ("aligns")
 	GemRB.SetPlayerStat (MyChar, IE_ALIGNMENT, Alignment)
 
 	# use the alignment to apply starting reputation
-	RepTable = GemRB.LoadTableObject ("repstart")
+	RepTable = GemRB.LoadTable ("repstart")
 	AlignmentAbbrev = AlignmentTable.FindValue (3, Alignment)
 	Rep = RepTable.GetValue (AlignmentAbbrev, 0) * 10
 	GemRB.SetPlayerStat (MyChar, IE_REPUTATION, Rep)

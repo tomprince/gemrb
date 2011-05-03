@@ -22,12 +22,12 @@
 #define TLKIMPORTER_H
 
 #include "StringMgr.h"
+
 #include "TlkOverride.h"
 
 class TLKImporter : public StringMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 
 	//Data
 	ieDword StrRefCount, Offset;
@@ -40,7 +40,7 @@ public:
 	void OpenAux();
 	/** purge string defs coming from saved game */
 	void CloseAux();
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	/** construct a new custom string */
 	ieStrRef UpdateString(ieStrRef strref, const char *newvalue);
 	/** resolve a string reference */
@@ -59,14 +59,9 @@ private:
 		 if dest is not NULL it also returns the decoded value */
 	int BuiltinToken(char* Token, char* dest);
 	int RaceStrRef(int slot);
- 	int GenderStrRef(int slot, int malestrref, int femalestrref);
+	int GenderStrRef(int slot, int malestrref, int femalestrref);
 	char *Gabber();
 	char *CharName(int slot);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

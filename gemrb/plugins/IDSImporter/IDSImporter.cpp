@@ -18,40 +18,31 @@
  *
  */
 
-#include "win32def.h"
-#include "globals.h"
 #include "IDSImporter.h"
+
 #include "IDSImporterDefs.h"
-#include <ctype.h>
+
+#include "globals.h"
+#include "win32def.h"
+
 #include <cstring>
 
 IDSImporter::IDSImporter(void)
 {
-	str = NULL;
-	autoFree = false;
 }
 
 IDSImporter::~IDSImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
-
 	for (unsigned int i = 0; i < ptrs.size(); i++) {
 		free( ptrs[i] );
 	}
 }
 
-bool IDSImporter::Open(DataStream* stream, bool autoFree)
+bool IDSImporter::Open(DataStream* str)
 {
-	if (stream == NULL) {
+	if (str == NULL) {
 		return false;
 	}
-	if (str) {
-		return false;
-	}
-	str = stream;
-	this->autoFree = autoFree;
 
 	str->CheckEncrypted();
 	char tmp[11];
@@ -87,10 +78,11 @@ bool IDSImporter::Open(DataStream* stream, bool autoFree)
 		}
 	}
 
+	delete str;
 	return true;
 }
 
-int IDSImporter::GetValue(const char* txt)
+int IDSImporter::GetValue(const char* txt) const
 {
 	for (unsigned int i = 0; i < pairs.size(); i++) {
 		if (stricmp( pairs[i].str, txt ) == 0) {
@@ -100,7 +92,7 @@ int IDSImporter::GetValue(const char* txt)
 	return -1;
 }
 
-char* IDSImporter::GetValue(int val)
+char* IDSImporter::GetValue(int val) const
 {
 	for (unsigned int i = 0; i < pairs.size(); i++) {
 		if (pairs[i].val == val) {
@@ -110,7 +102,7 @@ char* IDSImporter::GetValue(int val)
 	return NULL;
 }
 
-char* IDSImporter::GetStringIndex(unsigned int Index)
+char* IDSImporter::GetStringIndex(unsigned int Index) const
 {
 	if (Index >= pairs.size()) {
 		return NULL;
@@ -118,7 +110,7 @@ char* IDSImporter::GetStringIndex(unsigned int Index)
 	return pairs[Index].str;
 }
 
-int IDSImporter::GetValueIndex(unsigned int Index)
+int IDSImporter::GetValueIndex(unsigned int Index) const
 {
 	if (Index >= pairs.size()) {
 		return 0;
@@ -126,7 +118,7 @@ int IDSImporter::GetValueIndex(unsigned int Index)
 	return pairs[Index].val;
 }
 
-int IDSImporter::FindString(char *str, int len)
+int IDSImporter::FindString(char *str, int len) const
 {
 	int i=pairs.size();
 	while(i--) {
@@ -137,7 +129,7 @@ int IDSImporter::FindString(char *str, int len)
 	return -1;
 }
 
-int IDSImporter::FindValue(int val)
+int IDSImporter::FindValue(int val) const
 {
 	int i=pairs.size();
 	while(i--) {

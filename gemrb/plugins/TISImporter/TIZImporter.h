@@ -22,16 +22,16 @@
 #ifndef TIZIMPORTER_H
 #define TIZIMPORTER_H
 
-#include "../Core/TileSetMgr.h"
+#include "TileSetMgr.h"
 
 class TIZImporter : public TileSetMgr {
 private:
 	ieWord TilesCount;
 	unsigned int *TileIndex;
 public:
-	TIZImporter(void);
-	~TIZImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	TIZImporter();
+	~TIZImporter();
+	bool Open(DataStream* stream);
 private:
 	Sprite2D* GetTile(int index);
 	void release() { delete this; }

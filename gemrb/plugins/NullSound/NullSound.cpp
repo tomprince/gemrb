@@ -18,9 +18,12 @@
  *
  */
 
-#include "win32def.h"
 #include "NullSound.h"
+
+#include "win32def.h"
+
 #include "AmbientMgr.h"
+#include "SoundMgr.h"
 
 NullSound::NullSound(void)
 {
@@ -39,12 +42,13 @@ bool NullSound::Init(void)
 	return true;
 }
 
-unsigned int NullSound::Play(const char*, int, int, unsigned int)
+Holder<SoundHandle> NullSound::Play(const char*, int, int, unsigned int, unsigned int *len)
 {
-	return 1000; //Returning 1 Second Length
+	if (len) *len = 1000; //Returning 1 Second Length
+	return Holder<SoundHandle>();
 }
 
-int NullSound::StreamFile(const char*)
+int NullSound::CreateStream(Holder<SoundMgr>)
 {
 	return 0;
 }
@@ -55,6 +59,16 @@ bool NullSound::Stop()
 }
 
 bool NullSound::Play()
+{
+	return true;
+}
+
+bool NullSound::Pause()
+{
+	return true;
+}
+
+bool NullSound::Resume()
 {
 	return true;
 }
@@ -115,5 +129,5 @@ void NullSound::QueueBuffer(int, unsigned short, int, short*, int, int)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x96E414D, "Null Sound Driver")
-PLUGIN_CLASS(IE_AUDIO_CLASS_ID, NullSound)
+PLUGIN_DRIVER(NullSound, "none")
 END_PLUGIN()

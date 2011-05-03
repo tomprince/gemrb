@@ -18,19 +18,25 @@
  *
  */
 
+#include "SDLVideo.h"
+
+#include "TileRenderer.inl"
+
+#include "AnimationFactory.h"
+#include "Audio.h"
+#include "Game.h" // for GetGlobalTint
+#include "GameData.h"
+#include "Interface.h"
+#include "Palette.h"
+#include "Polygon.h"
+#include "SpriteCover.h"
+#include "GUI/Console.h"
+#include "GUI/EventMgr.h"
+#include "GUI/Window.h"
+
 #include <cmath>
 #include <cassert>
 #include <cstdio>
-#include "SDLVideo.h"
-#include "Interface.h"
-#include "SpriteCover.h"
-#include "Console.h"
-#include "Audio.h"
-#include "Palette.h"
-#include "AnimationFactory.h"
-#include "Game.h" // for GetGlobalTint
-
-#include "TileRenderer.inl"
 
 SDLVideoDriver::SDLVideoDriver(void)
 {
@@ -44,7 +50,7 @@ SDLVideoDriver::SDLVideoDriver(void)
 	xCorr = 0;
 	yCorr = 0;
 	lastTime = 0;
-	GetTime( lastMouseTime );
+	lastMouseTime = GetTickCount();
 	backBuf=NULL;
 	extra=NULL;
 	subtitlestrref = 0;
@@ -70,12 +76,12 @@ SDLVideoDriver::~SDLVideoDriver(void)
 
 int SDLVideoDriver::Init(void)
 {
-	//printf("[SDLVideoDriver]: Init...");
+	//print("[SDLVideoDriver]: Init...");
 	if (SDL_InitSubSystem( SDL_INIT_VIDEO ) == -1) {
-		//printf("[ERROR]\n");
+		//print("[ERROR]\n");
 		return GEM_ERROR;
 	}
-	//printf("[OK]\n");
+	//print("[OK]\n");
 	SDL_EnableUNICODE( 1 );
 	SDL_EnableKeyRepeat( 500, 50 );
 	SDL_ShowCursor( SDL_DISABLE );
@@ -91,7 +97,7 @@ int SDLVideoDriver::CreateDisplay(int w, int h, int b, bool fs)
 	bpp=b;
 	fullscreen=fs;
 	printMessage( "SDLVideo", "Creating display\n", WHITE );
-	ieDword flags = SDL_SWSURFACE;// | SDL_DOUBLEBUF;
+	ieDword flags = SDL_SWSURFACE;
 	if (fullscreen) {
 		flags |= SDL_FULLSCREEN;
 	}
@@ -138,74 +144,16 @@ void SDLVideoDriver::SetDisplayTitle(char* title, char* icon)
 	SDL_WM_SetCaption( title, icon );
 }
 
-VideoModes SDLVideoDriver::GetVideoModes(bool fullscreen)
+bool SDLVideoDriver::SetFullscreenMode(bool set)
 {
-	SDL_Rect** modes;
-	ieDword flags = SDL_SWSURFACE;
-	if (fullscreen) {
-		flags |= SDL_FULLSCREEN;
-	}
-	VideoModes vm;
-	//32-bit Video Modes
-	SDL_PixelFormat pf;
-	pf.palette = NULL;
-	pf.BitsPerPixel = 32;
-	pf.BytesPerPixel = 4;
-	pf.Rmask = 0xff000000;
-	pf.Gmask = 0x00ff0000;
-	pf.Bmask = 0x0000ff00;
-	pf.Amask = 0x000000ff;
-	pf.Rshift = 24;
-	pf.Gshift = 16;
-	pf.Bshift = 8;
-	pf.Ashift = 0;
-	modes = SDL_ListModes( &pf, fullscreen );
-	if (modes == ( SDL_Rect * * ) 0) {
-		return vm;
-	}
-	if (modes == ( SDL_Rect * * ) - 1) {
-		vm.AddVideoMode( 640, 480, 32, fullscreen );
-		vm.AddVideoMode( 800, 600, 32, fullscreen );
-		vm.AddVideoMode( 1024, 786, 32, fullscreen );
-		vm.AddVideoMode( 1280, 1024, 32, fullscreen );
-		vm.AddVideoMode( 1600, 1200, 32, fullscreen );
-	} else {
-		for (int i = 0; modes[i]; i++) {
-			vm.AddVideoMode( modes[i]->w, modes[i]->h, 32, fullscreen );
-		}
-	}
-	return vm;
-}
-
-bool SDLVideoDriver::TestVideoMode(VideoMode& vm)
-{
-	ieDword flags = SDL_SWSURFACE;
-	if (vm.GetFullScreen()) {
-		flags |= SDL_FULLSCREEN;
-	}
-	if (SDL_VideoModeOK( vm.GetWidth(), vm.GetHeight(), vm.GetBPP(), flags ) == vm.GetBPP()) {
+	if (fullscreen != set) {
+		fullscreen=set;
+		SDL_WM_ToggleFullScreen( disp );
+		//readjust mouse to original position
+		MoveMouse(CursorPos.x, CursorPos.y);
+		//synchronise internal variable
+		core->GetDictionary()->SetAt( "Full Screen", (ieDword) fullscreen );
 		return true;
-	}
-	return false;
-}
-
-bool SDLVideoDriver::ToggleFullscreenMode(int set_reset)
-{
-	if (set_reset==-1) {
-		 set_reset=fullscreen;
-	}
-	if (fullscreen == !set_reset) {
-		fullscreen=set_reset;
-		ieDword flags = SDL_SWSURFACE;// | SDL_DOUBLEBUF;
-		if (fullscreen) {
-			flags |= SDL_FULLSCREEN;
-		}
-		SDL_Surface* disp2 = SDL_SetVideoMode( width, height, bpp, flags );
-		if (disp2) {
-			disp = disp2;
-			MoveMouse(CursorPos.x,CursorPos.y);
-			return true;
-		}
 	}
 	return false;
 }
@@ -221,27 +169,84 @@ inline int GetModState(int modstate)
 
 int SDLVideoDriver::SwapBuffers(void)
 {
-	static bool lastevent = false; /* last event was a mousedown */
-	static unsigned long lastmousetime = 0;
-	int x,y;
-
 	int ret = GEM_OK;
 	unsigned long time;
-	GetTime( time );
-	if (( time - lastTime ) < 17) {
-		SDL_Delay( 17 - (time - lastTime) );
-		GetTime( time );
+	time = GetTickCount();
+	if (( time - lastTime ) < 33) {
+		SDL_Delay( 33 - (time - lastTime) );
+		time = GetTickCount();
 	}
 	lastTime = time;
 
-	unsigned char key = 0;
 	bool ConsolePopped = core->ConsolePopped;
 
 	if (ConsolePopped) {
 		core->DrawConsole();
 	}
 
+	ret = PollEvents();
+
+	SDL_BlitSurface( backBuf, NULL, disp, NULL );
+	if (fadeColor.a) {
+		SDL_SetAlpha( extra, SDL_SRCALPHA, fadeColor.a );
+		SDL_Rect src = {
+			0, 0, Viewport.w, Viewport.h
+		};
+		SDL_Rect dst = {
+			xCorr, yCorr, 0, 0
+		};
+		SDL_BlitSurface( extra, &src, disp, &dst );
+	}
+
+	if (Cursor[CursorIndex] && !(DisableMouse&MOUSE_DISABLED)) {
+		SDL_Surface* temp = backBuf;
+		backBuf = disp; // FIXME: UGLY HACK!
+		if (DisableMouse&MOUSE_GRAYED) {
+			//used for greyscale blitting, fadeColor is unused
+			BlitGameSprite(Cursor[CursorIndex], CursorPos.x, CursorPos.y, BLIT_GREY, fadeColor, NULL, NULL, NULL, true);
+		} else {
+			BlitSprite(Cursor[CursorIndex], CursorPos.x, CursorPos.y, true);
+		}
+		backBuf = temp;
+	}
+
+	//handle tooltips
+	unsigned int delay = core->TooltipDelay;
+	// The multiplication by 10 is there since the last, disabling slider position is the eleventh
+	if (!ConsolePopped && (delay<TOOLTIP_DELAY_FACTOR*10) ) {
+		time = GetTickCount();
+		/** Display tooltip if mouse is idle */
+		if (( time - lastMouseTime ) > delay) {
+			if (Evnt)
+				Evnt->MouseIdle( time - lastMouseTime );
+		}
+
+		/** This causes the tooltip to be rendered directly to display */
+		SDL_Surface* tmp = backBuf;
+		backBuf = disp; // FIXME: UGLY HACK!
+		core->DrawTooltip();
+		backBuf = tmp;
+	}
+
+	SDL_Flip( disp );
+
+	return ret;
+}
+
+int SDLVideoDriver::PollEvents() {
+	static bool lastevent = false; /* last event was a mousedown */
+	static unsigned long lastmousetime = 0;
+
+	int ret = GEM_OK;
+
+	bool ConsolePopped = core->ConsolePopped;
+	unsigned long time = lastTime;
+	unsigned char key = 0;
+	int x,y;
+
 	while ( SDL_PollEvent(&event) ) {
+		int modstate = GetModState(event.key.keysym.mod);
+
 		/* Loop until there are no events left on the queue */
 		switch (event.type) {
 		/* Process the appropriate event type */
@@ -256,6 +261,14 @@ int SDLVideoDriver::SwapBuffers(void)
 				case SDLK_RALT:
 					key = GEM_ALT;
 					break;
+				case SDLK_SCROLLOCK:
+					key = GEM_GRAB;
+					break;
+				case SDLK_f:
+					if (modstate & GEM_MOD_CTRL) {
+						ToggleFullscreenMode();
+					}
+					break;
 				default:
 					if (event.key.keysym.sym<256) {
 						key=(unsigned char) event.key.keysym.sym;
@@ -263,11 +276,11 @@ int SDLVideoDriver::SwapBuffers(void)
 					break;
 			}
 			if (!ConsolePopped && Evnt && ( key != 0 ))
-				Evnt->KeyRelease( key, GetModState(event.key.keysym.mod) );
+				Evnt->KeyRelease( key, modstate );
 			break;
 
 		case SDL_KEYDOWN:
-			if ((event.key.keysym.sym == SDLK_SPACE) && GetModState(event.key.keysym.mod) & GEM_MOD_CTRL) {
+			if ((event.key.keysym.sym == SDLK_SPACE) && modstate & GEM_MOD_CTRL) {
 				core->PopupConsole();
 				break;
 			}
@@ -318,6 +331,9 @@ int SDLVideoDriver::SwapBuffers(void)
 				case SDLK_PAGEDOWN:
 					key = GEM_PGDOWN;
 					break;
+				case SDLK_SCROLLOCK:
+					key = GEM_GRAB;
+					break;
 				default:
 					break;
 				}
@@ -327,9 +343,9 @@ int SDLVideoDriver::SwapBuffers(void)
 					Evnt->OnSpecialKeyPress( key );
 			} else if (( key != 0 )) {
 				if (ConsolePopped)
-					core->console->OnKeyPress( key, GetModState(event.key.keysym.mod) );
+					core->console->OnKeyPress( key, modstate);
 				else if (Evnt)
-					Evnt->KeyPress( key, GetModState(event.key.keysym.mod) );
+					Evnt->KeyPress( key, modstate);
 			}
 			break;
 		case SDL_MOUSEMOTION:
@@ -385,49 +401,6 @@ int SDLVideoDriver::SwapBuffers(void)
 			Evnt->MouseUp( x, y, 1 << ( 0 ), GetModState(SDL_GetModState()) );
 	}
 
-	SDL_BlitSurface( backBuf, NULL, disp, NULL );
-	if (fadeColor.a) {
-		SDL_SetAlpha( extra, SDL_SRCALPHA, fadeColor.a );
-		SDL_Rect src = {
-			0, 0, Viewport.w, Viewport.h
-		};
-		SDL_Rect dst = {
-			xCorr, yCorr, 0, 0
-		};
-		SDL_BlitSurface( extra, &src, disp, &dst );
-	}
-
-	if (Cursor[CursorIndex] && !(DisableMouse&MOUSE_DISABLED)) {
-		SDL_Surface* temp = backBuf;
-		backBuf = disp; // FIXME: UGLY HACK!
-		if (DisableMouse&MOUSE_GRAYED) {
-			//used for greyscale blitting, fadeColor is unused
-			BlitGameSprite(Cursor[CursorIndex], CursorPos.x, CursorPos.y, BLIT_GREY, fadeColor, NULL, NULL, NULL, true);
-		} else {
-			BlitSprite(Cursor[CursorIndex], CursorPos.x, CursorPos.y, true);
-		}
-		backBuf = temp;
-	}
-
-	//handle tooltips
-	unsigned int delay = core->TooltipDelay;
-	// The multiplication by 10 is there since the last, disabling slider position is the eleventh
-	if (!ConsolePopped && (delay<TOOLTIP_DELAY_FACTOR*10) ) {
-		GetTime( time );
-		/** Display tooltip if mouse is idle */
-		if (( time - lastMouseTime ) > delay) {
-			if (Evnt)
-				Evnt->MouseIdle( time - lastMouseTime );
-		}
-
-		/** This causes the tooltip to be rendered directly to display */
-		SDL_Surface* tmp = backBuf;
-		backBuf = disp; // FIXME: UGLY HACK!
-		core->DrawTooltip();
-		backBuf = tmp;
-	}
-
-	SDL_Flip( disp );
 	return ret;
 }
 
@@ -439,6 +412,7 @@ bool SDLVideoDriver::ToggleGrabInput()
 	}
 	else {
 		SDL_WM_GrabInput( SDL_GRAB_OFF );
+		MoveMouse(CursorPos.x, CursorPos.y);
 		return false;
 	}
 }
@@ -628,7 +602,7 @@ void SDLVideoDriver::FreeSprite(Sprite2D*& spr)
 	spr = NULL;
 }
 
-Sprite2D* SDLVideoDriver::DuplicateSprite(Sprite2D* sprite)
+Sprite2D* SDLVideoDriver::DuplicateSprite(const Sprite2D* sprite)
 {
 	if (!sprite) return NULL;
 	Sprite2D* dest = 0;
@@ -660,8 +634,8 @@ Sprite2D* SDLVideoDriver::DuplicateSprite(Sprite2D* sprite)
 }
 
 
-void SDLVideoDriver::BlitSpriteRegion(Sprite2D* spr, Region& size, int x,
-	int y, bool anchor, Region* clip)
+void SDLVideoDriver::BlitSpriteRegion(const Sprite2D* spr, const Region& size, int x,
+	int y, bool anchor, const Region* clip)
 {
 	if (!spr->vptr) return;
 
@@ -842,7 +816,7 @@ void SDLVideoDriver::BlitSpriteRegion(Sprite2D* spr, Region& size, int x,
 	}
 }
 
-void SDLVideoDriver::BlitTile(Sprite2D* spr, Sprite2D* mask, int x, int y, Region* clip, bool trans)
+void SDLVideoDriver::BlitTile(const Sprite2D* spr, const Sprite2D* mask, int x, int y, const Region* clip, unsigned int flags)
 {
 	if (spr->BAM) {
 		printMessage( "SDLVideo", "Tile blit not supported for this sprite\n", LIGHT_RED );
@@ -892,7 +866,7 @@ void SDLVideoDriver::BlitTile(Sprite2D* spr, Sprite2D* mask, int x, int y, Regio
 	}
 
 	bool tint = false;
-	Color tintcol = {0,0,0,0};
+	Color tintcol = {255,255,255,0};
 
 	if (core->GetGame()) {
 		const Color* totint = core->GetGame()->GetGlobalTint();
@@ -908,27 +882,58 @@ void SDLVideoDriver::BlitTile(Sprite2D* spr, Sprite2D* mask, int x, int y, Regio
 		else \
 			BlitTile_internal<Uint16>(backBuf, x, y, rx, ry, w, h, data, pal, mask_data, ck, T, B); \
 
+	if (flags & TILE_GREY) {
 
-	if (trans) {
-		TRBlender_HalfTrans B(backBuf->format);
+		if (flags & TILE_HALFTRANS) {
+			TRBlender_HalfTrans B(backBuf->format);
 
-		if (tint) {
-			TRTinter_Tint T(tintcol);
+			TRTinter_Grey T(tintcol);
 			DO_BLIT
 		} else {
-			TRTinter_NoTint T;
+			TRBlender_Opaque B(backBuf->format);
+
+			TRTinter_Grey T(tintcol);
 			DO_BLIT
 		}
+
+	} else if (flags & TILE_SEPIA) {
+
+		if (flags & TILE_HALFTRANS) {
+			TRBlender_HalfTrans B(backBuf->format);
+
+			TRTinter_Sepia T(tintcol);
+			DO_BLIT
+		} else {
+			TRBlender_Opaque B(backBuf->format);
+
+			TRTinter_Sepia T(tintcol);
+			DO_BLIT
+		}
+
 	} else {
-		TRBlender_Opaque B(backBuf->format);
 
-		if (tint) {
-			TRTinter_Tint T(tintcol);
-			DO_BLIT
+		if (flags & TILE_HALFTRANS) {
+			TRBlender_HalfTrans B(backBuf->format);
+
+			if (tint) {
+				TRTinter_Tint T(tintcol);
+				DO_BLIT
+			} else {
+				TRTinter_NoTint T;
+				DO_BLIT
+			}
 		} else {
-			TRTinter_NoTint T;
-			DO_BLIT
+			TRBlender_Opaque B(backBuf->format);
+
+			if (tint) {
+				TRTinter_Tint T(tintcol);
+				DO_BLIT
+			} else {
+				TRTinter_NoTint T;
+				DO_BLIT
+			}
 		}
+
 	}
 
 #undef DO_BLIT
@@ -936,8 +941,8 @@ void SDLVideoDriver::BlitTile(Sprite2D* spr, Sprite2D* mask, int x, int y, Regio
 }
 
 
-void SDLVideoDriver::BlitSprite(Sprite2D* spr, int x, int y, bool anchor,
-	Region* clip)
+void SDLVideoDriver::BlitSprite(const Sprite2D* spr, int x, int y, bool anchor,
+	const Region* clip)
 {
 	if (!spr->vptr) return;
 
@@ -1067,10 +1072,10 @@ void SDLVideoDriver::BlitSprite(Sprite2D* spr, int x, int y, bool anchor,
 }
 
 //cannot make const reference from tint, it is modified locally
-void SDLVideoDriver::BlitGameSprite(Sprite2D* spr, int x, int y,
-									unsigned int flags, Color tint,
-									SpriteCover* cover, Palette *palette,
-									Region* clip, bool anchor)
+void SDLVideoDriver::BlitGameSprite(const Sprite2D* spr, int x, int y,
+		unsigned int flags, Color tint,
+		SpriteCover* cover, Palette *palette,
+		const Region* clip, bool anchor)
 {
 	if (!spr->vptr) return;
 
@@ -1335,7 +1340,7 @@ void SDLVideoDriver::BlitGameSprite(Sprite2D* spr, int x, int y,
 		// tinted
 		// covered
 
-//		printf("Unoptimized blit: %04X\n", flags);
+//		print("Unoptimized blit: %04X\n", flags);
 
 #define SPECIALPIXEL   int ia=0; if ((remflags & BLIT_HALFTRANS) || (p == 1 && (remflags & BLIT_TRANSSHADOW))) ia = 1; if (p == 1 && (remflags & BLIT_NOSHADOW)) { } else
 
@@ -1465,7 +1470,7 @@ void SDLVideoDriver::BlitGameSprite(Sprite2D* spr, int x, int y,
 		// transshadow  (impossible with 32bpp)
 		// palettealpha (always set)
 
-//		printf("Unoptimized blit: %04X\n", flags);
+//		print("Unoptimized blit: %04X\n", flags);
 
 #define SPECIALPIXEL   int ia=0; if ((remflags & BLIT_HALFTRANS)) ia = 1; if (p == 1 && (remflags & BLIT_NOSHADOW)) { } else
 
@@ -1581,8 +1586,8 @@ void SDLVideoDriver::SetDragCursor(Sprite2D* drag)
 
 Sprite2D* SDLVideoDriver::GetScreenshot( Region r )
 {
-	int Width = r.w ? r.w : disp->w;
-	int Height = r.h ? r.h : disp->h;
+	unsigned int Width = r.w ? r.w : disp->w;
+	unsigned int Height = r.h ? r.h : disp->h;
 	SDL_Rect src = {r.x, r.y, r.w, r.h};
 
 
@@ -1590,7 +1595,8 @@ Sprite2D* SDLVideoDriver::GetScreenshot( Region r )
 				0xFF0000, 0x00FF00, 0x0000FF, 0x000000 );
 	SDL_BlitSurface( backBuf, (r.w && r.h) ? &src : NULL, surf, NULL);
 	void* pixels = malloc( Width * Height * 3 );
-	memcpy( pixels, surf->pixels, Width * Height * 3 );
+	for (unsigned int y = 0; y < Height; y++)
+		memcpy( (char*)pixels+(Width * y * 3), (char*)surf->pixels+(surf->pitch * y), Width * 3 );
 	//freeing up temporary surface as we copied its pixels
 	Sprite2D* screenshot = CreateSprite( Width, Height, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000, pixels, false, 0 );
 	SDL_FreeSurface(surf);
@@ -1655,7 +1661,7 @@ void SDLVideoDriver::DrawRect(const Region& rgn, const Color& color, bool fill, 
 }
 
 /** This function Draws a clipped sprite */
-void SDLVideoDriver::DrawRectSprite(const Region& rgn, const Color& color, Sprite2D* sprite)
+void SDLVideoDriver::DrawRectSprite(const Region& rgn, const Color& color, const Sprite2D* sprite)
 {
 	if (sprite->BAM) {
 		printMessage( "SDLVideo", "DrawRectSprite not supported for this sprite\n", LIGHT_RED );
@@ -1722,7 +1728,7 @@ inline void WritePixel(const long val, unsigned char *pixels, int BytesPerPixel)
 
 void SDLVideoDriver::SetPixel(short x, short y, const Color& color, bool clipped)
 {
-	//printf("x: %d; y: %d; XC: %d; YC: %d, VX: %d, VY: %d, VW: %d, VH: %d\n", x, y, xCorr, yCorr, Viewport.x, Viewport.y, Viewport.w, Viewport.h);
+	//print("x: %d; y: %d; XC: %d; YC: %d, VX: %d, VY: %d, VW: %d, VH: %d\n", x, y, xCorr, yCorr, Viewport.x, Viewport.y, Viewport.w, Viewport.h);
 	if (clipped) {
 		x += xCorr;
 		y += yCorr;
@@ -1764,16 +1770,16 @@ void SDLVideoDriver::GetPixel(short x, short y, Color& c)
 
 void SDLVideoDriver::GetPixel(void *vptr, unsigned short x, unsigned short y, Color &c)
 {
-        SDL_Surface *surf = (SDL_Surface*)(vptr);
+	SDL_Surface *surf = (SDL_Surface*)(vptr);
 
-        SDL_LockSurface( surf );
-        unsigned char * pixels = ( ( unsigned char * ) surf->pixels ) +
-                ( ( y * surf->w + x) * surf->format->BytesPerPixel );
-        long val = 0;
-        ReadPixel(val, pixels, surf->format->BytesPerPixel);
-        SDL_UnlockSurface( surf );
+	SDL_LockSurface( surf );
+	unsigned char * pixels = ( ( unsigned char * ) surf->pixels ) +
+		( ( y * surf->w + x) * surf->format->BytesPerPixel );
+	long val = 0;
+	ReadPixel(val, pixels, surf->format->BytesPerPixel);
+	SDL_UnlockSurface( surf );
 
-        SDL_GetRGBA( val, surf->format, (Uint8 *) &c.r, (Uint8 *) &c.g, (Uint8 *) &c.b, (Uint8 *) &c.a );
+	SDL_GetRGBA( val, surf->format, (Uint8 *) &c.r, (Uint8 *) &c.g, (Uint8 *) &c.b, (Uint8 *) &c.a );
 }
 
 long SDLVideoDriver::GetPixel(void *vptr, unsigned short x, unsigned short y)
@@ -2232,7 +2238,7 @@ Palette* SDLVideoDriver::GetPalette(void *vptr)
 // flips its anchor (i.e. origin//base point) as well
 // returns new sprite
 
-Sprite2D *SDLVideoDriver::MirrorSpriteVertical(Sprite2D* sprite, bool MirrorAnchor)
+Sprite2D *SDLVideoDriver::MirrorSpriteVertical(const Sprite2D* sprite, bool MirrorAnchor)
 {
 	if (!sprite || !sprite->vptr)
 		return NULL;
@@ -2270,7 +2276,7 @@ Sprite2D *SDLVideoDriver::MirrorSpriteVertical(Sprite2D* sprite, bool MirrorAnch
 
 // Flips given sprite horizontally (left-right). If MirrorAnchor=true,
 //   flips its anchor (i.e. origin//base point) as well
-Sprite2D *SDLVideoDriver::MirrorSpriteHorizontal(Sprite2D* sprite, bool MirrorAnchor)
+Sprite2D *SDLVideoDriver::MirrorSpriteHorizontal(const Sprite2D* sprite, bool MirrorAnchor)
 {
 	if (!sprite || !sprite->vptr)
 		return NULL;
@@ -2359,7 +2365,7 @@ void SDLVideoDriver::GetMousePos(int &x, int &y)
 
 void SDLVideoDriver::MouseMovement(int x, int y)
 {
-	GetTime( lastMouseTime );
+	lastMouseTime = GetTickCount();
 	if (DisableMouse&MOUSE_DISABLED)
 		return;
 	CursorPos.x = x; // - mouseAdjustX[CursorIndex];
@@ -2386,13 +2392,14 @@ void SDLVideoDriver::ClickMouse(unsigned int button)
 
 void SDLVideoDriver::MouseClickEvent(Uint8 type, Uint8 button)
 {
-	SDL_MouseButtonEvent *event = new SDL_MouseButtonEvent();
+	SDL_Event *event = new SDL_Event();
 	event->type = type;
-	event->button = button;
-	event->state = (type==SDL_MOUSEBUTTONDOWN)?SDL_PRESSED:SDL_RELEASED;
-	event->x = CursorPos.x;
-	event->y = CursorPos.y;
-	SDL_PushEvent((SDL_Event *) event);
+	event->button.type = type;
+	event->button.button = button;
+	event->button.state = (type==SDL_MOUSEBUTTONDOWN)?SDL_PRESSED:SDL_RELEASED;
+	event->button.x = CursorPos.x;
+	event->button.y = CursorPos.y;
+	SDL_PushEvent(event);
 }
 
 void SDLVideoDriver::InitMovieScreen(int &w, int &h, bool yuv)
@@ -2416,6 +2423,12 @@ void SDLVideoDriver::InitMovieScreen(int &w, int &h, bool yuv)
 	subtitleregion.h = h/4;
 	subtitleregion.x = 0;
 	subtitleregion.y = h-h/4;
+
+	//same for SDL
+	subtitleregion_sdl.w = w;
+	subtitleregion_sdl.h = h/4;
+	subtitleregion_sdl.x = 0;
+	subtitleregion_sdl.y = h-h/4;
 }
 
 void SDLVideoDriver::showFrame(unsigned char* buf, unsigned int bufw,
@@ -2453,6 +2466,7 @@ void SDLVideoDriver::showFrame(unsigned char* buf, unsigned int bufw,
 	destRect.w = w;
 	destRect.h = h;
 
+	SDL_FillRect(disp, &subtitleregion_sdl, 0);
 	SDL_BlitSurface( sprite, &srcRect, disp, &destRect );
 	if (titleref>0)
 		DrawMovieSubtitle( titleref );
@@ -2461,13 +2475,13 @@ void SDLVideoDriver::showFrame(unsigned char* buf, unsigned int bufw,
 }
 
 void SDLVideoDriver::showYUVFrame(unsigned char** buf, unsigned int *strides,
-	unsigned int bufw, unsigned int bufh,
+	unsigned int /*bufw*/, unsigned int bufh,
 	unsigned int w, unsigned int h,
 	unsigned int dstx, unsigned int dsty,
 	ieDword titleref) {
 	SDL_Rect destRect;
 
-	assert( bufw == w && bufh == h );
+	assert( /* bufw == w && */ bufh == h );
 
 	SDL_LockYUVOverlay(overlay);
 	for (unsigned int plane = 0; plane < 3; plane++) {
@@ -2489,6 +2503,7 @@ void SDLVideoDriver::showYUVFrame(unsigned char** buf, unsigned int *strides,
 	destRect.y = dsty;
 	destRect.w = w;
 	destRect.h = h;
+	SDL_FillRect(disp, &subtitleregion_sdl, 0);
 	SDL_DisplayYUVOverlay(overlay, &destRect);
 	if (titleref>0)
 		DrawMovieSubtitle( titleref );
@@ -2511,7 +2526,7 @@ int SDLVideoDriver::PollMovieEvents()
 					case SDLK_q:
 						return 1;
 					case SDLK_f:
-						SDL_WM_ToggleFullScreen( disp );
+						ToggleFullscreenMode();
 						break;
 					default:
 						break;
@@ -2535,14 +2550,18 @@ void SDLVideoDriver::DrawMovieSubtitle(ieDword strRef)
 {
 	if (strRef!=subtitlestrref) {
 		core->FreeString(subtitletext);
+		if (!strRef)
+			return;
 		subtitletext = core->GetString(strRef);
 		subtitlestrref = strRef;
-		printf("Fetched subtitle %s\n", subtitletext);
 	}
-	if (subtitlefont) {
+	if (subtitlefont && subtitletext) {
 		// FIXME: ugly hack!
 		SDL_Surface* temp = backBuf;
 		backBuf = disp;
+		
+		//FYI: that 0 is pitch black
+		//SDL_FillRect(disp, &subtitleregion_sdl, 0);
 		subtitlefont->Print(subtitleregion, (unsigned char *) subtitletext, subtitlepal, IE_FONT_ALIGN_LEFT|IE_FONT_ALIGN_BOTTOM, true);
 		backBuf = temp;
 	}
@@ -2558,5 +2577,5 @@ void SDLVideoDriver::SetGamma(int brightness, int /*contrast*/)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0xDBAAB50, "SDL Video Driver")
-PLUGIN_CLASS(IE_VIDEO_CLASS_ID, SDLVideoDriver)
+PLUGIN_DRIVER(SDLVideoDriver, "sdl")
 END_PLUGIN()

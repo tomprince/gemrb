@@ -18,22 +18,36 @@
  *
  */
 
-#include "win32def.h"
 #include "TLKImporter.h"
-#include "Interface.h"
-#include "Audio.h"
-#include "Game.h"
-#include "GameControl.h"
-#include "Calendar.h"
 
-//static int *monthnames=NULL;
-//static int *days=NULL;
-//static int monthnamecount=0;
+#include "win32def.h"
+
+#include "Audio.h"
+#include "Calendar.h"
+#include "DialogHandler.h"
+#include "Game.h"
+#include "Interface.h"
+#include "TableMgr.h"
+#include "GUI/GameControl.h"
+#include "Scriptable/Actor.h"
+
 //set this to -1 if charname is gabber (iwd2)
 static int charname=0;
+struct gt_type
+{
+	int type;
+	ieStrRef male;
+	ieStrRef female;
+};
+static Variables gtmap;
 
 TLKImporter::TLKImporter(void)
 {
+	int gtcount;
+
+	gtmap.RemoveAll(NULL);
+	gtmap.SetType(GEM_VARIABLES_POINTER);
+
 	if (core->HasFeature(GF_CHARNAMEISGABBER)) {
 		charname=-1;
 	} else {
@@ -41,36 +55,36 @@ TLKImporter::TLKImporter(void)
 	}
 	str = NULL;
 	override = NULL;
-	autoFree = false;
-/*
-	if (monthnamecount==0) {
-		int i;
-		AutoTable tab("months");
-		if (!tab) {
-			monthnamecount=-1;
-			return;
-		}
-		monthnamecount = tab->GetRowCount();
-		monthnames = (int *) malloc(sizeof(int) * monthnamecount);
-		days = (int *) malloc(sizeof(int) * monthnamecount);
-		for(i=0;i<monthnamecount;i++) {
-			days[i]=atoi(tab->QueryField(i,0));
-			monthnames[i]=atoi(tab->QueryField(i,1));
-		}
+
+	AutoTable tm("gender");
+	if (tm) {
+		gtcount = tm->GetRowCount();
+	} else {
+		gtcount = 0;
 	}
-*/
+	for(int i=0;i<gtcount;i++) {
+		ieVariable key;
+
+		strnuprcpy(key, tm->GetRowName(i), sizeof(ieVariable)-1 );
+		gt_type *entry = (gt_type *) new gt_type;
+		entry->type = atoi(tm->QueryField(i,0));
+		entry->male = atoi(tm->QueryField(i,1));
+		entry->female = atoi(tm->QueryField(i,2));
+		gtmap.SetAt(key, (void *) entry);
+	}
+}
+
+void ReleaseGtEntry(void *poi)
+{
+	delete (gt_type *) poi;
 }
 
 TLKImporter::~TLKImporter(void)
 {
-/*
-	if (monthnames) free(monthnames);
-	if (days) free(days);
-	monthnamecount=0;
-*/
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
+	
+	gtmap.RemoveAll(ReleaseGtEntry);
+
 	CloseAux();
 }
 
@@ -94,16 +108,13 @@ void TLKImporter::OpenAux()
 	}
 }
 
-bool TLKImporter::Open(DataStream* stream, bool autoFree)
+bool TLKImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "TLK\x20V1\x20\x20", 8 ) != 0) {
@@ -135,7 +146,7 @@ inline Actor *GetActorFromSlot(int slot)
 	if (slot==-1) {
 		GameControl *gc = core->GetGameControl();
 		if (gc) {
-			return gc->GetSpeaker();
+			return gc->dialoghandler->GetSpeaker();
 		}
 		return NULL;
 	}
@@ -153,7 +164,7 @@ char *TLKImporter::Gabber()
 {
 	Actor *act;
 
-	act=core->GetGameControl()->GetSpeaker();
+	act=core->GetGameControl()->dialoghandler->GetSpeaker();
 	if (act) {
 		return override->CS(act->LongName);
 	}
@@ -202,39 +213,18 @@ int TLKImporter::GenderStrRef(int slot, int malestrref, int femalestrref)
 	return malestrref;
 }
 
-/*
-void TLKImporter::GetMonthName(int dayandmonth)
-{
-	int month=1;
-
-	for(int i=0;i<monthnamecount;i++) {
-		if (dayandmonth<days[i]) {
-			char *tmp;
-			char tmpstr[10];
-			
-			sprintf(tmpstr,"%d", dayandmonth+1);
-			core->GetTokenDictionary()->SetAtCopy("DAY", tmpstr);
-
-			tmp = GetString( monthnames[i] );
-			core->GetTokenDictionary()->SetAt("MONTHNAME",tmp);
-			//must not free tmp, SetAt doesn't copy the pointer!
-
-			sprintf(tmpstr,"%d", month);
-			core->GetTokenDictionary()->SetAtCopy("MONTH",tmpstr);
-			return;
-		}
-		dayandmonth-=days[i];
-		//ignoring single days (they are not months)
-		if (days[i]!=1) month++;
-	}
-}
-*/
-
 //if this function returns -1 then it is not a built in token, dest may be NULL
 int TLKImporter::BuiltinToken(char* Token, char* dest)
 {
 	char* Decoded = NULL;
 	int TokenLength;	 //decoded token length
+	gt_type *entry;
+
+	//these are gender specific tokens, they are customisable by gender.2da
+	if (gtmap.Lookup(Token, (void *&) entry) ) {
+		Decoded = GetString( GenderStrRef(entry->type, entry->male, entry->female) );
+		goto exit_function;
+	}
 
 	//these are hardcoded, all engines are the same or don't use them
 	if (!strcmp( Token, "DAYANDMONTH")) {
@@ -254,42 +244,6 @@ int TLKImporter::BuiltinToken(char* Token, char* dest)
 		Decoded = GetString( RaceStrRef(-1), 0);
 		goto exit_function;
 	}
-	if (!strcmp( Token, "SIRMAAM" )) {
-		Decoded = GetString( GenderStrRef(-1,27473,27475), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "GIRLBOY" )) {
-		Decoded = GetString( GenderStrRef(-1,27477,27476), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "BROTHERSISTER" )) {
-		Decoded = GetString( GenderStrRef(-1,27478,27479), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "LADYLORD" )) {
-		Decoded = GetString( GenderStrRef(-1,27481,27480), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "MALEFEMALE" )) {
-		Decoded = GetString( GenderStrRef(-1,27482,27483), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "HESHE" )) {
-		Decoded = GetString( GenderStrRef(-1,27484,27485), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "HISHER" )) {
-		Decoded = GetString( GenderStrRef(-1,27486,27487), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "HIMHER" )) {
-		Decoded = GetString( GenderStrRef(-1,27488,27487), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "MANWOMAN" )) {
-		Decoded = GetString( GenderStrRef(-1,27489,27490), 0);
-		goto exit_function;
-	}
 	if (!strncmp( Token, "PLAYER",6 )) {
 		Decoded = CharName(Token[6]-'1');
 		goto exit_function;
@@ -307,43 +261,6 @@ int TLKImporter::BuiltinToken(char* Token, char* dest)
 		Decoded = GetString( RaceStrRef(0), 0);
 		goto exit_function;
 	}
-	if (!strcmp( Token, "PRO_SIRMAAM" )) {
-		Decoded = GetString( GenderStrRef(0,27473,27475), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_GIRLBOY" )) {
-		Decoded = GetString( GenderStrRef(0,27477,27476), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_BROTHERSISTER" )) {
-		Decoded = GetString( GenderStrRef(0,27478,27479), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_LADYLORD" )) {
-		Decoded = GetString( GenderStrRef(0,27481,27480), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_MALEFEMALE" )) {
-		Decoded = GetString( GenderStrRef(0,27482,27483), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_HESHE" )) {
-		Decoded = GetString( GenderStrRef(0,27484,27485), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_HISHER" )) {
-		Decoded = GetString( GenderStrRef(0,27486,27487), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_HIMHER" )) {
-		Decoded = GetString( GenderStrRef(0,27488,27487), 0);
-		goto exit_function;
-	}
-	if (!strcmp( Token, "PRO_MANWOMAN" )) {
-		Decoded = GetString( GenderStrRef(0,27489,27490), 0);
-		goto exit_function;
-	}
-
 	if (!strcmp( Token, "MAGESCHOOL" )) {
 		ieDword row = 0; //default value is 0 (generalist)
 		//this is subject to change, the row number in magesch.2da
@@ -527,8 +444,8 @@ empty:
 		}
 	}
 	if (flags & IE_STR_STRREFON) {
-		char* string2 = ( char* ) malloc( Length + 11 );
-		sprintf( string2, "%d: %s", strref, string );
+		char* string2 = ( char* ) malloc( Length + 13 );
+		sprintf( string2, "%u: %s", strref, string );
 		free( string );
 		return string2;
 	}

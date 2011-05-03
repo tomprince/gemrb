@@ -23,6 +23,7 @@
 ###################################################
 
 import GemRB
+from GUIDefines import *
 
 MovieWindow = 0
 TextAreaControl = 0
@@ -32,14 +33,14 @@ def OnLoad ():
 	global MovieWindow, TextAreaControl, MoviesTable
 
 	GemRB.LoadWindowPack ("GUIMOVIE", 640, 480)
-	MovieWindow = GemRB.LoadWindowObject (0)
+	MovieWindow = GemRB.LoadWindow (0)
 	MovieWindow.SetFrame ()
 	TextAreaControl = MovieWindow.GetControl (0)
 	TextAreaControl.SetFlags (IE_GUI_TEXTAREA_SELECTABLE)
 	PlayButton = MovieWindow.GetControl (2)
 	CreditsButton = MovieWindow.GetControl (3)
 	DoneButton = MovieWindow.GetControl (4)
-	MoviesTable = GemRB.LoadTableObject ("MOVIDESC")
+	MoviesTable = GemRB.LoadTable ("MOVIDESC")
 	for i in range (0, MoviesTable.GetRowCount () ):
 		t = MoviesTable.GetRowName (i)
 		if GemRB.GetVar(t)==1:
@@ -49,9 +50,9 @@ def OnLoad ():
 	PlayButton.SetText (17318)
 	CreditsButton.SetText (15591)
 	DoneButton.SetText (11973)
-	PlayButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "PlayPress")
-	CreditsButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "CreditsPress")
-	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "DonePress")
+	PlayButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, PlayPress)
+	CreditsButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreditsPress)
+	DoneButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, DonePress)
 	DoneButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 	MovieWindow.SetVisible (WINDOW_VISIBLE)
 	return

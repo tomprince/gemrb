@@ -19,15 +19,17 @@
 # character generation, mage spells (GUICG7)
 
 import GemRB
+import GUICommon
+import CommonTables
+from ie_stats import *
 from GUIDefines import *
-from GUICommon import *
-from LUSpellSelection import *
+import LUSpellSelection
 
 def OnLoad():
-	KitTable = GemRB.LoadTableObject("magesch")
+	KitTable = GemRB.LoadTable("magesch")
 	Slot = GemRB.GetVar ("Slot")
 	Class = GemRB.GetPlayerStat (Slot, IE_CLASS)
-	TableName = ClassSkillsTable.GetValue(Class, 2)
+	TableName = CommonTables.ClassSkills.GetValue(Class, 2)
 
 	# make sure we have a correct table
 	if TableName == "*":
@@ -38,7 +40,7 @@ def OnLoad():
 		TableName = "SPLSRCKN"
 
 	# get our kit index
-	KitIndex = GetKitIndex (Slot)
+	KitIndex = GUICommon.GetKitIndex (Slot)
 	if KitIndex:
 		KitValue = KitTable.GetValue(KitIndex - 21, 3)
 
@@ -50,13 +52,14 @@ def OnLoad():
 
 	# open up the spell selection window
 	# remember, it is pc, table, level, diff, kit, chargen
-	IsMulti = IsMultiClassed (Slot, 1)
+	IsMulti = GUICommon.IsMultiClassed (Slot, 1)
 	Level = GemRB.GetPlayerStat (Slot, IE_LEVEL)
 	if IsMulti[0]>1:
-		for i in range (2, IsMulti[0]+1):
-			if ClassSkillsTable.GetValue (IsMulti[i], 2, 0) != "*":
+		for i in range (1, IsMulti[0]):
+			if CommonTables.ClassSkills.GetValue (IsMulti[i], 2, 0) != "*":
 				Level = GemRB.GetPlayerStat (Slot, IE_LEVEL2+i-1)
 			break
-	OpenSpellsWindow (Slot, TableName, Level, Level, KitValue, 1)
+
+	LUSpellSelection.OpenSpellsWindow (Slot, TableName, Level, Level, KitValue, 1)
 
 	return

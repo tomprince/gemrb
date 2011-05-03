@@ -22,6 +22,10 @@
 #define CREIMPORTER_H
 
 #include "ActorMgr.h"
+#include "Spellbook.h"
+
+class CREItem;
+struct Effect;
 
 #define IE_CRE_GEMRB            0
 #define IE_CRE_V1_0		10  //bg1
@@ -33,7 +37,6 @@
 class CREImporter : public ActorMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	unsigned char CREVersion;
 	ieDword KnownSpellsOffset;
 	ieDword KnownSpellsCount;
@@ -61,18 +64,13 @@ private:
 public:
 	CREImporter(void);
 	~CREImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	Actor* GetActor(unsigned char is_in_party);
 
 	//returns saved size, updates internal offsets before save
 	int GetStoredFileSize(Actor *ac);
 	//saves file
 	int PutActor(DataStream *stream, Actor *actor, bool chr=false);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 private:
 	/** sets up some variables based on creature version for serializing the object */
 	void SetupSlotCounts();
@@ -94,7 +92,7 @@ private:
 	void ReadScript(Actor *actor, int ScriptLevel);
 	void ReadDialog(Actor *actor);
 	CREKnownSpell* GetKnownSpell();
-	CRESpellMemorization* GetSpellMemorization();
+	CRESpellMemorization* GetSpellMemorization(Actor *act);
 	CREMemorizedSpell* GetMemorizedSpell();
 	CREItem* GetItem();
 	void SetupColor(ieDword&);

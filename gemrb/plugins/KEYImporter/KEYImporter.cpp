@@ -18,129 +18,131 @@
  *
  */
 
-#include "win32def.h"
 #include "KEYImporter.h"
-#include "globals.h"
-#include "FileStream.h"
-#include "Interface.h"
-#include "ArchiveImporter.h"
-#include "ResourceDesc.h"
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
-#define SHARED_OVERRIDE "shared"
+#include "win32def.h"
+#include "globals.h"
+
+#include "ArchiveImporter.h"
+#include "Interface.h"
+#include "ResourceDesc.h"
+#include "System/FileStream.h"
 
 KEYImporter::KEYImporter(void)
 {
+	description = NULL;
 }
 
 KEYImporter::~KEYImporter(void)
 {
+	free(description);
 	for (unsigned int i = 0; i < biffiles.size(); i++) {
 		free( biffiles[i].name );
 	}
 }
 
-static bool exists(char *file)
+static char* AddCBF(char *file)
 {
-	FILE *f = fopen( file, "rb" );
-	if (f) {
-		fclose(f);
+	// This is safe in single-threaded, since the
+	// return value is passed straight to PathJoin.
+	static char cbf[_MAX_PATH];
+	strcpy(cbf,file);
+	char *dot = strrchr(cbf, '.');
+	if (dot)
+		strcpy(dot, ".cbf");
+	else
+		strcat(cbf, ".cbf");
+	return cbf;
+}
+
+static bool PathExists(BIFEntry *entry, const char *path)
+{
+	PathJoin(entry->path, path, entry->name, NULL);
+	if (file_exists(entry->path)) {
 		return true;
 	}
+	PathJoin(entry->path, path, AddCBF(entry->name), NULL);
+	if (file_exists(entry->path)) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool PathExists(BIFEntry *entry, const std::vector<std::string> &pathlist)
+{
+	size_t i;
+	
+	for(i=0;i<pathlist.size();i++) {
+		if (PathExists(entry, pathlist[i].c_str() )) {
+			return true;
+		}
+	}
+
 	return false;
 }
 
 static void FindBIF(BIFEntry *entry)
 {
 	entry->cd = 0;
-
-	PathJoin( entry->path, core->GamePath, entry->name, NULL );
-	ResolveFilePath(entry->path);
-	if (exists(entry->path)) {
-		entry->found = true;
-		return;
-	}
-
-	PathJoin( entry->path, core->GamePath, entry->name, NULL );
-	strcpy( entry->path + strlen( entry->path ) - 4, ".cbf" );
-	ResolveFilePath(entry->path);
-	if (exists(entry->path)) {
-		entry->found = true;
+	entry->found = PathExists(entry, core->GamePath);
+	if (entry->found) {
 		return;
 	}
 
 	if (core->GameOnCD) {
-		char BasePath[_MAX_PATH];
-		if (( entry->BIFLocator & ( 1 << 2 ) ) != 0) {
-			strcpy( BasePath, core->CD[0] );
-			entry->cd = 1;
-		} else if (( entry->BIFLocator & ( 1 << 3 ) ) != 0) {
-			strcpy( BasePath, core->CD[1] );
-			entry->cd = 2;
-		} else if (( entry->BIFLocator & ( 1 << 4 ) ) != 0) {
-			strcpy( BasePath, core->CD[2] );
-			entry->cd = 3;
-		} else if (( entry->BIFLocator & ( 1 << 5 ) ) != 0) {
-			strcpy( BasePath, core->CD[3] );
-			entry->cd = 4;
-		} else if (( entry->BIFLocator & ( 1 << 6 ) ) != 0) {
-			strcpy( BasePath, core->CD[4] );
-			entry->cd = 5;
-		} else {
+		int mask = 1<<2;
+		for(int cd = 1; cd<=MAX_CD; cd++) {
+			if ((entry->BIFLocator & mask) != 0) {
+				entry->cd = cd;
+				break;
+			}
+			mask += mask;
+		}
+
+		if (!entry->cd) {
 			printStatus( "ERROR", LIGHT_RED );
-			printf( "Cannot find %s... Resource unavailable.\n",
+			print( "Cannot find %s... Resource unavailable.\n",
 					entry->name );
 			entry->found = false;
 			return;
 		}
-		PathJoin( entry->path, BasePath, entry->name, NULL );
-		entry->found = false;
+		entry->found = PathExists(entry, core->CD[entry->cd-1]);
 		return;
 	}
 
-	for (int i = 0; i < 6; i++) {
-		PathJoin( entry->path, core->CD[i], entry->name, NULL );
-		ResolveFilePath(entry->path);
-		if (exists(entry->path)) {
-			entry->found = true;
-			return;
-		}
-
-		//Trying CBF Extension
-		PathJoin( entry->path, core->CD[i], entry->name, NULL );
-		strcpy( entry->path + strlen( entry->path ) - 4, ".cbf" );
-		ResolveFilePath(entry->path);
-		if (exists(entry->path)) {
+	for (int i = 0; i < MAX_CD; i++) {
+		if (PathExists(entry, core->CD[i]) ) {
 			entry->found = true;
 			return;
 		}
 	}
 
-	printMessage( "KEYImporter", " ", WHITE );
-	printf( "Cannot find %s...", entry->name );
+	printMessage("KEYImporter", "Cannot find %s...", WHITE, entry->name);
 	printStatus( "ERROR", LIGHT_RED );
-	entry->found = false;
 }
 
 bool KEYImporter::Open(const char *resfile, const char *desc)
 {
-	description = desc;
+	free(description);
+	description = strdup(desc);
 	if (!core->IsAvailable( IE_BIF_CLASS_ID )) {
-		printf( "[ERROR]\nAn Archive Plug-in is not Available\n" );
+		print( "[ERROR]\nAn Archive Plug-in is not Available\n" );
 		return false;
 	}
 	unsigned int i;
 	// NOTE: Interface::Init has already resolved resfile.
-	printMessage( "KEYImporter", "Opening ", WHITE );
-	printf( "%s...", resfile );
-	FileStream* f = new FileStream();
-	if (!f->Open( resfile )) {
+	printMessage("KEYImporter", "Opening %s...", WHITE, resfile);
+	FileStream* f = FileStream::OpenFile(resfile);
+	if (!f) {
+		// Check for backslashes (false escape characters)
+		// this check probably belongs elsewhere (e.g. ResolveFilePath)
+		if (strstr( resfile, "\\ " )) {
+			print("%s", "\nEscaped space(s) detected in path!. Do not escape spaces in your GamePath! " );
+		}
 		printStatus( "ERROR", LIGHT_RED );
 		printMessage( "KEYImporter", "Cannot open Chitin.key\n", LIGHT_RED );
 		textcolor( WHITE );
-		delete( f );
 		return false;
 	}
 	printStatus( "OK", LIGHT_GREEN );
@@ -149,8 +151,7 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 	f->Read( Signature, 8 );
 	if (strncmp( Signature, "KEY V1  ", 8 ) != 0) {
 		printStatus( "ERROR", LIGHT_RED );
-		printMessage( "KEYImporter", "File has an Invalid Signature.\n",
-			LIGHT_RED );
+		printMessage( "KEYImporter", "File has an Invalid Signature.\n", LIGHT_RED );
 		textcolor( WHITE );
 		delete( f );
 		return false;
@@ -163,10 +164,10 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 	f->ReadDword( &BifOffset );
 	f->ReadDword( &ResOffset );
 	printMessage( "KEYImporter", " ", WHITE );
-	printf( "BIF Files Count: %d (Starting at %d Bytes)\n", BifCount,
+	print( "BIF Files Count: %d (Starting at %d Bytes)\n", BifCount,
 		BifOffset );
-	printMessage( "KEYImporter", " ", WHITE );
-	printf( "RES Count: %d (Starting at %d Bytes)\n", ResCount, ResOffset );
+	printMessage("KEYImporter", "RES Count: %d (Starting at %d Bytes)\n", WHITE,
+		ResCount, ResOffset);
 	f->Seek( BifOffset, GEM_STREAM_START );
 	ieDword BifLen, ASCIIZOffset;
 	ieWord ASCIIZLen;
@@ -180,7 +181,6 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 		be.name = ( char * ) malloc( ASCIIZLen );
 		f->Seek( ASCIIZOffset, GEM_STREAM_START );
 		f->Read( be.name, ASCIIZLen );
-#ifndef WIN32
 		for (int p = 0; p < ASCIIZLen; p++) {
 			//some MAC versions use : as delimiter
 			if (be.name[p] == '\\' || be.name[p] == ':')
@@ -194,7 +194,6 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 				be.name[p] = be.name[p + 1];
 			// (if you change this, try moving to ar9700 for testing)
 		}
-#endif
 		FindBIF(&be);
 		biffiles.push_back( be );
 	}
@@ -226,28 +225,14 @@ bool KEYImporter::HasResource(const char* resname, const ResourceDesc &type)
 
 static void FindBIFOnCD(BIFEntry *entry)
 {
-	ResolveFilePath(entry->path);
-	if (exists(entry->path)) {
+	if (file_exists(entry->path)) {
 		entry->found = true;
 		return;
 	}
 
-	core->WaitForDisc( entry->cd, core->CD[entry->cd-1] );
-	ResolveFilePath(entry->path);
-	if (exists(entry->path)) {
-		entry->found = true;
-		return;
-	}
+	core->WaitForDisc(entry->cd, entry->name);
 
-	//Trying CBF Extension
-	strcpy( entry->path + strlen( entry->path ) - 4, ".cbf" );
-	ResolveFilePath(entry->path);
-	if (exists(entry->path)) {
-		entry->found = true;
-		return;
-	}
-
-	entry->found = false;
+	entry->found = PathExists(entry, core->CD[entry->cd-1]);
 }
 
 DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
@@ -257,27 +242,31 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 	if (type == 0)
 		return NULL;
 	if (resources.Lookup( resname, type, ResLocator )) {
-		int bifnum = ( ResLocator & 0xFFF00000 ) >> 20;
+		unsigned int bifnum = ( ResLocator & 0xFFF00000 ) >> 20;
 
 		if (core->GameOnCD && (biffiles[bifnum].cd != 0))
 			FindBIFOnCD(&biffiles[bifnum]);
 		if (!biffiles[bifnum].found) {
-			printf( "Cannot find %s... Resource unavailable.\n",
+			print( "Cannot find %s... Resource unavailable.\n",
 					biffiles[bifnum].name );
 			return NULL;
 		}
 
-		ArchiveImporter* ai = ( ArchiveImporter* )
-			core->GetInterface( IE_BIF_CLASS_ID );
-		if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
-			printf("Cannot open archive %s\n", biffiles[bifnum].path );
-			core->FreeInterface( ai );
-			return NULL;
+		// simple one-BIF cache to avoid opening the same BIF repeatedly
+		if (lastSeenCache.bifnum != bifnum) {
+			PluginHolder<ArchiveImporter> ai(IE_BIF_CLASS_ID);
+			if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
+				print("Cannot open archive %s\n", biffiles[bifnum].path );
+				return NULL;
+			}
+			lastSeenCache.bifnum = bifnum;
+			lastSeenCache.plugin = ai;
 		}
-		DataStream* ret = ai->GetStream( ResLocator, type );
-		core->FreeInterface( ai );
+
+		DataStream* ret = lastSeenCache.plugin->GetStream( ResLocator, type );
 		if (ret) {
 			strnlwrcpy( ret->filename, resname, 8 );
+			strcat( ret->filename, "." );
 			strcat( ret->filename, core->TypeExt( type ) );
 			return ret;
 		}

@@ -26,7 +26,7 @@ def OnLoad():
 	global FeedbackWindow, TextAreaControl
 
 	GemRB.LoadWindowPack("GUIOPT", 640, 480)
-	FeedbackWindow = GemRB.LoadWindowObject(9)
+	FeedbackWindow = GemRB.LoadWindow(9)
 
 	MarkerSlider = FeedbackWindow.GetControl(30)
 	MarkerSliderS = FeedbackWindow.GetControl(8)
@@ -59,47 +59,47 @@ def OnLoad():
 	OkButton.SetText(11973)
 	CancelButton.SetText(13727)
 	
-	MarkerSlider.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MarkerSliderPress")
-	MarkerSliderS.SetEvent(IE_GUI_SLIDER_ON_CHANGE, "MarkerSliderPress")
+	MarkerSlider.SetEvent(IE_GUI_BUTTON_ON_PRESS, MarkerSliderPress)
+	MarkerSliderS.SetEvent(IE_GUI_SLIDER_ON_CHANGE, MarkerSliderPress)
 	MarkerSliderS.SetVarAssoc("GUI Feedback Level",1)
 
-	LocatorSlider.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LocatorSliderPress")
-	LocatorSliderS.SetEvent(IE_GUI_SLIDER_ON_CHANGE, "LocatorSliderPress")
+	LocatorSlider.SetEvent(IE_GUI_BUTTON_ON_PRESS, LocatorSliderPress)
+	LocatorSliderS.SetEvent(IE_GUI_SLIDER_ON_CHANGE, LocatorSliderPress)
 	LocatorSliderS.SetVarAssoc("Locator Feedback Level",1)
 
-	THac0Rolls.SetEvent(IE_GUI_BUTTON_ON_PRESS, "THac0RollsPress")
-	THac0RollsB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "THac0RollsBPress")
+	THac0Rolls.SetEvent(IE_GUI_BUTTON_ON_PRESS, THac0RollsPress)
+	THac0RollsB.SetEvent(IE_GUI_BUTTON_ON_PRESS, THac0RollsBPress)
 	THac0RollsB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	THac0RollsB.SetVarAssoc("Rolls",1)
 
-	CombatInfo.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CombatInfoPress")
-	CombatInfoB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CombatInfoBPress")
+	CombatInfo.SetEvent(IE_GUI_BUTTON_ON_PRESS, CombatInfoPress)
+	CombatInfoB.SetEvent(IE_GUI_BUTTON_ON_PRESS, CombatInfoBPress)
 	CombatInfoB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	CombatInfoB.SetVarAssoc("Combat Info",1)
 
-	Actions.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ActionsPress")
-	ActionsB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "ActionsBPress")
+	Actions.SetEvent(IE_GUI_BUTTON_ON_PRESS, ActionsPress)
+	ActionsB.SetEvent(IE_GUI_BUTTON_ON_PRESS, ActionsBPress)
 	ActionsB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	ActionsB.SetVarAssoc("Actions",1)
 
-	StateChanges.SetEvent(IE_GUI_BUTTON_ON_PRESS, "StateChangesPress")
-	StateChangesB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "StateChangesBPress")
+	StateChanges.SetEvent(IE_GUI_BUTTON_ON_PRESS, StateChangesPress)
+	StateChangesB.SetEvent(IE_GUI_BUTTON_ON_PRESS, StateChangesBPress)
 	StateChangesB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	StateChangesB.SetVarAssoc("State Changes",1)
 
-	SelectionText.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionTextPress")
-	SelectionTextB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "SelectionTextBPress")
+	SelectionText.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionTextPress)
+	SelectionTextB.SetEvent(IE_GUI_BUTTON_ON_PRESS, SelectionTextBPress)
 	SelectionTextB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	SelectionTextB.SetVarAssoc("Selection Text",1)
 
-	Miscellaneous.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MiscellaneousPress")
-	MiscellaneousB.SetEvent(IE_GUI_BUTTON_ON_PRESS, "MiscellaneousBPress")
+	Miscellaneous.SetEvent(IE_GUI_BUTTON_ON_PRESS, MiscellaneousPress)
+	MiscellaneousB.SetEvent(IE_GUI_BUTTON_ON_PRESS, MiscellaneousBPress)
 	MiscellaneousB.SetFlags(IE_GUI_BUTTON_CHECKBOX, OP_OR)
 	MiscellaneousB.SetVarAssoc("Miscellaneous Text",1)
 
-	OkButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "OkPress")
+	OkButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, OkPress)
 	OkButton.SetFlags (IE_GUI_BUTTON_DEFAULT, OP_OR)
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CancelPress")
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CancelPress)
 	CancelButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 	FeedbackWindow.SetVisible(WINDOW_VISIBLE)
 	return
@@ -116,25 +116,51 @@ def THac0RollsPress():
 	TextAreaControl.SetText(18026)
 	return
 
+def THac0RollsBPress():
+	#TODO: TextAreaControl.SetText()
+	return
+
 def CombatInfoPress():
 	TextAreaControl.SetText(18027)
+	return
+
+def CombatInfoBPress():
+	#TODO: TextAreaControl.SetText()
 	return
 
 def ActionsPress():
 	TextAreaControl.SetText(18028)
 	return
 
+def ActionsBPress():
+	#TODO: TextAreaControl.SetText(18028)
+	return
+
+
 def StateChangesPress():
 	TextAreaControl.SetText(18029)
+	return
+
+def StateChangesBPress():
+	#TODO: TextAreaControl.SetText(18029)
 	return
 
 def SelectionTextPress():
 	TextAreaControl.SetText(18030)
 	return
 
+def SelectionTextBPress():
+	#TODO: TextAreaControl.SetText(18030)
+	return
+
 def MiscellaneousPress():
 	TextAreaControl.SetText(18031)
 	return
+
+def MiscellaneousBPress():
+	#TODO: TextAreaControl.SetText(18031)
+	return
+
 
 def OkPress():
 	if FeedbackWindow:

@@ -30,28 +30,20 @@ struct Pair {
 
 class IDSImporter : public SymbolMgr {
 private:
-	DataStream* str;
-	bool autoFree;
-
 	std::vector< Pair> pairs;
 	std::vector< char*> ptrs;
 
 public:
 	IDSImporter(void);
 	~IDSImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
-	int GetValue(const char* txt);
-	char* GetValue(int val);
-	char* GetStringIndex(unsigned int Index);
-	int GetValueIndex(unsigned int Index);
-	int FindString(char *str, int len);
-	int FindValue(int val);
-	int GetSize() { return pairs.size(); }
-public:
-	void release(void)
-	{
-		delete this;
-	}
+	bool Open(DataStream* stream);
+	int GetValue(const char* txt) const;
+	char* GetValue(int val) const;
+	char* GetStringIndex(unsigned int Index) const;
+	int GetValueIndex(unsigned int Index) const;
+	int FindString(char *str, int len) const;
+	int FindValue(int val) const;
+	int GetSize() const { return pairs.size(); }
 };
 
 #endif

@@ -18,7 +18,9 @@
 #
 #character generation, import (GUICG20)
 import GemRB
-from CharGenCommon import * 
+from GUIDefines import *
+import GUICommon
+import CharGenCommon
 
 #import from a character sheet
 ImportWindow = 0
@@ -27,10 +29,10 @@ TextAreaControl = 0
 def OnLoad():
 	global ImportWindow, TextAreaControl
 
-	GemRB.LoadWindowPack("GUICG")
-	ImportWindow = GemRB.LoadWindowObject(20)
+	GemRB.LoadWindowPack("GUICG", 640, 480)
+	ImportWindow = GemRB.LoadWindow(20)
 
-	CloseOtherWindow(ImportWindow.Unload)
+	GUICommon.CloseOtherWindow(ImportWindow.Unload)
 
 	TextAreaControl = ImportWindow.GetControl(4)
 	TextAreaControl.SetText(10963)
@@ -40,15 +42,16 @@ def OnLoad():
 	TextAreaControl.GetCharacters()
 
 	DoneButton = ImportWindow.GetControl(0)
-	DoneButton.SetText(13955)
+	DoneButton.SetText (11973)
+
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 
 	CancelButton = ImportWindow.GetControl(1)
-	CancelButton.SetText(15416)
+	CancelButton.SetText (13727)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "DonePress")
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CancelPress")
-	TextAreaControl.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, "SelectPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, DonePress)
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CancelPress)
+	TextAreaControl.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, SelectPress)
 	ImportWindow.ShowModal(MODAL_SHADOW_NONE)
 	return
 
@@ -63,10 +66,10 @@ def DonePress():
 	GemRB.CreatePlayer(FileName, Slot| 0x8000, 1)
 	GemRB.SetToken("SmallPortrait", GemRB.GetPlayerPortrait (Slot, 1) )
 	GemRB.SetToken("LargePortrait", GemRB.GetPlayerPortrait (Slot, 0) )
-	jumpTo("name")
+	CharGenCommon.jumpTo("appearance")
 	return
 
 def CancelPress():
-	CloseOtherWindow(None)
+	GUICommon.CloseOtherWindow(None)
 	GemRB.SetNextScript(GemRB.GetToken("NextScript"))
 	return

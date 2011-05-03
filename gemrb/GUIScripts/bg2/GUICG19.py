@@ -33,7 +33,7 @@ def OnLoad():
 	global CharSoundWindow, VoiceList
 	
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	CharSoundWindow=GemRB.LoadWindowObject(19)
+	CharSoundWindow=GemRB.LoadWindow(19)
 
 	VoiceList = CharSoundWindow.GetControl (45)
 	VoiceList.SetFlags (IE_GUI_TEXTAREA_SELECTABLE)
@@ -47,7 +47,7 @@ def OnLoad():
 
 	PlayButton = CharSoundWindow.GetControl (47)
 	PlayButton.SetState (IE_GUI_BUTTON_ENABLED)
-	PlayButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, "PlayPress")
+	PlayButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, PlayPress)
 	PlayButton.SetText (17318)
 
 	TextArea = CharSoundWindow.GetControl (50)
@@ -60,9 +60,9 @@ def OnLoad():
 	DoneButton.SetText(11973)
 	DoneButton.SetFlags(IE_GUI_BUTTON_DEFAULT,OP_OR)
 
-	VoiceList.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, "ChangeVoice")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	VoiceList.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, ChangeVoice)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	CharSoundWindow.SetVisible(WINDOW_VISIBLE)
 	return
 

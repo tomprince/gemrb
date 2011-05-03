@@ -18,12 +18,14 @@
  *
  */
 
-#include "globals.h"
 #include "PNGImporter.h"
+
 #include "RGBAColor.h"
+#include "globals.h"
+
+#include "ImageFactory.h"
 #include "Interface.h"
 #include "Video.h"
-#include "ImageFactory.h"
 
 // CHECKME: how should we include png.h ? (And how should we check for it?)
 #include <png.h>
@@ -31,7 +33,7 @@
 static void DataStream_png_read_data(png_structp png_ptr,
 		 png_bytep data, png_size_t length)
 {
-	voidp read_io_ptr = png_get_io_ptr(png_ptr);
+	void *read_io_ptr = png_get_io_ptr(png_ptr);
 	DataStream* str = reinterpret_cast<DataStream*>(read_io_ptr);
 	str->Read(data, length);
 }
@@ -75,10 +77,9 @@ void PNGImporter::Close()
 	}
 }
 
-bool PNGImporter::Open(DataStream* stream, bool autoFree)
+bool PNGImporter::Open(DataStream* stream)
 {
-	if (!Resource::Open(stream, autoFree))
-		return false;
+	str = stream;
 	Close();
 
 	png_byte header[8];
@@ -162,7 +163,7 @@ Sprite2D* PNGImporter::GetSprite2D()
 		delete[] row_pointers;
 		free( buffer );
 		png_destroy_read_struct(&inf->png_ptr, &inf->info_ptr, &inf->end_info);
-		return false;
+		return NULL;
 	}
 
 	png_read_image(inf->png_ptr, row_pointers);
@@ -173,10 +174,8 @@ Sprite2D* PNGImporter::GetSprite2D()
 	// the end_info struct isn't used, but passing it anyway for now
 	png_read_end(inf->png_ptr, inf->end_info);
 
-	png_destroy_read_struct(&inf->png_ptr, &inf->info_ptr, &inf->end_info);
-
 	if (hasPalette) {
-		Color* pal = 0;
+		Color pal[256];
 		GetPalette(256, pal);
 		// TODO: colorkey
 		spr = core->GetVideoDriver()->CreateSprite8(Width, Height, 8,
@@ -187,6 +186,8 @@ Sprite2D* PNGImporter::GetSprite2D()
 												   blue_mask, alpha_mask,
 												   buffer, false, 0);
 	}
+
+	png_destroy_read_struct(&inf->png_ptr, &inf->info_ptr, &inf->end_info);
 
 	return spr;
 }
@@ -212,5 +213,5 @@ void PNGImporter::GetPalette(int colors, Color* pal)
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x11C3EB12, "PNG File Importer")
-PLUGIN_IE_RESOURCE(PNGImporter, ".png", (ieWord)IE_PNG_CLASS_ID)
+PLUGIN_IE_RESOURCE(PNGImporter, "png", (ieWord)IE_PNG_CLASS_ID)
 END_PLUGIN()

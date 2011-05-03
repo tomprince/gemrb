@@ -18,21 +18,31 @@
  *
  */
 
+#include "AREImporter.h"
+
 #include "win32def.h"
 #include "strrefs.h"
-#include "AREImporter.h"
-#include "TileMapMgr.h"
-#include "Interface.h"
+
 #include "ActorMgr.h"
-#include "CachedFileStream.h"
-#include "ImageMgr.h"
 #include "Ambient.h"
 #include "DataFileMgr.h"
+#include "DisplayMessage.h"
+#include "EffectMgr.h"
 #include "Game.h"
-#include "Video.h"
+#include "GameData.h"
+#include "ImageMgr.h"
+#include "Interface.h"
 #include "Palette.h"
 #include "ProjectileServer.h"
-#include "EffectMgr.h"
+#include "TileMapMgr.h"
+#include "Video.h"
+#include "GameScript/GameScript.h"
+#include "GUI/Window.h"
+#include "Scriptable/Container.h"
+#include "Scriptable/Door.h"
+#include "Scriptable/InfoPoint.h"
+#include "System/FileStream.h"
+#include "System/SlicedStream.h"
 
 #define DEF_OPEN   0
 #define DEF_CLOSE  1
@@ -57,14 +67,13 @@ struct ResRefToStrRef {
 	int difficulty;
 };
 
-DataFileMgr *INInote = NULL;
+Holder<DataFileMgr> INInote;
 ResRefToStrRef *tracks = NULL;
 int trackcount = 0;
 
 void ReleaseMemory()
 {
-	core->FreeInterface( INInote );
-	INInote = NULL;
+	INInote.release();
 
 	delete [] tracks;
 	tracks = NULL;
@@ -72,20 +81,17 @@ void ReleaseMemory()
 
 void ReadAutonoteINI()
 {
-	INInote = ( DataFileMgr * )
-		core->GetInterface( IE_INI_CLASS_ID );
-	FileStream* fs = new FileStream();
+	INInote = PluginHolder<DataFileMgr>(IE_INI_CLASS_ID);
 	char tINInote[_MAX_PATH];
 	PathJoin( tINInote, core->GamePath, "autonote.ini", NULL );
-	ResolveFilePath( tINInote );
-	fs->Open( tINInote, true );
-	INInote->Open( fs, true );
+	FileStream* fs = FileStream::OpenFile( tINInote );
+	INInote->Open(fs);
 }
 
 int GetTrackString(const ieResRef areaName)
 {
 	int i;
-	bool trackflag = core->GetStringReference(STR_TRACKING)!=(ieStrRef) -1;
+	bool trackflag = displaymsg->HasStringReference(STR_TRACKING);
 
 	if (!tracks) {
 		AutoTable tm("tracking");
@@ -117,7 +123,6 @@ int GetTrackString(const ieResRef areaName)
 
 AREImporter::AREImporter(void)
 {
-	autoFree = false;
 	str = NULL;
 	if (Sounds[0][0] == UNINITIALIZED_BYTE) {
 		memset( Sounds, 0, sizeof( Sounds ) );
@@ -135,22 +140,17 @@ AREImporter::AREImporter(void)
 
 AREImporter::~AREImporter(void)
 {
-	if (autoFree) {
-		delete str;
-	}
+	delete str;
 	Sounds[0][0]=UNINITIALIZED_BYTE;
 }
 
-bool AREImporter::Open(DataStream* stream, bool autoFree)
+bool AREImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (this->autoFree) {
-		delete str;
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 
@@ -232,7 +232,7 @@ bool AREImporter::ChangeMap(Map *map, bool day_or_night)
 	} else {
 		snprintf( TmpResRef, 9, "%sN", map->WEDResRef);
 	}
-	TileMapMgr* tmm = ( TileMapMgr* ) core->GetInterface( IE_WED_CLASS_ID );
+	PluginHolder<TileMapMgr> tmm(IE_WED_CLASS_ID);
 	DataStream* wedfile = gamedata->GetResource( TmpResRef, IE_WED_CLASS_ID );
 	tmm->Open( wedfile );
 
@@ -247,13 +247,12 @@ bool AREImporter::ChangeMap(Map *map, bool day_or_night)
 	}
 	tm = tmm->GetTileMap(tm);
 	if (!tm) {
-		printf( "[AREImporter]: No Tile Map Available.\n" );
-		core->FreeInterface( tmm );
+		print( "[AREImporter]: No Tile Map Available.\n" );
 		return false;
 	}
 
 	// Small map for MapControl
-	ImageMgr* sm = ( ImageMgr* ) gamedata->GetResource( TmpResRef, &ImageMgr::ID );
+	ResourceHolder<ImageMgr> sm(TmpResRef);
 	// small map is *optional*!
 
 	//the map state was altered, no need to hold this off for any later
@@ -266,14 +265,14 @@ bool AREImporter::ChangeMap(Map *map, bool day_or_night)
 		snprintf( TmpResRef, 9, "%sLN", map->WEDResRef);
 	}
 
-	ImageMgr* lm = ( ImageMgr* ) gamedata->GetResource(TmpResRef, &ImageMgr::ID);
+	ResourceHolder<ImageMgr> lm(TmpResRef);
 	if (!lm) {
-		printf( "[AREImporter]: No lightmap available.\n" );
+		print( "[AREImporter]: No lightmap available.\n" );
 		return false;
 	}
 
 	//alter the lightmap and the minimap (the tileset was already swapped)
-	map->ChangeTileMap(lm, sm);
+	map->ChangeTileMap(lm->GetImage(), sm?sm->GetSprite2D():NULL);
 	return true;
 }
 
@@ -287,8 +286,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 
 	Map* map = new Map();
 	if(!map) {
-		printf("Can't allocate map (out of memory).\n");
-		abort();
+		error("AREImporter", "Can't allocate map (out of memory).\n");
 	}
 	if (core->SaveAsOriginal) {
 		map->version = bigheader;
@@ -316,8 +314,8 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	}
 
 	if (!core->IsAvailable( IE_WED_CLASS_ID )) {
-		printf( "[AREImporter]: No Tile Map Manager Available.\n" );
-		return false;
+		print( "[AREImporter]: No Tile Map Manager Available.\n" );
+		return NULL;
 	}
 	ieResRef TmpResRef;
 
@@ -327,29 +325,32 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		snprintf( TmpResRef, 9, "%sN", WEDResRef);
 	}
 
-	TileMapMgr* tmm = ( TileMapMgr* ) core->GetInterface( IE_WED_CLASS_ID );
+	PluginHolder<TileMapMgr> tmm(IE_WED_CLASS_ID);
 	DataStream* wedfile = gamedata->GetResource( WEDResRef, IE_WED_CLASS_ID );
 	tmm->Open( wedfile );
 
 	//there was no tilemap set yet, so lets just send a NULL
 	TileMap* tm = tmm->GetTileMap(NULL);
 	if (!tm) {
-		printf( "[AREImporter]: No Tile Map Available.\n" );
-		core->FreeInterface( tmm );
-		return false;
+		print( "[AREImporter]: No Tile Map Available.\n" );
+		return NULL;
 	}
 
 	// Small map for MapControl
-	ImageMgr* sm = ( ImageMgr* ) gamedata->GetResource( TmpResRef, &ImageMgr::ID );
 	// small map is *optional*!
+	ResourceHolder<ImageMgr> sm(TmpResRef);
+
+	//if the Script field is empty, the area name will be copied into it on first load
+	//this works only in the iwd branch of the games
+	if (!Script[0] && core->HasFeature(GF_FORCE_AREA_SCRIPT) ) {
+		memcpy(Script, ResRef, sizeof(ieResRef) );
+	}
 
 	if (Script[0]) {
-		map->Scripts[0] = new GameScript( Script, ST_AREA );
-	} else {
-		map->Scripts[0] = NULL;
-	}
-	if (map->Scripts[0]) {
-		map->Scripts[0]->MySelf = map;
+		//for some reason the area's script is run from the last slot
+		//at least one area script depends on this, if you need something
+		//more customisable, add a game flag
+		map->Scripts[MAX_SCRIPTS-1] = new GameScript( Script, map );
 	}
 
 	if (day_or_night) {
@@ -358,29 +359,29 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		snprintf( TmpResRef, 9, "%sLN", WEDResRef);
 	}
 
-	ImageMgr* lm = ( ImageMgr* ) gamedata->GetResource( TmpResRef, &ImageMgr::ID );
+	ResourceHolder<ImageMgr> lm(TmpResRef);
 	if (!lm) {
-		printf( "[AREImporter]: No lightmap available.\n" );
-		return false;
+		print( "[AREImporter]: No lightmap available.\n" );
+		return NULL;
 	}
 
 	snprintf( TmpResRef, 9, "%sSR", WEDResRef);
 
-	ImageMgr* sr = ( ImageMgr* ) gamedata->GetResource( TmpResRef, &ImageMgr::ID );
+	ResourceHolder<ImageMgr> sr(TmpResRef);
 	if (!sr) {
-		printf( "[AREImporter]: No searchmap available.\n" );
-		return false;
+		print( "[AREImporter]: No searchmap available.\n" );
+		return NULL;
 	}
 
 	snprintf( TmpResRef, 9, "%sHT", WEDResRef);
 
-	ImageMgr* hm = ( ImageMgr* ) gamedata->GetResource( TmpResRef, &ImageMgr::ID );
+	ResourceHolder<ImageMgr> hm(TmpResRef);
 	if (!hm) {
-		printf( "[AREImporter]: No heightmap available.\n" );
-		return false;
+		print( "[AREImporter]: No heightmap available.\n" );
+		return NULL;
 	}
 
-	map->AddTileMap( tm, lm, sr, sm, hm );
+	map->AddTileMap( tm, lm->GetImage(), sr->GetBitmap(), sm ? sm->GetSprite2D() : NULL, hm->GetBitmap() );
 
 	str->Seek( SongHeader, GEM_STREAM_START );
 	//5 is the number of song indices
@@ -398,16 +399,17 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	if( map->RestHeader.CreatureNum>MAX_RESCOUNT ) {
 		map->RestHeader.CreatureNum = MAX_RESCOUNT;
 	}
-	str->Seek( 2, GEM_CURRENT_POS );              //difficulty?
+	str->ReadWord( &map->RestHeader.Difficulty);  //difficulty?
 	str->ReadDword( &map->RestHeader.sduration);  //spawn duration
 	str->ReadWord( &map->RestHeader.rwdist);      //random walk distance
 	str->ReadWord( &map->RestHeader.owdist);      //other walk distance
 	str->ReadWord( &map->RestHeader.Maximum);     //maximum number of creatures
-	str->Seek( 2, GEM_CURRENT_POS );
+	str->ReadWord( &map->RestHeader.Enabled);
 	str->ReadWord( &map->RestHeader.DayChance );
 	str->ReadWord( &map->RestHeader.NightChance );
 
-	printf( "Loading regions\n" );
+	print( "Loading regions\n" );
+	core->LoadProgress(70);
 	//Loading InfoPoints
 	for (i = 0; i < InfoPointsCount; i++) {
 		str->Seek( InfoPointsOffset + ( i * 0xC4 ), GEM_STREAM_START );
@@ -418,7 +420,8 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		ieWord PosX, PosY;
 		ieWord TalkX, TalkY;
 		ieVariable Name, Entrance;
-		ieResRef Script, DialogResRef, KeyResRef, Destination;
+		ieResRef Script, KeyResRef, Destination;
+		ieResRef DialogResRef, WavResRef; //adopted pst specific fields
 		ieStrRef DialogName;
 		str->Read( Name, 32 );
 		Name[32] = 0;
@@ -455,7 +458,8 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		str->ReadWord( &PosX);
 		str->ReadWord( &PosY);
 		//maybe we have to store this
-		str->Seek( 44, GEM_CURRENT_POS );
+		str->Seek( 36, GEM_CURRENT_POS );
+		str->ReadResRef( WavResRef );
 		str->ReadWord( &TalkX);
 		str->ReadWord( &TalkY);
 		str->ReadDword( &DialogName );
@@ -503,18 +507,16 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		ip->TalkPos.y=TalkY;
 		ip->DialogName=DialogName;
 		ip->SetDialog(DialogResRef);
+		ip->SetEnter(WavResRef);
 
 		if (Script[0]) {
-			ip->Scripts[0] = new GameScript( Script, ST_TRIGGER );
+			ip->Scripts[0] = new GameScript( Script, ip );
 		} else {
 			ip->Scripts[0] = NULL;
 		}
-		if (ip->Scripts[0]) {
-			ip->Scripts[0]->MySelf = ip;
-		}
 	}
 
-	printf( "Loading containers\n" );
+	print( "Loading containers\n" );
 	//Loading Containers
 	for (i = 0; i < ContainersCount; i++) {
 		str->Seek( ContainersOffset + ( i * 0xC0 ), GEM_STREAM_START );
@@ -605,23 +607,23 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			//cannot add directly to inventory (ground piles)
 			c->AddItem( core->ReadItem(str));
 		}
+		//update item flags (like movable flag)
+		c->inventory.CalculateWeight();
 
 		if (Type==IE_CONTAINER_PILE)
 			Script[0]=0;
 
 		if (Script[0]) {
-			c->Scripts[0] = new GameScript( Script, ST_CONTAINER );
+			c->Scripts[0] = new GameScript( Script, c );
 		} else {
 			c->Scripts[0] = NULL;
 		}
-		if (c->Scripts[0]) {
-			c->Scripts[0]->MySelf = c;
-		}
 		strnlwrcpy(c->KeyResRef, KeyResRef, 8);
+		if (!OpenFail) OpenFail = (ieStrRef)-1; // rewrite 0 to -1
 		c->OpenFail = OpenFail;
 	}
 
-	printf( "Loading doors\n" );
+	print( "Loading doors\n" );
 	//Loading Doors
 	for (i = 0; i < DoorsCount; i++) {
 		str->Seek( DoorsOffset + ( i * 0xc8 ), GEM_STREAM_START );
@@ -639,7 +641,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		ieWord TrapDetect, TrapRemoval;
 		ieWord Trapped, TrapDetected;
 		ieWord LaunchX, LaunchY;
-		ieDword Locked, LockRemoval;
+		ieDword DiscoveryDiff, LockRemoval;
 		Region BBClosed, BBOpen;
 		ieStrRef OpenStrRef;
 		ieStrRef NameStrRef;
@@ -687,7 +689,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		str->ReadWord( &LaunchY );
 		str->ReadResRef( KeyResRef );
 		str->ReadResRef( Script );
-		str->ReadDword( &Locked );
+		str->ReadDword( &DiscoveryDiff );
 		str->ReadDword( &LockRemoval );
 		Point toOpen[2];
 		str->ReadWord( &minX );
@@ -790,13 +792,9 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		door->Cursor = cursor;
 		memcpy( door->KeyResRef, KeyResRef, sizeof(KeyResRef) );
 		if (Script[0]) {
-			door->Scripts[0] = new GameScript( Script, ST_DOOR );
+			door->Scripts[0] = new GameScript( Script, door );
 		} else {
 			door->Scripts[0] = NULL;
-		}
-
-		if (door->Scripts[0]) {
-			door->Scripts[0]->MySelf = door;
 		}
 
 		door->toOpen[0] = toOpen[0];
@@ -818,7 +816,9 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			else
 				memcpy( door->CloseSound, Sounds[DEF_CLOSE], 9 );
 		}
+		door->DiscoveryDiff=DiscoveryDiff;
 		door->LockDifficulty=LockRemoval;
+		if (!OpenStrRef) OpenStrRef = (ieStrRef)-1; // rewrite 0 to -1
 		door->OpenStrRef=OpenStrRef;
 		strnspccpy(door->LinkedInfo, LinkedInfo, 32);
 		//these 2 fields are not sure
@@ -826,7 +826,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		door->SetDialog(Dialog);
 	}
 
-	printf( "Loading spawnpoints\n" );
+	print( "Loading spawnpoints\n" );
 	//Loading SpawnPoints
 	for (i = 0; i < SpawnCount; i++) {
 		str->Seek( SpawnOffset + (i*0xc8), GEM_STREAM_START );
@@ -880,18 +880,19 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		//the rest is not read, we seek for every record
 	}
 
-	printf( "Loading actors\n" );
+	core->LoadProgress(75);
+	print( "Loading actors\n" );
 	//Loading Actors
 	str->Seek( ActorOffset, GEM_STREAM_START );
 	if (!core->IsAvailable( IE_CRE_CLASS_ID )) {
-		printf( "[AREImporter]: No Actor Manager Available, skipping actors\n" );
+		print( "[AREImporter]: No Actor Manager Available, skipping actors\n" );
 	} else {
-		ActorMgr* actmgr = ( ActorMgr* ) core->GetInterface( IE_CRE_CLASS_ID );
+		PluginHolder<ActorMgr> actmgr(IE_CRE_CLASS_ID);
 		for (i = 0; i < ActorCount; i++) {
 			ieVariable DefaultName;
 			ieResRef CreResRef;
 			ieDword TalkCount;
-			ieDword Orientation, Schedule;
+			ieDword Orientation, Schedule, RemovalTime;
 			ieWord XPos, YPos, XDes, YDes;
 			ieResRef Dialog;
 			ieResRef Scripts[8]; //the original order
@@ -905,7 +906,8 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			str->ReadDword( &Flags );
 			str->Seek( 8, GEM_CURRENT_POS );
 			str->ReadDword( &Orientation );
-			str->Seek( 8, GEM_CURRENT_POS );
+			str->ReadDword( &RemovalTime );
+			str->Seek( 4, GEM_CURRENT_POS );
 			str->ReadDword( &Schedule );
 			str->ReadDword( &TalkCount );
 			str->ReadResRef( Dialog );
@@ -934,13 +936,12 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			//actually, Flags&1 signs that the creature
 			//is not loaded yet, so !(Flags&1) means it is embedded
 			if (CreOffset != 0 && !(Flags&1) ) {
-				CachedFileStream *fs = new CachedFileStream( (CachedFileStream *) str, CreOffset, CreSize, true);
-				crefile = (DataStream *) fs;
+				crefile = SliceStream( str, CreOffset, CreSize, true );
 			} else {
 				crefile = gamedata->GetResource( CreResRef, IE_CRE_CLASS_ID );
 			}
-			if(!actmgr->Open( crefile, true )) {
-				printf("Couldn't read actor: %s!\n", CreResRef);
+			if(!actmgr->Open(crefile)) {
+				print("Couldn't read actor: %s!\n", CreResRef);
 				continue;
 			}
 			ab = actmgr->GetActor(0);
@@ -968,16 +969,18 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			ab->SetOrientation( Orientation,0 );
 			ab->appearance = Schedule;
 			ab->TalkCount = TalkCount;
+			// TODO: remove corpse at removal time?
+			ab->RemovalTime = RemovalTime;
 			ab->RefreshEffects(NULL);
 		}
-		core->FreeInterface( actmgr );
 	}
 
-	printf( "Loading animations\n" );
+	core->LoadProgress(90);
+	print( "Loading animations\n" );
 	//Loading Animations
 	str->Seek( AnimOffset, GEM_STREAM_START );
 	if (!core->IsAvailable( IE_BAM_CLASS_ID )) {
-		printf( "[AREImporter]: No Animation Manager Available, skipping animations\n" );
+		print( "[AREImporter]: No Animation Manager Available, skipping animations\n" );
 	} else {
 		for (i = 0; i < AnimCount; i++) {
 			AreaAnimation* anim = new AreaAnimation();
@@ -992,7 +995,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			str->ReadWord( &anim->sequence );
 			str->ReadWord( &anim->frame );
 			str->ReadDword( &anim->Flags );
-			str->ReadWord( (ieWord *) &anim->height );
+			str->ReadWordSigned( &anim->height );
 			str->ReadWord( &anim->transparency );
 			str->ReadWord( &anim->unknown3c ); //not completely understood, if not 0, sequence is started
 			str->Read( &anim->startchance,1 );
@@ -1006,13 +1009,13 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 			//set up the animation, it cannot be done here
 			//because a StaticSequence action can change
 			//it later
-			anim->InitAnimation();
-
 			map->AddAnimation( anim );
+			//the animation was safely transferred to internal memory
+			delete anim;
 		}
 	}
 
-	printf( "Loading entrances\n" );
+	print( "Loading entrances\n" );
 	//Loading Entrances
 	str->Seek( EntrancesOffset, GEM_STREAM_START );
 	for (i = 0; i < EntrancesCount; i++) {
@@ -1027,7 +1030,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		map->AddEntrance( Name, XPos, YPos, Face );
 	}
 
-	printf( "Loading variables\n" );
+	print( "Loading variables\n" );
 	map->locals->LoadInitialValues(ResRef);
 	//Loading Variables
 	str->Seek( VariablesOffset, GEM_STREAM_START );
@@ -1042,7 +1045,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		map->locals->SetAt( Name, Value );
 	}
 
-	printf( "Loading ambients\n" );
+	print( "Loading ambients\n" );
 	str->Seek( AmbiOffset, GEM_STREAM_START );
 	for (i = 0; i < AmbiCount; i++) {
 		int j;
@@ -1082,7 +1085,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		map->AddAmbient(ambi);
 	}
 
-	printf( "Loading automap notes\n" );
+	print( "Loading automap notes\n" );
 	str->Seek( NoteOffset, GEM_STREAM_START );
 
 	//this feature exists in all blackisle games but not in bioware games
@@ -1157,15 +1160,15 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	}
 
 	//this is a ToB feature (saves the unexploded projectiles)
-	printf( "Loading traps\n" );
+	print( "Loading traps\n" );
 	for (i = 0; i < TrapCount; i++) {
 		ieResRef TrapResRef;
 		ieDword TrapEffOffset;
 		ieWord TrapSize, ProID;
 		ieWord X,Y;
-		ieDword Unknown1;
-		ieWord Unknown2;
-		ieByte Unknown3;
+		ieDword Ticks;
+		ieWord Unknown;
+		ieByte PartyID;
 		ieByte Owner;
 
 		str->Seek( TrapOffset + ( i * 0x1c ), GEM_STREAM_START );
@@ -1174,16 +1177,16 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		str->ReadDword( &TrapEffOffset );
 		str->ReadWord( &TrapSize );
 		str->ReadWord( &ProID );
-		str->ReadDword( &Unknown1 );
+		str->ReadDword( &Ticks );
 		str->ReadWord( &X );
 		str->ReadWord( &Y );
-		str->ReadWord( &Unknown2 );
-		str->Read( &Unknown3,1 );
+		str->ReadWord( &Unknown );
+		str->Read( &PartyID,1 );
 		str->Read( &Owner,1 );
 		int TrapEffectCount = TrapSize/0x108;
 		if(TrapEffectCount*0x108!=TrapSize) {
-			printMessage("AREImporter", " ", LIGHT_RED);
-			printf("TrapEffectSize in game: %d != %d. Clearing it\n", TrapSize, TrapEffectCount*0x108);
+			printMessage("AREImporter", "TrapEffectSize in game: %d != %d. Clearing it\n", LIGHT_RED,
+				TrapSize, TrapEffectCount*0x108);
 				continue;
 		}
 		//The projectile is always created, the worst that can happen
@@ -1194,17 +1197,20 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 
 		//This could be wrong on msvc7 with its separate memory managers
 		EffectQueue *fxqueue = new EffectQueue();
-		CachedFileStream *fs = new CachedFileStream( (CachedFileStream *) str, TrapEffOffset, TrapSize, true);
+		DataStream *fs = new SlicedStream( str, TrapEffOffset, TrapSize);
 
 		ReadEffects((DataStream *) fs,fxqueue, TrapEffectCount);
-		Actor * caster = core->GetGame()->FindPC(Owner);
+		Actor * caster = core->GetGame()->FindPC(PartyID);
 		pro->SetEffects(fxqueue);
-		if (caster) pro->SetCaster(caster->GetGlobalID());
+		if (caster) {
+			//FIXME: i don't know the level info
+			pro->SetCaster(caster->GetGlobalID(), 10);
+		}
 		Point pos(X,Y);
 		map->AddProjectile( pro, pos, pos);
 	}
 
-	printf( "Loading tiles\n" );
+	print( "Loading tiles\n" );
 	//Loading Tiled objects (if any)
 	str->Seek( TileOffset, GEM_STREAM_START );
 	for (i = 0; i < TileCount; i++) {
@@ -1227,7 +1233,7 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 		map->TMap->AddTile( ID, Name, Flags, NULL,0, NULL, 0 );
 	}
 
-	printf( "Loading explored bitmap\n" );
+	print( "Loading explored bitmap\n" );
 	i = map->GetExploredMapSize();
 	if (ExploredBitmapSize==i) {
 		map->ExploredBitmap = (ieByte *) malloc(i);
@@ -1236,22 +1242,21 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	}
 	else {
 		if( ExploredBitmapSize ) {
-			printMessage("AREImporter", " ", LIGHT_RED);
-			printf("ExploredBitmapSize in game: %d != %d. Clearing it\n", ExploredBitmapSize, i);
+			printMessage("AREImporter", "ExploredBitmapSize in game: %d != %d. Clearing it\n", LIGHT_RED,
+				ExploredBitmapSize, i);
 		}
 		ExploredBitmapSize = i;
 		map->ExploredBitmap = (ieByte *) calloc(i, 1);
 	}
 	map->VisibleBitmap = (ieByte *) calloc(i, 1);
 
-	printf( "Loading wallgroups\n");
+	print( "Loading wallgroups\n");
 	map->SetWallGroups( tmm->GetPolygonsCount(),tmm->GetWallGroups() );
 	//setting up doors
 	for (i=0;i<DoorsCount;i++) {
 		Door *door = tm->GetDoor(i);
 		door->SetDoorOpen(door->IsOpen(), false, 0);
 	}
-	core->FreeInterface( tmm );
 	return map;
 }
 
@@ -1259,8 +1264,8 @@ void AREImporter::ReadEffects(DataStream *ds, EffectQueue *fxqueue, ieDword Effe
 {
 	unsigned int i;
 
-	EffectMgr* eM = ( EffectMgr* ) core->GetInterface( IE_EFF_CLASS_ID );
-	eM->Open( ds, true );
+	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
+	eM->Open(ds);
 
 	for (i = 0; i < EffectsCount; i++) {
 		Effect fx;
@@ -1269,7 +1274,6 @@ void AREImporter::ReadEffects(DataStream *ds, EffectQueue *fxqueue, ieDword Effe
 		// NOTE: AddEffect() allocates a new effect
 		fxqueue->AddEffect( &fx );
 	}
-	core->FreeInterface(eM);
 }
 
 int AREImporter::GetStoredFileSize(Map *map)
@@ -1283,13 +1287,12 @@ int AREImporter::GetStoredFileSize(Map *map)
 	ActorCount = (ieWord) map->GetActorCount(false);
 	headersize += ActorCount * 0x110;
 
-	ActorMgr* am = ( ActorMgr* ) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> am(IE_CRE_CLASS_ID);
 	EmbeddedCreOffset = headersize;
 
 	for (i=0;i<ActorCount;i++) {
 		headersize += am->GetStoredFileSize(map->GetActor(i, false) );
 	}
-	core->FreeInterface(am);
 
 	InfoPointsOffset = headersize;
 
@@ -1439,7 +1442,9 @@ int AREImporter::PutHeader(DataStream *stream, Map *map)
 	stream->WriteDword( &VariablesOffset );
 	stream->WriteDword( &VariablesCount );
 	stream->WriteDword( &tmpDword);
-	GameScript *s = map->Scripts[0];
+
+	//the saved area script is in the last script slot!
+	GameScript *s = map->Scripts[MAX_SCRIPTS-1];
 	if (s) {
 		stream->WriteResRef( s->GetName() );
 	} else {
@@ -1478,7 +1483,6 @@ int AREImporter::PutHeader(DataStream *stream, Map *map)
 int AREImporter::PutDoors( DataStream *stream, Map *map, ieDword &VertIndex)
 {
 	char filling[8];
-	ieDword tmpDword = 0;
 	ieWord tmpWord = 0;
 
 	memset(filling,0,sizeof(filling) );
@@ -1542,9 +1546,7 @@ int AREImporter::PutDoors( DataStream *stream, Map *map, ieDword &VertIndex)
 		} else {
 			stream->Write( filling, 8);
 		}
-		//unknown field 0-100
-		//stream->WriteDword( &d->Locked);
-		stream->WriteDword( &tmpDword);
+		stream->WriteDword( &d->DiscoveryDiff);
 		//lock difficulty field
 		stream->WriteDword( &d->LockDifficulty);
 		//opening locations
@@ -1698,7 +1700,7 @@ int AREImporter::PutRegions( DataStream *stream, Map *map, ieDword &VertIndex)
 {
 	ieDword tmpDword = 0;
 	ieWord tmpWord;
-	char filling[56];
+	char filling[36];
 
 	memset(filling,0,sizeof(filling) );
 	for (unsigned int i=0;i<InfoPointsCount;i++) {
@@ -1748,8 +1750,9 @@ int AREImporter::PutRegions( DataStream *stream, Map *map, ieDword &VertIndex)
 		stream->WriteWord( &tmpWord);
 		tmpWord = (ieWord) ip->UsePoint.y;
 		stream->WriteWord( &tmpWord);
-		stream->Write( filling, 44); //unknown
+		stream->Write( filling, 36); //unknown
 		//these are probably only in PST
+		stream->WriteResRef( ip->EnterWav);
 		tmpWord = (ieWord) ip->TalkPos.x;
 		stream->WriteWord( &tmpWord);
 		tmpWord = (ieWord) ip->TalkPos.y;
@@ -1820,7 +1823,7 @@ int AREImporter::PutActors( DataStream *stream, Map *map)
 	char filling[120];
 	unsigned int i;
 
-	ActorMgr *am = (ActorMgr *) core->GetInterface( IE_CRE_CLASS_ID );
+	PluginHolder<ActorMgr> am(IE_CRE_CLASS_ID);
 	memset(filling,0,sizeof(filling) );
 	for (i=0;i<ActorCount;i++) {
 		Actor *ac = map->GetActor(i, false);
@@ -1842,7 +1845,7 @@ int AREImporter::PutActors( DataStream *stream, Map *map)
 		stream->WriteWord( &tmpWord);
 		tmpWord = 0;
 		stream->WriteWord( &tmpWord); //unknown
-		stream->WriteDword( &tmpDword);
+		stream->WriteDword( &ac->RemovalTime);
 		stream->WriteDword( &tmpDword); //more unknowns
 		stream->WriteDword( &ac->appearance);
 		stream->WriteDword( &ac->TalkCount);
@@ -1866,13 +1869,14 @@ int AREImporter::PutActors( DataStream *stream, Map *map)
 
 	CreatureOffset = EmbeddedCreOffset;
 	for (i=0;i<ActorCount;i++) {
+		assert(stream->GetPos() == CreatureOffset);
 		Actor *ac = map->GetActor(i, false);
 
 		//reconstructing offsets again
-		am->GetStoredFileSize(ac);
+		CreatureOffset += am->GetStoredFileSize(ac);
 		am->PutActor( stream, ac);
 	}
-	core->FreeInterface( am);
+	assert(stream->GetPos() == CreatureOffset);
 
 	return 0;
 }
@@ -1928,7 +1932,7 @@ int AREImporter::PutEntrances( DataStream *stream, Map *map)
 int AREImporter::PutVariables( DataStream *stream, Map *map)
 {
 	char filling[40];
-	POSITION pos=NULL;
+	Variables::iterator pos=NULL;
 	const char *name;
 	ieDword value;
 
@@ -2041,10 +2045,9 @@ int AREImporter::PutMapnotes( DataStream *stream, Map *map)
 
 int AREImporter::PutEffects( DataStream *stream, EffectQueue *fxqueue)
 {
-	ieDword tmpDword1,tmpDword2;
-	char filling[60];
+	PluginHolder<EffectMgr> eM(IE_EFF_CLASS_ID);
+	assert(eM != NULL);
 
-	memset(filling,0,sizeof(filling) );
 	std::list< Effect* >::const_iterator f=fxqueue->GetFirstEffect();
 	ieDword EffectsCount = fxqueue->GetSavedEffectsCount();
 	for(unsigned int i=0;i<EffectsCount;i++) {
@@ -2052,54 +2055,7 @@ int AREImporter::PutEffects( DataStream *stream, EffectQueue *fxqueue)
 
 		assert(fx!=NULL);
 
-		stream->Write( filling,8 ); //signature
-		stream->WriteDword( &fx->Opcode);
-		stream->WriteDword( &fx->Target);
-		stream->WriteDword( &fx->Power);
-		stream->WriteDword( &fx->Parameter1);
-		stream->WriteDword( &fx->Parameter2);
-		stream->WriteWord( &fx->TimingMode);
-		stream->WriteWord( &fx->unknown2);
-		stream->WriteDword( &fx->Duration);
-		stream->WriteWord( &fx->Probability1);
-		stream->WriteWord( &fx->Probability2);
-		stream->WriteResRef(fx->Resource);
-		stream->WriteDword( &fx->DiceThrown );
-		stream->WriteDword( &fx->DiceSides );
-		stream->WriteDword( &fx->SavingThrowType );
-		stream->WriteDword( &fx->SavingThrowBonus );
-		//isvariable
-		stream->Write( filling,4 );
-		stream->WriteDword( &fx->PrimaryType );
-		stream->Write( filling,12 );
-		stream->WriteDword( &fx->Resistance );
-		stream->WriteDword( &fx->Parameter3 );
-		stream->WriteDword( &fx->Parameter4 );
-		stream->Write( filling,8 );
-		if (fx->IsVariable) {
-			stream->Write(fx->Resource+8, 8);
-			//resource1-4 are used as a continuous memory
-			stream->Write(((ieByte *) fx->Resource)+16, 8);
-		} else {
-			stream->WriteResRef(fx->Resource2);
-			stream->WriteResRef(fx->Resource3);
-		}
-		tmpDword1 = (ieDword) fx->PosX;
-		tmpDword2 = (ieDword) fx->PosY;
-		stream->WriteDword( &tmpDword1 );
-		stream->WriteDword( &tmpDword2 );
-		//FIXME: these two points are actually different
-		stream->WriteDword( &tmpDword1 );
-		stream->WriteDword( &tmpDword2 );
-		stream->WriteDword( &fx->SourceType );
-		stream->WriteResRef( fx->Source );
-		stream->WriteDword( &fx->SourceFlags );
-		stream->WriteDword( &fx->Projectile );
-		tmpDword1 = (ieDword) fx->InventorySlot;
-		stream->WriteDword( &tmpDword1 );
-		stream->Write( filling,40 ); //12+32+8
-		stream->WriteDword( &fx->SecondaryType );
-		stream->Write( filling,60 );
+		eM->PutEffectV2(stream, fx);
 	}
 	return 0;
 }
@@ -2218,7 +2174,6 @@ int AREImporter::PutRestHeader( DataStream *stream, Map *map)
 {
 	int i;
 	ieDword tmpDword = 0;
-	ieWord tmpWord = 0;
 
 	char filling[32];
 	memset(filling,0,sizeof(filling) );
@@ -2230,11 +2185,12 @@ int AREImporter::PutRestHeader( DataStream *stream, Map *map)
 		stream->WriteResRef( map->RestHeader.CreResRef[i]);
 	}
 	stream->WriteWord( &map->RestHeader.CreatureNum);
-	//lots of unknowns
-	stream->WriteWord( &tmpWord);
-	for(i=0;i<6;i++) {
-		stream->WriteWord( &tmpWord);
-	}
+	stream->WriteWord( &map->RestHeader.Difficulty);
+	stream->WriteDword( &map->RestHeader.sduration);
+	stream->WriteWord( &map->RestHeader.rwdist);
+	stream->WriteWord( &map->RestHeader.owdist);
+	stream->WriteWord( &map->RestHeader.Maximum);
+	stream->WriteWord( &map->RestHeader.Enabled);
 	stream->WriteWord( &map->RestHeader.DayChance);
 	stream->WriteWord( &map->RestHeader.NightChance);
 	for(i=0;i<14;i++) {
@@ -2366,5 +2322,5 @@ int AREImporter::PutArea(DataStream *stream, Map *map)
 
 GEMRB_PLUGIN(0x145B60F0, "ARE File Importer")
 PLUGIN_CLASS(IE_ARE_CLASS_ID, AREImporter)
-PLUGIN_CLEANUP(ReleaseMemory);
+PLUGIN_CLEANUP(ReleaseMemory)
 END_PLUGIN()

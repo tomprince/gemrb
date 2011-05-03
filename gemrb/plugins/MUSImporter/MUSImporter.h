@@ -22,8 +22,11 @@
 #define MUSIMPORTER_H
 
 #include "MusicMgr.h"
-#include "FileStream.h"
-#include <stdio.h>
+
+#include "ResourceManager.h"
+#include "System/FileStream.h"
+
+#include <cstdio>
 
 /**MUS PlayList Importer
   *@author GemRB Development Team
@@ -42,10 +45,12 @@ private:
 	bool Initialized;
 	bool Playing;
 	char PLName[32];
+	char PLNameNew[32];
 	int PLpos, PLnext;
 	FileStream* str;
 	std::vector< PLString> playlist;
 	unsigned int lastSound;
+	ResourceManager manager;
 private:
 	void PlayMusic(int pos);
 	void PlayMusic(char* name);
@@ -69,11 +74,6 @@ public:
 	bool IsPlaying() { return Playing; }
 	/** Returns whether given playlist is currently loaded */
 	bool CurrentPlayList(const char* name);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

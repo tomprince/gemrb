@@ -51,7 +51,7 @@ def UpdateOverview(CurrentStep):
 	GlobalStep = CurrentStep
 	
 	GemRB.LoadWindowPack("GUICG", 800 ,600)
-	CharGenWindow = GemRB.LoadWindowObject(0)
+	CharGenWindow = GemRB.LoadWindow(0)
 	CharGenWindow.SetFrame()
 	PortraitButton = CharGenWindow.GetControl(12)
 	PortraitButton.SetFlags(IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
@@ -70,18 +70,18 @@ def UpdateOverview(CurrentStep):
 		if CurrentStep - 1 == i:
 			State = IE_GUI_BUTTON_ENABLED
 			StepButtons[Step].SetFlags(IE_GUI_BUTTON_DEFAULT, OP_OR)
-			StepButtons[Step].SetEvent(IE_GUI_BUTTON_ON_PRESS, 'NextPress')
+			StepButtons[Step].SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
 		StepButtons[Step].SetState(State)
 	
 	# Handle (not so) persistent buttons
 	# This array handles all the default values for the buttons
 	# Exceptions are handled within the loop
 	ControlLookup = {
-		'Bio': [16, 18003, 0, 0],
-		'Import': [13, 13955, 0, 0],
-		'Back': [11, 15416, 1, 'BackPress'],
-		'Next': [8, 28210, 0, 0],
-		'Start': [15, 36788, 1, 'StartOver']
+		'Bio': [16, 18003, 0, None],
+		'Import': [13, 13955, 0, None],
+		'Back': [11, 15416, 1, BackPress],
+		'Next': [8, 28210, 0, None],
+		'Start': [15, 36788, 1, StartOver]
 	}
 	States = [IE_GUI_BUTTON_DISABLED, IE_GUI_BUTTON_ENABLED]
 	for Key in ControlLookup:
@@ -92,27 +92,28 @@ def UpdateOverview(CurrentStep):
 		
 		if Key == 'Bio' and CurrentStep == 9:
 			State = States[1]
-			Event = 'BioPress'
+			import CharGen9
+			Event = CharGen9.BioPress
 		
 		if Key == 'Import' and CurrentStep == 1:
 			State = States[1]
-			Event = 'ImportPress'
+			Event = ImportPress
 		
 		if Key == 'Back':
 			if CurrentStep == 1:
 				State = States[0]
-				Event = 0
+				Event = None
 			else:
 				PersistButtons[Key].SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 		
 		if Key == 'Next' and CurrentStep == 9:
 			Text = 11962
 			State = 1
-			Event = 'NextPress'
+			Event = NextPress
 		
 		if Key == 'Start' and CurrentStep == 1:
 			Text = 13727
-			Event = 'CancelPress'
+			Event = CancelPress
 			PersistButtons[Key].SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 		
 		PersistButtons[Key].SetText(Text)
@@ -125,7 +126,7 @@ def UpdateOverview(CurrentStep):
 	TextAreaControl = CharGenWindow.GetControl(9)
 	Tables = []
 	for tbl in ['races', 'classes', 'aligns', 'ability', 'skillsta', 'skills', 'featreq', 'feats']:
-		Tables.append(GemRB.LoadTableObject(tbl))
+		Tables.append(GemRB.LoadTable(tbl))
 	
 	if GemRB.GetVar('Gender') > 0:
 		if GemRB.GetToken('CHARNAME') == '':
@@ -183,7 +184,7 @@ def UpdateOverview(CurrentStep):
 		
 		RaceName = Tables[0].GetRowName(Tables[0].FindValue(3, GemRB.GetVar('Race')))
 		SkillColumn = Tables[0].GetValue(RaceName, 'SKILL_COLUMN', 1) + 1
-		Lookup = {'STR': 0, 'DEX': 1, 'CON': 2, 'INT': 3, 'WIS': 4, 'CHA': 5} # Probably a better way to do this
+		Lookup = {'STR': 0, 'DEX': 1, 'CON': 2, 'INT': 3, 'WIS': 4, 'CHR': 5} # Probably a better way to do this
 		for i in range(Tables[4].GetRowCount()):
 			SkillName = Tables[5].GetRowName(i)
 			Abl = Tables[4].GetValue(i, 1, 0)
@@ -216,15 +217,15 @@ def UpdateOverview(CurrentStep):
 				if value > 1: AddText(': ' + str(value))
 
 	# Handle StartOverWindow
-	StartOverWindow = GemRB.LoadWindowObject(53)
+	StartOverWindow = GemRB.LoadWindow(53)
 	
 	YesButton = StartOverWindow.GetControl(0)
 	YesButton.SetText(13912)
-	YesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, 'RestartGen')
+	YesButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, RestartGen)
 	
 	NoButton = StartOverWindow.GetControl(1)
 	NoButton.SetText(13913)
-	NoButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, 'NoExitPress')
+	NoButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NoExitPress)
 	
 	TextAreaControl = StartOverWindow.GetControl(2)
 	TextAreaControl.SetText(40275)
@@ -238,7 +239,11 @@ def NextPress():
 		CharGenWindow.Unload()
 	if StartOverWindow:
 		StartOverWindow.Unload()
-	GemRB.SetNextScript(Steps[GlobalStep - 1])
+	if len(Steps) > GlobalStep - 1:
+		GemRB.SetNextScript(Steps[GlobalStep - 1])
+	else: #start the game
+		import CharGen9
+		CharGen9.NextPress()
 	return
 
 def CancelPress():

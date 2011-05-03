@@ -22,24 +22,33 @@
 ###################################################
 
 import GemRB
+import GUICommon
 from GUIDefines import *
 
 LoadScreen = None
+hide = None
+
+def SetLoadScreen ():
+	return
 
 def StartLoadScreen ():
 	global LoadScreen
 
 	GemRB.LoadWindowPack ("guils", 640, 480)
-	LoadScreen = GemRB.LoadWindowObject (0)
+	LoadScreen = GemRB.LoadWindow (0)
 	LoadScreen.SetFrame ()
 	Middle = LoadScreen.GetControl (3)
 	LoadPic = GemRB.GetGameString (STR_LOADMOS)
 	if LoadPic == "":
+		#the addition of 1 is not an error, bg2 loadpic resrefs are GTRSK002-GTRSK006
 		LoadPic = "GTRSK00"+str(GemRB.Roll(1,5,1) )
 	Middle.SetMOS (LoadPic)
 	Progress = 0
 	GemRB.SetVar ("Progress", Progress)
-	Table = GemRB.LoadTableObject ("loadhint")
+	if GUICommon.HasTOB():
+		Table = GemRB.LoadTable ("loadh25")
+	else:
+		Table = GemRB.LoadTable ("loadhint")
 	tmp = Table.GetRowCount ()
 	tmp = GemRB.Roll (1,tmp,0)
 	HintStr = Table.GetValue (tmp, 0)
@@ -47,4 +56,11 @@ def StartLoadScreen ():
 	TextArea.SetText (HintStr)
 	Bar = LoadScreen.GetControl (0)
 	Bar.SetVarAssoc ("Progress", Progress)
+	Bar.SetEvent (IE_GUI_PROGRESS_END_REACHED, EndLoadScreen)
 	LoadScreen.SetVisible (WINDOW_VISIBLE)
+
+def EndLoadScreen ():
+	LoadScreen.SetVisible (WINDOW_VISIBLE)
+	LoadScreen.Unload()
+        return
+

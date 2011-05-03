@@ -18,22 +18,23 @@
  *
  */
 
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <cstdio>
-#include "Interface.h"
-#include "Video.h"
-#include "Audio.h"
-#include "Variables.h"
 #include "MVEPlayer.h"
+
 #include "mve_player.h"
+
 #include "ie_types.h"
+
+#include "Audio.h"
+#include "Interface.h"
+#include "Variables.h"
+#include "Video.h"
+
+#include <cassert>
+#include <cstdio>
 
 static const char MVESignature[] = "Interplay MVE File\x1A";
 static const int MVE_SIGNATURE_LEN = 19;
 
-static Video *video = NULL;
 static unsigned char g_palette[768];
 static int g_truecolor;
 static ieDword maxRow = 0;
@@ -51,10 +52,9 @@ MVEPlay::~MVEPlay(void)
 {
 }
 
-bool MVEPlay::Open(DataStream* stream, bool autoFree)
+bool MVEPlay::Open(DataStream* stream)
 {
-	if (!Resource::Open(stream,autoFree))
-		return false;
+	str = stream;
 	validVideo = false;
 
 	char Signature[MVE_SIGNATURE_LEN];
@@ -104,7 +104,7 @@ int MVEPlay::doPlay()
 	player.video_init(w, h);
 
 	if (!player.start_playback()) {
-		printf("Failed to decode movie!\n");
+		print("Failed to decode movie!\n");
 		return 1;
 	}
 
@@ -114,6 +114,7 @@ int MVEPlay::doPlay()
 		done = video->PollMovieEvents();
 	}
 
+	video->DrawMovieSubtitle(0);
 	return 0;
 }
 
@@ -171,8 +172,8 @@ void MVEPlay::freeAudioStream(int stream)
 }
 
 void MVEPlay::queueBuffer(int stream, unsigned short bits,
-                int channels, short* memory,
-                int size, int samplerate)
+			int channels, short* memory,
+			int size, int samplerate)
 {
 	if (stream > -1)
 		core->GetAudioDrv()->QueueBuffer(stream, bits, channels, memory, size, samplerate) ;
@@ -182,5 +183,5 @@ void MVEPlay::queueBuffer(int stream, unsigned short bits,
 #include "plugindef.h"
 
 GEMRB_PLUGIN(0x218963DC, "MVE Video Player")
-PLUGIN_IE_RESOURCE(MVEPlay, ".mve", (ieWord)IE_MVE_CLASS_ID)
+PLUGIN_IE_RESOURCE(MVEPlay, "mve", (ieWord)IE_MVE_CLASS_ID)
 END_PLUGIN()

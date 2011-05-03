@@ -18,6 +18,7 @@
 #
 #character generation, sound (GUICG19)
 import GemRB
+from GUIDefines import *
 
 SoundWindow = 0
 TextAreaControl = 0
@@ -29,7 +30,7 @@ def OnLoad():
 
 	GemRB.LoadWindowPack("GUICG", 800,  600)
 	#this hack will redraw the base CG window
-	SoundWindow = GemRB.LoadWindowObject(19)
+	SoundWindow = GemRB.LoadWindow(19)
 	GemRB.SetVar("Sound",0)  #scrapping the sound value
 
 	BackButton = SoundWindow.GetControl(10)
@@ -51,9 +52,9 @@ def OnLoad():
 	DefaultButton = SoundWindow.GetControl(47)
 	DefaultButton.SetText(33479)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
-	DefaultButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"DefaultPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
+	DefaultButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, DefaultPress)
 	SoundWindow.SetVisible(WINDOW_VISIBLE)
 	return
 

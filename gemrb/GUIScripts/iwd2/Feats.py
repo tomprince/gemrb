@@ -18,8 +18,9 @@
 #
 #character generation, skills (GUICG6)
 import GemRB
+from GUIDefines import *
 from ie_stats import *
-from GUICommon import RaceTable, ClassTable
+import CommonTables
 
 FeatWindow = 0
 TextAreaControl = 0
@@ -192,31 +193,31 @@ def OnLoad():
 	GemRB.SetVar("Level",1) #for simplicity
 
 	Race = GemRB.GetVar("Race")
-	RaceColumn = RaceTable.FindValue(3, Race)
-	RaceName = RaceTable.GetRowName(RaceColumn)
+	RaceColumn = CommonTables.Races.FindValue(3, Race)
+	RaceName = CommonTables.Races.GetRowName(RaceColumn)
 	# could use column ID as well, but they tend to change :)
-	RaceColumn = RaceTable.GetValue(RaceName, "SKILL_COLUMN")
+	RaceColumn = CommonTables.Races.GetValue(RaceName, "SKILL_COLUMN")
 
 	Class = GemRB.GetVar("Class") - 1
-	KitName = ClassTable.GetRowName(Class)
+	KitName = CommonTables.Classes.GetRowName(Class)
 	# classcolumn is base class or 0 if it is not a kit
-	ClassColumn = ClassTable.GetValue(Class, 3) - 1
+	ClassColumn = CommonTables.Classes.GetValue(Class, 3) - 1
 	if ClassColumn < 0:  #it was already a base class
 		ClassColumn = Class
-		FeatsClassColumn = ClassTable.GetValue(Class, 2) + 2
+		FeatsClassColumn = CommonTables.Classes.GetValue(Class, 2) + 2
 	else:
-		FeatsClassColumn = ClassTable.GetValue(Class, 3) + 2
+		FeatsClassColumn = CommonTables.Classes.GetValue(Class, 3) + 2
 
-	FeatTable = GemRB.LoadTableObject("feats")
+	FeatTable = GemRB.LoadTable("feats")
 	RowCount = FeatTable.GetRowCount()
-	FeatReqTable = GemRB.LoadTableObject("featreq")
+	FeatReqTable = GemRB.LoadTable("featreq")
 
 	for i in range(RowCount):
 		GemRB.SetVar("Feat "+str(i), GetBaseValue(i))
 		GemRB.SetVar("BaseFeatValue " + str(i), GetBaseValue(i))
 
-	FeatLevelTable = GemRB.LoadTableObject("featlvl")
-	FeatClassTable = GemRB.LoadTableObject("featclas")
+	FeatLevelTable = GemRB.LoadTable("featlvl")
+	FeatClassTable = GemRB.LoadTable("featclas")
 	#calculating the number of new feats for the next level
 	PointsLeft = 0
 	#levels start with 1
@@ -225,7 +226,7 @@ def OnLoad():
 	#this one exists only for clerics
 	# Although it should be made extendable to all kits
 	# A FEAT_COLUMN is needed in classes.2da or better yet, a whole new 2da
-	if ClassTable.GetValue(Class, 3) == "CLERIC":
+	if CommonTables.Classes.GetValue(Class, 3) == "CLERIC":
 		ClassColumn += 3
 		if KitColumn:
 			KitColumn = 3 + KitColumn + 11
@@ -237,25 +238,25 @@ def OnLoad():
 	#racial abilities which seem to be hardcoded in the IWD2 engine
 	#are implemented in races.2da
 	if Level<1:
-		PointsLeft += RaceTable.GetValue(RaceName,'FEATBONUS')
+		PointsLeft += CommonTables.Races.GetValue(RaceName,'FEATBONUS')
 	###
 
 	GemRB.SetToken("number",str(PointsLeft) )
 
 	GemRB.LoadWindowPack("GUICG", 800, 600)
-	FeatWindow = GemRB.LoadWindowObject(55)
+	FeatWindow = GemRB.LoadWindow(55)
 	for i in range(10):
 		Button = FeatWindow.GetControl(i+93)
 		Button.SetVarAssoc("Feat",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "JustPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, JustPress)
 
 		Button = FeatWindow.GetControl(i*2+14)
 		Button.SetVarAssoc("Feat",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, LeftPress)
 
 		Button = FeatWindow.GetControl(i*2+15)
 		Button.SetVarAssoc("Feat",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "RightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RightPress)
 		for j in range(5):
 			Star=FeatWindow.GetControl(i*5+j+36)
 			Star.SetState(IE_GUI_BUTTON_DISABLED)
@@ -273,15 +274,15 @@ def OnLoad():
 	TextAreaControl.SetText(36476)
 
 	ScrollBarControl = FeatWindow.GetControl(104)
-	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE,"ScrollBarPress")
+	ScrollBarControl.SetEvent(IE_GUI_SCROLLBAR_ON_CHANGE, ScrollBarPress)
 	#decrease it with the number of controls on screen (list size)
 	TopIndex = 0
 	GemRB.SetVar("TopIndex",0)
 	ScrollBarControl.SetVarAssoc("TopIndex",RowCount-10)
 	ScrollBarControl.SetDefaultScrollBar ()
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	RedrawFeats()
 	FeatWindow.SetVisible(WINDOW_VISIBLE)
 	return

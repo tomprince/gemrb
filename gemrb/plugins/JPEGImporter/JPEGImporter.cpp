@@ -21,12 +21,13 @@
 
 #include "JPEGImporter.h"
 #include "JPEGSourceManager.h"
-#include "../../includes/globals.h"
-#include "JPEGImporter.h"
-#include "../../includes/RGBAColor.h"
-#include "../Core/Interface.h"
-#include "../Core/Video.h"
-#include "../Core/ImageFactory.h"
+
+#include "RGBAColor.h"
+#include "globals.h"
+
+#include "ImageFactory.h"
+#include "Interface.h"
+#include "Video.h"
 
 #include <jpeglib.h>
 
@@ -54,10 +55,13 @@ void throw_error_exit (j_common_ptr /*cinfo*/)
 	throw "JPEG Error: FIXME: report error";
 }
 
-bool JPEGImporter::Open(DataStream* stream, bool autoFree)
+bool JPEGImporter::Open(DataStream* stream)
 {
-	if (!Resource::Open(stream, autoFree))
+	if (!str)
 		return false;
+	delete str;
+	str = stream;
+
 	jpeg_destroy((j_common_ptr)&cinfo); // should this be jpeg_abort?
 
         // Allocate and initialize a JPEG decompression object

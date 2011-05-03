@@ -19,10 +19,11 @@
  *
  */
 
+#include "System/DataStream.h"
+
 #include <cstddef>
 #include <cstdio>
 #include <jpeglib.h>
-#include "../Core/DataStream.h"
 
 class JPEGSourceManager : public jpeg_source_mgr
 {

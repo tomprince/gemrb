@@ -18,10 +18,14 @@
  *
  */
 
-#include "win32def.h"
 #include "MUSImporter.h"
-#include "Interface.h"
+
+#include "win32def.h"
+
 #include "Audio.h"
+#include "GameData.h" // For ResourceHolder
+#include "Interface.h"
+#include "SoundMgr.h"
 
 static char musicsubfolder[6] = "music";
 
@@ -32,7 +36,11 @@ MUSImporter::MUSImporter()
 	str = new FileStream();
 	PLpos = 0;
 	PLName[0] = '\0';
+	PLNameNew[0] = '\0';
 	lastSound = 0xffffffff;
+	char path[_MAX_PATH];
+	PathJoin(path, core->GamePath, musicsubfolder, NULL);
+	manager.AddSource(path, "Music", PLUGIN_RESOURCE_DIRECTORY);
 }
 
 MUSImporter::~MUSImporter()
@@ -65,16 +73,9 @@ bool MUSImporter::OpenPlaylist(const char* name)
 		return false;
 	}
 	char path[_MAX_PATH];
-	strcpy( path, core->GamePath );
-	strcat( path, musicsubfolder );
-	strcat( path, SPathDelimiter );
-	strcat( path, name );
-#ifndef WIN32
-	ResolveFilePath( path );
-#endif
-	printMessage("MUSImporter", "", WHITE);
-	printf( "Loading %s...", path );
-	if (!str->Open( path, true )) {
+	PathJoin(path, core->GamePath, musicsubfolder, name, NULL);
+	printMessage("MUSImporter", "Loading %s...", WHITE, path);
+	if (!str->Open(path)) {
 		printStatus("NOT FOUND", LIGHT_RED );
 		return false;
 	}
@@ -223,9 +224,9 @@ void MUSImporter::HardEnd()
 /** Switches the current PlayList while playing the current one, return nonzero on error */
 int MUSImporter::SwitchPlayList(const char* name, bool Hard)
 {
-	//don't do anything if the requested song is already playing
-	//this fixed PST's infinite song start
 	if (Playing) {
+		//don't do anything if the requested song is already playing
+		//this fixed PST's infinite song start
 		int len = ( int ) strlen( PLName );
 		if (strnicmp( name, PLName, len ) == 0)
 			return 0;
@@ -234,11 +235,19 @@ int MUSImporter::SwitchPlayList(const char* name, bool Hard)
 		} else {
 			End();
 		}
+		//if still playing, then don't insist on trying to open it now
+		//either HardEnd stopped it for us, or End marked it for early ending
+		if (Playing) {
+			strncpy(PLNameNew, name, sizeof(PLNameNew) );
+			return 0;
+		}
 	}
+
 	if (OpenPlaylist( name )) {
 		Start();
 		return 0;
 	}
+
 	return -1;
 }
 /** Plays the Next Entry */
@@ -262,13 +271,20 @@ void MUSImporter::PlayNext()
 				PLnext = -1;
 			else
 				PLnext = PLpos + 1;
-				if ((unsigned int) PLnext >= playlist.size() ) {
-					PLnext = 0;
-				}
+			if ((unsigned int) PLnext >= playlist.size() ) {
+				PLnext = 0;
+			}
 		}
 	} else {
 		Playing = false;
 		core->GetAudioDrv()->Stop();
+		//start new music after the old faded out
+		if (PLNameNew[0]) {
+			if (OpenPlaylist(PLNameNew)) {
+				Start();
+			}
+			PLNameNew[0]='\0';
+		}
 	}
 }
 
@@ -281,31 +297,27 @@ void MUSImporter::PlayMusic(char* name)
 {
 	char FName[_MAX_PATH];
 	if (strnicmp( name, "mx9000", 6 ) == 0) { //iwd2
-		snprintf( FName, _MAX_PATH, "%s%s%smx9000%s%s.acm",
-			core->GamePath, musicsubfolder, SPathDelimiter,
-			SPathDelimiter, name);
+		PathJoin(FName, "mx9000", name, NULL);
 	} else if (strnicmp( name, "mx0000", 6 ) == 0) { //iwd
-		snprintf( FName, _MAX_PATH, "%s%s%smx0000%s%s.acm",
-			core->GamePath, musicsubfolder, SPathDelimiter,
-			SPathDelimiter, name);
+		PathJoin(FName, "mx0000", name, NULL);
 	} else if (strnicmp( name, "SPC", 3 ) != 0) { //bg2
-		snprintf( FName, _MAX_PATH, "%s%s%s%s%s%s%s.acm",
-			core->GamePath, musicsubfolder, SPathDelimiter,
-			PLName, SPathDelimiter, PLName, name);
+		char File[_MAX_PATH];
+		snprintf(File, _MAX_PATH, "%s%s", PLName, name);
+		PathJoin(FName, PLName, File, NULL);
+	} else {
+		strncpy(FName, name, _MAX_PATH);
 	}
-	else {
-		snprintf(FName, _MAX_PATH, "%s%s%s%s.acm",
-			core->GamePath, musicsubfolder, SPathDelimiter,
-			name);
-	}
-#ifndef WIN32
-		ResolveFilePath( FName );
-#endif
-	int soundID = core->GetAudioDrv()->StreamFile( FName );
-	if (soundID == -1) {
+
+	ResourceHolder<SoundMgr> sound(FName, manager);
+	if (sound) {
+		int soundID = core->GetAudioDrv()->CreateStream( sound );
+		if (soundID == -1) {
+			core->GetAudioDrv()->Stop();
+		}
+	} else {
 		core->GetAudioDrv()->Stop();
 	}
-	printf( "Playing: %s\n", FName );
+	print( "Playing: %s\n", FName );
 }
 
 bool MUSImporter::CurrentPlayList(const char* name) {

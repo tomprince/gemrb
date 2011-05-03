@@ -21,9 +21,11 @@
 #ifndef SDLVIDEODRIVER_H
 #define SDLVIDEODRIVER_H
 
-#include <SDL.h>
-#include "win32def.h"
 #include "Video.h"
+
+#include "win32def.h"
+
+#include <SDL.h>
 
 class SDLVideoDriver : public Video {
 private:
@@ -42,6 +44,7 @@ private:
 	Font *subtitlefont;
 	Palette *subtitlepal;
 	Region subtitleregion;
+	SDL_Rect subtitleregion_sdl;  //we probably have the same stuff, twice
 	char *subtitletext;
 	ieDword subtitlestrref;
 	/* yuv overlay for bink movie */
@@ -52,10 +55,9 @@ public:
 	int Init(void);
 	int CreateDisplay(int width, int height, int bpp, bool fullscreen);
 	void SetDisplayTitle(char* title, char* icon);
-	VideoModes GetVideoModes(bool fullscreen = false);
-	bool TestVideoMode(VideoMode& vm);
-	bool ToggleFullscreenMode(int set_reset=-1);
+	bool SetFullscreenMode(bool set);
 	int SwapBuffers(void);
+	int PollEvents();
 	bool ToggleGrabInput();
 	short GetWidth() { return ( disp ? disp->w : 0 ); }
 	short GetHeight() { return ( disp ? disp->h : 0 ); }
@@ -79,16 +81,16 @@ public:
 		Palette* palette, int transindex);
 	bool SupportsBAMSprites() { return true; }
 	void FreeSprite(Sprite2D* &spr);
-	Sprite2D* DuplicateSprite(Sprite2D* spr);
-	void BlitTile(Sprite2D* spr, Sprite2D* mask, int x, int y, Region* clip, bool trans);
-	void BlitSprite(Sprite2D* spr, int x, int y, bool anchor = false,
-		Region* clip = NULL);
-	void BlitSpriteRegion(Sprite2D* spr, Region& size, int x, int y,
-		bool anchor = true, Region* clip = NULL);
-	void BlitGameSprite(Sprite2D* spr, int x, int y,
+	Sprite2D* DuplicateSprite(const Sprite2D* spr);
+	void BlitTile(const Sprite2D* spr, const Sprite2D* mask, int x, int y, const Region* clip, unsigned int flags);
+	void BlitSprite(const Sprite2D* spr, int x, int y, bool anchor = false,
+		const Region* clip = NULL);
+	void BlitSpriteRegion(const Sprite2D* spr, const Region& size, int x, int y,
+		bool anchor = true, const Region* clip = NULL);
+	void BlitGameSprite(const Sprite2D* spr, int x, int y,
 		unsigned int flags, Color tint,
 		SpriteCover* cover, Palette *palette = NULL,
-		Region* clip = NULL, bool anchor = false);
+		const Region* clip = NULL, bool anchor = false);
 	void SetCursor(Sprite2D* up, Sprite2D* down);
 	void SetDragCursor(Sprite2D* drag);
 	Sprite2D* GetScreenshot( Region r );
@@ -97,7 +99,7 @@ public:
 	void SetPalette(void* data, Palette* pal);
 	/** This function Draws the Border of a Rectangle as described by the Region parameter. The Color used to draw the rectangle is passes via the Color parameter. */
 	void DrawRect(const Region& rgn, const Color& color, bool fill = true, bool clipped = false);
-	void DrawRectSprite(const Region& rgn, const Color& color, Sprite2D* sprite);
+	void DrawRectSprite(const Region& rgn, const Color& color, const Sprite2D* sprite);
 	/** This functions Draws a Circle */
 	void SetPixel(short x, short y, const Color& color, bool clipped = true);
 	/** Gets the pixel of the backbuffer surface */
@@ -117,15 +119,15 @@ public:
 	inline void DrawVLine(short x, short y1, short y2, const Color& color, bool clipped = false);
 	inline void DrawLine(short x1, short y1, short x2, short y2, const Color& color, bool clipped = false);
 	/** Blits a Sprite filling the Region */
-	void BlitTiled(Region rgn, Sprite2D* img, bool anchor = false);
+	void BlitTiled(Region rgn, const Sprite2D* img, bool anchor = false);
 	/** Send a Quit Signal to the Event Queue */
 	bool Quit();
 	/** Get the Palette of a surface */
 	Palette* GetPalette(void *vptr);
 	/** Flips sprite vertically */
-	Sprite2D *MirrorSpriteVertical(Sprite2D *sprite, bool MirrorAnchor);
+	Sprite2D *MirrorSpriteVertical(const Sprite2D *sprite, bool MirrorAnchor);
 	/** Flips sprite horizontally */
-	Sprite2D *MirrorSpriteHorizontal(Sprite2D *sprite, bool MirrorAnchor);
+	Sprite2D *MirrorSpriteHorizontal(const Sprite2D *sprite, bool MirrorAnchor);
 	/** Set Clip Rect */
 	void SetClipRect(const Region* clip);
 	/** Get Clip Rect */
@@ -166,10 +168,6 @@ public:
 	long GetPixel(void *data, unsigned short x, unsigned short y);
 	void SetGamma(int brightness, int contrast);
 	void SetMouseScrollSpeed(int speed);
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

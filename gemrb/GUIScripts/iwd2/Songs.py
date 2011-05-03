@@ -18,6 +18,7 @@
 #
 #instead of credits, you can listen the songs of the game :)
 import GemRB
+from GUIDefines import *
 
 MovieWindow = 0
 TextAreaControl = 0
@@ -27,14 +28,14 @@ def OnLoad():
 	global MovieWindow, TextAreaControl, MoviesTable
 
 	GemRB.LoadWindowPack("GUIMOVIE", 800, 600)
-	MovieWindow = GemRB.LoadWindowObject(2)
+	MovieWindow = GemRB.LoadWindow(2)
 	MovieWindow.SetFrame ()
 	TextAreaControl = MovieWindow.GetControl(0)
 	TextAreaControl.SetFlags(IE_GUI_TEXTAREA_SELECTABLE)
 	PlayButton = MovieWindow.GetControl(2)
 	CreditsButton = MovieWindow.GetControl(3)
 	DoneButton = MovieWindow.GetControl(4)
-	MoviesTable = GemRB.LoadTableObject("MUSIC")
+	MoviesTable = GemRB.LoadTable("MUSIC")
 	for i in range(0, MoviesTable.GetRowCount() ):
 			s = MoviesTable.GetRowName(i)
 			TextAreaControl.Append(s,-1)
@@ -44,9 +45,9 @@ def OnLoad():
 	DoneButton.SetText(11973)
 	DoneButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
 
-	PlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "PlayPress")
-	CreditsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CreditsPress")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "DonePress")
+	PlayButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, PlayPress)
+	CreditsButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CreditsPress)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, DonePress)
 	MovieWindow.SetVisible(WINDOW_VISIBLE)
 	return
 	

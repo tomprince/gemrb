@@ -19,6 +19,7 @@
 #character generation, gender (GUICG1)
 import GemRB
 from ie_stats import *
+from GUIDefines import *
 
 GenderWindow = 0
 TextAreaControl = 0
@@ -31,7 +32,7 @@ def OnLoad():
 	GemRB.LoadWindowPack("GUICG", 640, 480)
 	MyChar = GemRB.GetVar ("Slot")
 	#this hack will redraw the base CG window
-	GenderWindow = GemRB.LoadWindowObject(0)
+	GenderWindow = GemRB.LoadWindow(0)
 	PortraitButton = GenderWindow.GetControl(12)
 	PortraitButton.SetFlags(IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
 	ImportButton = GenderWindow.GetControl(13)
@@ -50,7 +51,7 @@ def OnLoad():
 	GemRB.DrawWindows()
 	if GenderWindow:
 		GenderWindow.Unload()
-	GenderWindow = GemRB.LoadWindowObject(1)
+	GenderWindow = GemRB.LoadWindow(1)
 
 	BackButton = GenderWindow.GetControl(6)
 	BackButton.SetText(15416)
@@ -70,10 +71,10 @@ def OnLoad():
 
 	MaleButton.SetVarAssoc("Gender",1)
 	FemaleButton.SetVarAssoc("Gender",2)
-	MaleButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"ClickedMale")
-	FemaleButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"ClickedFemale")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	MaleButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ClickedMale)
+	FemaleButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ClickedFemale)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	GenderWindow.SetVisible(WINDOW_VISIBLE)
 	return

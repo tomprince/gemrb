@@ -21,13 +21,16 @@
 #ifndef KEYIMP_H
 #define KEYIMP_H
 
-#include <vector>
+#include "ArchiveImporter.h"
 #include "ResourceSource.h"
+
 #include "Dictionary.h"
 
+#include <vector>
+
+class DataStream;
 class Resource;
 class ResourceDesc;
-class DataStream;
 
 struct RESEntry {
 	ieResRef ResRef;
@@ -43,11 +46,19 @@ struct BIFEntry {
 	bool found;
 };
 
+struct KEYCache {
+	KEYCache() { bifnum = 0xffffffff; }
+
+	unsigned int bifnum;
+	PluginHolder<ArchiveImporter> plugin;
+};
 
 class KEYImporter : public ResourceSource {
 private:
 	std::vector< BIFEntry> biffiles;
 	Dictionary resources;
+
+	KEYCache lastSeenCache;
 
 	/** Gets the stream assoicated to a RESKey */
 	DataStream *GetStream(const char *resname, ieWord type);
@@ -61,11 +72,6 @@ public:
 	/* returns resource */
 	DataStream* GetResource(const char* resname, SClass_ID type);
 	DataStream* GetResource(const char* resname, const ResourceDesc &type);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

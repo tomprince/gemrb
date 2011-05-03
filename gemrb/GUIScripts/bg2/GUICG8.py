@@ -18,7 +18,9 @@
 #
 #character generation, race (GUICG2)
 import GemRB
-from GUICommon import *
+import CommonTables
+from ie_stats import IE_RACE
+from GUIDefines import *
 
 RaceWindow = 0
 TextAreaControl = 0
@@ -29,10 +31,10 @@ def OnLoad():
 	global RaceWindow, TextAreaControl, DoneButton, MyChar
 	
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	RaceWindow = GemRB.LoadWindowObject(8)
+	RaceWindow = GemRB.LoadWindow(8)
 
 	MyChar = GemRB.GetVar ("Slot")
-	RaceCount = RaceTable.GetRowCount()
+	RaceCount = CommonTables.Races.GetRowCount()
 
 	for i in range(2,RaceCount+2):
 		#hack to stop if the race table has more entries than the gui resource
@@ -46,9 +48,9 @@ def OnLoad():
 	GemRB.SetVar ("Race", -1)
 	for i in range(2, RaceCount+2):
 		Button = RaceWindow.GetControl(i)
-		Button.SetText(RaceTable.GetValue(i-2,0) )
+		Button.SetText(CommonTables.Races.GetValue(i-2,0) )
 		Button.SetState(IE_GUI_BUTTON_ENABLED)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS,"RacePress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RacePress)
 		Button.SetVarAssoc("Race", i-2 )
 
 	BackButton = RaceWindow.GetControl(i+2)  #i=8 now (when race count is 7)
@@ -62,14 +64,14 @@ def OnLoad():
 	TextAreaControl = RaceWindow.GetControl(12)
 	TextAreaControl.SetText(17237)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	RaceWindow.SetVisible(WINDOW_VISIBLE)
 	return
 
 def RacePress():
 	Race = GemRB.GetVar("Race")
-	TextAreaControl.SetText(RaceTable.GetValue(Race,1) )
+	TextAreaControl.SetText(CommonTables.Races.GetValue(Race,1) )
 	DoneButton.SetState(IE_GUI_BUTTON_ENABLED)
 	return
 
@@ -85,7 +87,7 @@ def NextPress():
 		RaceWindow.Unload()
 
 	Race = GemRB.GetVar ("Race")
-	GemRB.SetPlayerStat (MyChar, IE_RACE, RaceTable.GetValue(Race,3) )
+	GemRB.SetPlayerStat (MyChar, IE_RACE, CommonTables.Races.GetValue(Race,3) )
 
 	GemRB.SetNextScript("CharGen3") #class
 	return

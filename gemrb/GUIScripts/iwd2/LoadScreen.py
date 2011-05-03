@@ -25,12 +25,21 @@ import GemRB
 from GUIDefines import *
 
 LoadScreen = None
+Picture = None
+
+def SetLoadScreen ():
+	Table = GemRB.LoadTable ("areaload")
+	Area = GemRB.GetGameString (STR_AREANAME)
+	LoadPic = Table.GetValue (Area, Table.GetColumnName(0) )
+	if LoadPic!="*":
+		Picture.SetPicture(LoadPic)
+	return
 
 def StartLoadScreen ():
-	global LoadScreen
+	global LoadScreen, Picture
 
 	GemRB.LoadWindowPack ("guils", 800, 600)
-	LoadScreen = GemRB.LoadWindowObject (0)
+	LoadScreen = GemRB.LoadWindow (0)
 	LoadScreen.SetFrame( )
 
 	LoadPic = GemRB.GetGameString (STR_LOADMOS)
@@ -40,16 +49,18 @@ def StartLoadScreen ():
 	Progress = 0
 	GemRB.SetVar ("Progress", Progress)
 
-	Table = GemRB.LoadTableObject ("loadhint")
+	Table = GemRB.LoadTable ("loadhint")
 	tmp = Table.GetRowCount ()
 	tmp = GemRB.Roll (1,tmp,0)
 	HintStr = Table.GetValue (tmp, 0)
 	TextArea = LoadScreen.GetControl (2)
 	TextArea.SetText (HintStr)
 
+	Picture = LoadScreen.GetControl (4)
+
 	Bar = LoadScreen.GetControl (0)
 	Bar.SetVarAssoc ("Progress", Progress)
-	Bar.SetEvent (IE_GUI_PROGRESS_END_REACHED, "EndLoadScreen")
+	Bar.SetEvent (IE_GUI_PROGRESS_END_REACHED, EndLoadScreen)
 	LoadScreen.SetVisible (WINDOW_VISIBLE)
 	return
 
@@ -57,4 +68,5 @@ def EndLoadScreen ():
 	Skull = LoadScreen.GetControl (3)
 	Skull.SetMOS ("GTRBPSK2")
 	LoadScreen.SetVisible (WINDOW_VISIBLE)
+	LoadScreen.Unload()
 	return

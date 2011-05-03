@@ -23,7 +23,7 @@
 
 import GemRB
 from GUIDefines import *
-from GUICommonWindows import GetWindowPack
+import GUICommon
 
 movies = [None,"T1DEATH","T1ABSORB","FINALE"]
 
@@ -49,8 +49,8 @@ def DonePress ():
 def DeathWindowEnd ():
 	GemRB.GamePause (1,1)
 
-	GemRB.LoadWindowPack (GetWindowPack())
-	Window = GemRB.LoadWindowObject (25)
+	GemRB.LoadWindowPack (GUICommon.GetWindowPack())
+	Window = GemRB.LoadWindow (25)
 
 	#reason for death
 	Label = Window.GetControl (0x0fffffff)
@@ -60,7 +60,7 @@ def DeathWindowEnd ():
 	#done
 	Button = Window.GetControl (1)
 	Button.SetText (17237)
-	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, "DonePress")
+	Button.SetEvent (IE_GUI_BUTTON_ON_PRESS, DonePress)
 	Button.SetFlags (IE_GUI_BUTTON_DEFAULT|IE_GUI_BUTTON_CANCEL, OP_OR)
 
 	GemRB.HideGUI ()
@@ -68,5 +68,5 @@ def DeathWindowEnd ():
 	GemRB.SetVar ("PortraitWindow", Window.ID)
 	GemRB.UnhideGUI ()
 	#making the playing field gray
-	GemRB.SetVisible (0, WINDOW_GRAYED)
+	GUICommon.GameWindow.SetVisible(WINDOW_GRAYED)
 	return

@@ -1,19 +1,99 @@
-GemRB git (930101a):
+GemRB git (b81de475e00):
   New features:
     - 
-    - tinting for different times of the day and weather effects
-    - a BI(n)K player plugin for the IWD2 movies
-    - new actions
+    - yet more unhardcoded PST projectiles
 
   Improved features:
     - 
-    - the design of some internals was cleaned up
+    - squirrels and other small game don't die instantly
+    - stores and stacking
+    - effects, triggers, actions, dialogs
+    - bugfixes and internal cleanups
+
+  Applied patches:
+
+GemRB V0.6.4 (2011-03-27):
+  New features:
+    - PST maze and (un)hardcoded projectiles
+    - full wild, dead, miscast and vocal magic support
+    - subspell selection (spell immunity, nahal's reckless dweomer...)
+    - Autodetect GameType if it is set to 'auto' or commented out
+    - compatibility with the bg2 demo
+    - VVC lightspot support
+
+  Improved features:
+    - travel regions, projectiles, dialog startup
+    - bink player has no/less artifacts, good sound quality
+    - combat, effects, actions, triggers, banters
+    - bugfixes
+
+  Applied patches:
+    a set of patches for Android support from Beholder
+    arm compilation fixes by ShadowJack
+    patch from Thomas Klausner fixing building with libpng 1.5
+    patch by Hana Dusíková to support static linking on mac
+
+GemRB V0.6.3 git (2010-11-21)
+  New features:
+    - IWD:HoW is now completable!
+    - casting sounds and footsteps
+    - autodetection of secret doors, detect illusions
+    - basic bardsong support and selective magic resistance (bg2-style)
+    - proper store economics, ergonomics and dragging
+    - custom blood color (creature-dependant)
+    - new actions, iwd effects and triggers
+    - Importing a SoA game into ToB
+
+  Improved features:
+    - actor selection and action bar (for summons and illusions too!)
+    - door bashing and traps
+    - loading screens, ambushes, worldmap
+    - sparkles, panic and other effects
+    - actions, dialogs, object matching
+    - personal items support (swap/equip/remove)
+    - bugfixes
+
+  Applied patches:
+	iwd regression fix from Eggert Jón Magnússon
+
+GemRB V0.6.2 (2010-08-21):
+  New features:
+    - a basic SDL_mixer plugin for faster, but lower-quality audio
+    - dualclassing for bg1 and iwd
+    - new triggers, actions, infravision
+    - feet circle flickering on portrait hover, coloration in dialog
+    - wisdom xp bonus (pst)
+
+  Improved features:
+    - actions, triggers, object matching
+    - item loading and ability selection, inventory
+    - projectiles, effects, subtitles, verbal constants
+    - the core and guiscript design was cleaned up in many places
+    - bugfixes
+
+  Applied patches:
+    backslash check patch from anthiste
+    bg1 character generation patch from Maighstir
+    a crosscompiling fix from F.Fischer
+
+GemRB V0.6.1 (2010-06-16):
+  New features:
+    - a minimal dataset
+    - reputation penalties on death or injury
+    - casting level bonus/malus (wild mages, clerics)
+    - tinting for different times of the day and weather effects
+    - a BI(n)K player plugin for the IWD2 movies
+    - new actions, turn undead
+
+  Improved features:
+    - the internal design was cleaned up in many places
+    - game saving, modal actions, combat, effects, spawns
     - magic missiles are now drawn properly
     - various guiscripts (no more flickering!)
     - bugfixes
 
   Applied patches:
-    plenty of patches from Tom Prince
+    two patches from Brendan Molloy
 
 GemRB V0.6.0 (2009-11-03):
   New features:

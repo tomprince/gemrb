@@ -18,9 +18,11 @@
 #
 #character generation, ability (GUICG4)
 import GemRB
-
-from CharGenCommon import * 
-from GUICommon import *
+from GUIDefines import *
+from ie_stats import *
+import CharGenCommon
+import GUICommon
+import CommonTables
 
 AbilityWindow = 0
 TextAreaControl = 0
@@ -41,8 +43,8 @@ MyChar = 0
 def CalcLimits(Abidx):
 	global Minimum, Maximum, Add
 
-	Race = RaceTable.FindValue (3, GemRB.GetPlayerStat (MyChar, IE_RACE) )
-	RaceName = RaceTable.GetRowName(Race)
+	Race = CommonTables.Races.FindValue (3, GemRB.GetPlayerStat (MyChar, IE_RACE) )
+	RaceName = CommonTables.Races.GetRowName(Race)
 
 	Minimum = 3
 	Maximum = 18
@@ -110,29 +112,29 @@ def OnLoad():
 	global AbilityTable, Abclasrq, Abclsmod, Abracerq, Abracead
 	global KitIndex, Minimum, Maximum, MyChar
 
-	if CloseOtherWindow (OnLoad):
+	if GUICommon.CloseOtherWindow (OnLoad):
 		if(AbilityWindow):
 			AbilityWindow.Unload()
 			AbilityWindow = None
 		return
 
-	Abracead = GemRB.LoadTableObject("ABRACEAD")
-	#Abclsmod = GemRB.LoadTableObject("ABCLSMOD")
-	Abclasrq = GemRB.LoadTableObject("ABCLASRQ")
-	Abracerq = GemRB.LoadTableObject("ABRACERQ")
+	Abracead = GemRB.LoadTable("ABRACEAD")
+	#Abclsmod = GemRB.LoadTable("ABCLSMOD")
+	Abclasrq = GemRB.LoadTable("ABCLASRQ")
+	Abracerq = GemRB.LoadTable("ABRACERQ")
 
 	MyChar = GemRB.GetVar ("Slot")
-	Kit = GetKitIndex (MyChar)
+	Kit = GUICommon.GetKitIndex (MyChar)
 	Class = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-	Class = ClassTable.FindValue (5, Class)
+	Class = CommonTables.Classes.FindValue (5, Class)
 	if Kit == 0:
-		KitName = ClassTable.GetRowName(Class)
+		KitName = CommonTables.Classes.GetRowName(Class)
 	else:
 		#rowname is just a number, first value row what we need here
-		KitName = KitListTable.GetValue(Kit, 0)
+		KitName = CommonTables.KitList.GetValue(Kit, 0)
 
 	#if the class uses the warrior table for saves, then it may have the extra strength
-	if ClassTable.GetValue(Class, 3)=="SAVEWAR":
+	if CommonTables.Classes.GetValue(Class, 3)=="SAVEWAR":
 		HasStrExtra=1
 	else:
 		HasStrExtra=0
@@ -140,8 +142,8 @@ def OnLoad():
 	KitIndex = Abclasrq.GetRowIndex(KitName)
 
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	AbilityTable = GemRB.LoadTableObject("ability")
-	AbilityWindow = GemRB.LoadWindowObject(4)
+	AbilityTable = GemRB.LoadTable("ability")
+	AbilityWindow = GemRB.LoadWindow(4)
 
 	RerollButton = AbilityWindow.GetControl(2)
 	RerollButton.SetText(11982)
@@ -162,25 +164,25 @@ def OnLoad():
 	StorePress()
 	for i in range(6):
 		Button = AbilityWindow.GetControl(i+30)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "JustPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, JustPress)
 		Button.SetVarAssoc("Ability", i)
 
 		Button = AbilityWindow.GetControl(i*2+16)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "LeftPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, LeftPress)
 		Button.SetVarAssoc("Ability", i )
 
 		Button = AbilityWindow.GetControl(i*2+17)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "RightPress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, RightPress)
 		Button.SetVarAssoc("Ability", i )
 
 	TextAreaControl = AbilityWindow.GetControl(29)
 	TextAreaControl.SetText(17247)
 
-	StoreButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"StorePress")
-	RecallButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"RecallPress")
-	RerollButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"RollPress")
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	StoreButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, StorePress)
+	RecallButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, RecallPress)
+	RerollButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, RollPress)
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 	AbilityWindow.ShowModal(MODAL_SHADOW_NONE)
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_NAND)
 	return
@@ -274,12 +276,12 @@ def RecallPress():
 
 def BackPress():
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_OR)
-	back()
+	CharGenCommon.back()
 
 def NextPress():
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_OR)
 	
-	AbilityTable = GemRB.LoadTableObject ("ability")
+	AbilityTable = GemRB.LoadTable ("ability")
 	AbilityCount = AbilityTable.GetRowCount ()
 	
 	# print our diagnostic as we loop (so as not to duplicate)
@@ -295,5 +297,5 @@ def NextPress():
 
         GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_OR)
 
-	next()
+	CharGenCommon.next()
 

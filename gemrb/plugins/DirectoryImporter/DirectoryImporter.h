@@ -14,25 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- * $Id$
- *
  */
 
 #ifndef KEYIMP_H
 #define KEYIMP_H
 
-#include <vector>
-#include <map>
-#include <cstring>
 #include "ResourceSource.h"
+
+#include <cstring>
+#include <map>
+#include <vector>
 
 class Resource;
 class ResourceDesc;
 
 class DirectoryImporter : public ResourceSource {
-private:
+protected:
 	char path[_MAX_PATH];
+
 public:
 	DirectoryImporter(void);
 	~DirectoryImporter(void);
@@ -43,11 +42,25 @@ public:
 	/** returns resource */
 	DataStream* GetResource(const char* resname, SClass_ID type);
 	DataStream* GetResource(const char* resname, const ResourceDesc &type);
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
+
+class CachedDirectoryImporter : public DirectoryImporter {
+protected:
+	std::map<std::string, std::string> cache;
+
+public:
+	CachedDirectoryImporter();
+	~CachedDirectoryImporter();
+
+	bool Open(const char *dir, const char *desc);
+	void Refresh();
+	/** predicts the availability of a resource */
+	bool HasResource(const char* resname, SClass_ID type);
+	bool HasResource(const char* resname, const ResourceDesc &type);
+	/** returns resource */
+	DataStream* GetResource(const char* resname, SClass_ID type);
+	DataStream* GetResource(const char* resname, const ResourceDesc &type);
+};
+
 
 #endif

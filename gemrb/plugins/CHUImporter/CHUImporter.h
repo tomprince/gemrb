@@ -22,7 +22,8 @@
 #define CHUIMPORTER_H
 
 #include "WindowMgr.h"
-#include "DataStream.h"
+
+#include "System/DataStream.h"
 
 /**CHU File Importer Class
   *@author GemRB Developement Team
@@ -41,12 +42,7 @@ public:
 	/** Returns the i-th window in the Previously Loaded Stream */
 	Window* GetWindow(unsigned int i);
 	/** This function loads all available windows from the 'stream' parameter. */
-	bool Open(DataStream* stream, bool autoFree = true);
-public:
-	void release(void)
-	{
-		delete this;
-	}
+	bool Open(DataStream* stream);
 };
 
 #endif

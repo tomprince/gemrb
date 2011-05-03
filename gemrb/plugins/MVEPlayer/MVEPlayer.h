@@ -21,15 +21,17 @@
 #ifndef MVEPLAY_H
 #define MVEPLAY_H
 
-#include "win32def.h"
-#include "globals.h"
 #include "MoviePlayer.h"
+
+#include "globals.h"
+#include "win32def.h"
+
 #include "Interface.h"
 
 class MVEPlay : public MoviePlayer {
 	friend class MVEPlayer;
-
 private:
+	Video *video;
 	bool validVideo;
 	int doPlay();
 	unsigned int fileRead(void* buf, unsigned int count);
@@ -42,20 +44,14 @@ private:
 	int setAudioStream();
 	void freeAudioStream(int stream);
 	void queueBuffer(int stream, unsigned short bits,
-                int channels, short* memory,
-                int size, int samplerate);
+				int channels, short* memory,
+				int size, int samplerate);
 public:
 	MVEPlay(void);
 	~MVEPlay(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	void CallBackAtFrames(ieDword cnt, ieDword *arg, ieDword *arg2);
 	int Play();
-
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif

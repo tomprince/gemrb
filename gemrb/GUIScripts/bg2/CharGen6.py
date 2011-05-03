@@ -18,45 +18,47 @@
 #
 # character generation - ability; next skills/profs/spells (CharGen6)
 import GemRB
-from CharGenCommon import *
-from GUICommonWindows import *
-from LUSkillsSelection import *
-from LUProfsSelection import *
-from GUICommon import LearnPriestSpells
+import GUICommon
+import CommonTables
+import CharGenCommon
+import LUSkillsSelection
+import LUProfsSelection
+from GUIDefines import IE_SPELL_TYPE_PRIEST, IE_SPELL_TYPE_WIZARD
+from ie_stats import *
 
 def OnLoad():
 	MyChar = GemRB.GetVar ("Slot")
 
 	# nullify our thieving skills
-	SkillsNullify ()
-	SkillsSave (MyChar)
+	LUSkillsSelection.SkillsNullify ()
+	LUSkillsSelection.SkillsSave (MyChar)
 
 	# nullify our proficiencies
-	ProfsNullify ()
+	LUProfsSelection.ProfsNullify ()
 
 	# nully other variables
 	GemRB.SetVar ("HatedRace", 0)
 
 	# save our previous stats:
 	# 	abilities
-	AbilityTable = GemRB.LoadTableObject ("ability")
+	AbilityTable = GemRB.LoadTable ("ability")
 	AbilityCount = AbilityTable.GetRowCount ()
 
 	# print our diagnostic as we loop (so as not to duplicate)
 	print "CharGen6 output:"
 
 	#remove all known spells and nullify the memorizable counts
-	RemoveKnownSpells (MyChar, IE_SPELL_TYPE_WIZARD, 1,9, 1)
-	RemoveKnownSpells (MyChar, IE_SPELL_TYPE_PRIEST, 1,7, 1)
+	GUICommon.RemoveKnownSpells (MyChar, IE_SPELL_TYPE_WIZARD, 1,9, 1)
+	GUICommon.RemoveKnownSpells (MyChar, IE_SPELL_TYPE_PRIEST, 1,7, 1)
 
 	# learn divine spells if appropriate
 	Class = GemRB.GetPlayerStat (MyChar, IE_CLASS)
-	TableName = ClassSkillsTable.GetValue (Class, 1, 0) # cleric spells
+	TableName = CommonTables.ClassSkills.GetValue (Class, 1, 0) # cleric spells
 
 	if TableName == "*": # only druid spells or no spells at all
-		TableName = ClassSkillsTable.GetValue (Class, 0, 0)
+		TableName = CommonTables.ClassSkills.GetValue (Class, 0, 0)
 		ClassFlag = 0x8000
-	elif ClassSkillsTable.GetValue (Class, 0, 0) != "*": # cleric and druid spells
+	elif CommonTables.ClassSkills.GetValue (Class, 0, 0) != "*": # cleric and druid spells
 		ClassFlag = 0
 	else: # only cleric spells
 		ClassFlag = 0x4000
@@ -68,16 +70,16 @@ def OnLoad():
 				GemRB.GetPlayerStat (MyChar, IE_LEVEL2), \
 				GemRB.GetPlayerStat (MyChar, IE_LEVEL3)]
 		index = 0
-		IsMulti = IsMultiClassed (MyChar, 1)
+		IsMulti = GUICommon.IsMultiClassed (MyChar, 1)
 		if IsMulti[0]>1:
 			#loop through each multiclass until we come across the class that gives
 			#divine spells; because clerics have a lower id than rangers, they should
 			#be looked at first in Cleric/Ranger multi's, which is correct
 			foundindex = 0
 			for i in range (IsMulti[0]):
-				ClassName = ClassTable.GetRowName (ClassTable.FindValue (5, IsMulti[i+1]) )
+				ClassName = CommonTables.Classes.GetRowName (CommonTables.Classes.FindValue (5, IsMulti[i+1]) )
 				for table in "CLERICSPELL", "DRUIDSPELL":
-					if ClassSkillsTable.GetValue (ClassName, table) != "*":
+					if CommonTables.ClassSkills.GetValue (ClassName, table) != "*":
 						index = i
 						foundindex = 1
 						break
@@ -85,12 +87,12 @@ def OnLoad():
 					break
 
 		#set our memorizable counts
-		SetupSpellLevels (MyChar, TableName, IE_SPELL_TYPE_PRIEST, Levels[index])
+		GUICommon.SetupSpellLevels (MyChar, TableName, IE_SPELL_TYPE_PRIEST, Levels[index])
 
 		#learn all our priest spells up to the level we can learn
 		for level in range (8):
-			if GemRB.GetMemorizableSpellsCount (MyChar, IE_SPELL_TYPE_PRIEST, level, 1) <= 0:
-				LearnPriestSpells (MyChar, level, ClassFlag)
+			if GemRB.GetMemorizableSpellsCount (MyChar, IE_SPELL_TYPE_PRIEST, level, 0) <= 0:
+				GUICommon.LearnPriestSpells (MyChar, level, ClassFlag)
 				break
-	DisplayOverview (6)
+	CharGenCommon.DisplayOverview (6)
 	return

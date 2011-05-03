@@ -18,6 +18,7 @@
 #
 #character generation, import (GUICG20)
 import GemRB
+from GUIDefines import *
 
 #import from a character sheet
 MainWindow = 0
@@ -31,13 +32,13 @@ def OnLoad():
 	global ImportWindow, TextAreaControl, DoneButton
 
 	GemRB.LoadWindowPack("GUICG", 800, 600)
-	MainWindow = GemRB.LoadWindowObject(0)
+	MainWindow = GemRB.LoadWindow(0)
 	MainWindow.SetFrame()
 
 	PortraitButton = MainWindow.GetControl (12)
 	PortraitButton.SetFlags(IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_NO_IMAGE,OP_SET)
 
-	ImportWindow = GemRB.LoadWindowObject(20)
+	ImportWindow = GemRB.LoadWindow(20)
 
 	TextAreaControl = ImportWindow.GetControl(4)
 	TextAreaControl.SetText(10963)
@@ -59,9 +60,9 @@ def OnLoad():
 		TmpButton = MainWindow.GetControl(i)
 		TmpButton.SetState(IE_GUI_BUTTON_DISABLED)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "DonePress")
-	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, "CancelPress")
-	TextAreaControl.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, "SelectFile")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, DonePress)
+	CancelButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CancelPress)
+	TextAreaControl.SetEvent(IE_GUI_TEXTAREA_ON_CHANGE, SelectFile)
 	MainWindow.SetVisible(WINDOW_VISIBLE)
 	ImportWindow.SetVisible(WINDOW_VISIBLE)
 	return

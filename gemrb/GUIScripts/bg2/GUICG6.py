@@ -18,7 +18,9 @@
 #
 #character generation, (thief) skills (GUICG6)
 import GemRB
-from LUSkillsSelection import *
+import LUSkillsSelection
+from GUIDefines import *
+from ie_stats import *
 
 SkillWindow = 0
 TextAreaControl = 0
@@ -37,13 +39,14 @@ def OnLoad():
 	global SkillWindow, DoneButton, MyChar
 	
 	GemRB.LoadWindowPack("GUICG", 640, 480)
-	SkillWindow = GemRB.LoadWindowObject(6)
+	SkillWindow = GemRB.LoadWindow(6)
 	MyChar = GemRB.GetVar ("Slot")
 
 	Levels = [GemRB.GetPlayerStat (MyChar, IE_LEVEL), \
 			GemRB.GetPlayerStat (MyChar, IE_LEVEL2), \
 			GemRB.GetPlayerStat (MyChar, IE_LEVEL3)]
-	SetupSkillsWindow (MyChar, LUSKILLS_TYPE_CHARGEN, SkillWindow, RedrawSkills, [0,0,0], Levels)
+	LUSkillsSelection.SetupSkillsWindow (MyChar, \
+		LUSkillsSelection.LUSKILLS_TYPE_CHARGEN, SkillWindow, RedrawSkills, [0,0,0], Levels)
 
 	if not GemRB.GetVar ("SkillPointsLeft"): #skipping
 		GemRB.SetNextScript("GUICG9")
@@ -52,12 +55,12 @@ def OnLoad():
 	BackButton = SkillWindow.GetControl(25)
 	BackButton.SetText(15416)
 	BackButton.SetFlags (IE_GUI_BUTTON_CANCEL, OP_OR)
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, BackPress)
 
 	DoneButton = SkillWindow.GetControl(0)
 	DoneButton.SetText(11973)
 	DoneButton.SetFlags(IE_GUI_BUTTON_DEFAULT,OP_OR)
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
 	DoneButton.SetState(IE_GUI_BUTTON_DISABLED)
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_NAND)
 
@@ -77,7 +80,7 @@ def NextPress():
 		SkillWindow.Unload()
 	# save all skills
 
-	SkillsSave (MyChar)
+	LUSkillsSelection.SkillsSave (MyChar)
 
 	GemRB.SetRepeatClickFlags(GEM_RK_DISABLE, OP_OR)
 	GemRB.SetNextScript("GUICG9") #weapon proficiencies

@@ -18,10 +18,21 @@
  *
  */
 
-#include "win32def.h"
+#if defined(__HAIKU__)
+#include <unistd.h>
+#endif
+
+#ifdef ANDROID
+#include "swab.h"
+#endif
+
 #include "WEDImporter.h"
-#include "TileSetMgr.h"
+
+#include "win32def.h"
+
+#include "GameData.h"
 #include "Interface.h"
+#include "TileSetMgr.h"
 
 struct wed_polygon {
 	ieDword FirstVertex;
@@ -36,30 +47,24 @@ struct wed_polygon {
 WEDImporter::WEDImporter(void)
 {
 	str = NULL;
-	autoFree = false;
 }
 
 WEDImporter::~WEDImporter(void)
 {
-	if (str && autoFree) {
-		delete( str );
-	}
+	delete str;
 }
 
-bool WEDImporter::Open(DataStream* stream, bool autoFree)
+bool WEDImporter::Open(DataStream* stream)
 {
 	if (stream == NULL) {
 		return false;
 	}
-	if (str && this->autoFree) {
-		delete( str );
-	}
+	delete str;
 	str = stream;
-	this->autoFree = autoFree;
 	char Signature[8];
 	str->Read( Signature, 8 );
 	if (strncmp( Signature, "WED V1.3", 8 ) != 0) {
-		printf( "[WEDImporter]: This file is not a valid WED File\n" );
+		print( "[WEDImporter]: This file is not a valid WED File\n" );
 		return false;
 	}
 	str->ReadDword( &OverlaysCount );
@@ -97,18 +102,19 @@ int WEDImporter::AddOverlay(TileMap *tm, Overlay *overlays, bool rain)
 
 	memcpy(res, overlays->TilesetResRef,sizeof(ieResRef));
 	if (rain) {
-		strncat(res,"R",8);
+		if (strlen(res) < 8)
+			strcat(res,"R");
 		//no rain tileset available, rolling back
 		if (!gamedata->Exists(res, &TileSetMgr::ID)) {
 			memcpy(res, overlays->TilesetResRef,sizeof(ieResRef));
 		}
 	}
 	TileOverlay *over = new TileOverlay( overlays->Width, overlays->Height );
-	TileSetMgr* tis = ( TileSetMgr* ) gamedata->GetResource( res, &TileSetMgr::ID );
+	ResourceHolder<TileSetMgr> tis(res);
 	if (!tis) {
-		printf( "[WEDImporter]: No Tile Set Available.\n" );
-		core->FreeInterface( tis );
-		abort(); // FIXME
+		print( "[WEDImporter]: No Tile Set Available.\n" );
+		delete over;
+		return -1;
 	}
 	for (int y = 0; y < overlays->Height; y++) {
 		for (int x = 0; x < overlays->Width; x++) {
@@ -148,7 +154,6 @@ int WEDImporter::AddOverlay(TileMap *tm, Overlay *overlays, bool rain)
 	} else {
 		tm->AddOverlay( over );
 	}
-	core->FreeInterface( tis );
 	return usedoverlays;
 }
 
@@ -156,6 +161,7 @@ int WEDImporter::AddOverlay(TileMap *tm, Overlay *overlays, bool rain)
 TileMap* WEDImporter::GetTileMap(TileMap *tm)
 {
 	int usedoverlays;
+	bool freenew = false;
 
 	if (!overlays.size()) {
 		return NULL;
@@ -163,10 +169,20 @@ TileMap* WEDImporter::GetTileMap(TileMap *tm)
 
 	if (!tm) {
 		tm = new TileMap();
+		freenew = true;
 	}
 
 	usedoverlays = AddOverlay(tm, &overlays.at(0), false);
-	AddOverlay(tm, &overlays.at(0), true);
+	if (usedoverlays == -1) {
+		if (freenew) {
+			delete tm;
+		}
+		return NULL;
+	}
+	// rain_overlays[0] is never used
+	// XXX: should fix AddOverlay not to load an overlay twice if there's no rain version!!
+	//AddOverlay(tm, &overlays.at(0), true);
+	tm->AddRainOverlay( NULL );
 
 	//reading additional overlays
 	int mask=2;
@@ -191,7 +207,7 @@ void WEDImporter::GetDoorPolygonCount(ieWord count, ieDword offset)
 	ieDword basecount = offset-PolygonsOffset;
 	if (basecount%WED_POLYGON_SIZE) {
 		basecount+=WED_POLYGON_SIZE;
-		printf("[WEDImporter]: Found broken door polygon header!\n");
+		print("[WEDImporter]: Found broken door polygon header!\n");
 	}
 	ieDword polycount = basecount/WED_POLYGON_SIZE+count-WallPolygonsCount;
 	if (polycount>DoorPolygonsCount) {
@@ -226,7 +242,7 @@ ieWord* WEDImporter::GetDoorIndices(char* ResRef, int* count, bool& BaseClosed)
 	//The door has no representation in the WED file
 	if (i == DoorsCount) {
 		*count = 0;
-		printf( "[WEDImporter]: Found door without WED entry!\n" );
+		print( "[WEDImporter]: Found door without WED entry!\n" );
 		return NULL;
 	}
 

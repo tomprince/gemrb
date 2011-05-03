@@ -18,12 +18,12 @@
 #
 #character generation, color (GUICG13)
 import GemRB
+from GUIDefines import *
+from ie_stats import *
+import CharGenCommon
+import GUICommon
+import BGCommon
 
-from CharGenCommon import *
-from GUICommon import CloseOtherWindow
-
-
-global IE_ANIM_ID
 ColorTable = 0
 ColorWindow = 0
 ColorPicker = 0
@@ -39,33 +39,19 @@ SkinColor = 0
 MinorColor = 0
 MajorColor = 0
 PDollButton = 0
-IE_ANIM_ID = 206
-
-def RefreshPDoll():
-	AnimID = 0x6000
-	table = GemRB.LoadTableObject("avprefr")
-	AnimID = AnimID+table.GetValue(GemRB.GetVar("Race"),0)
-	table = GemRB.LoadTableObject("avprefc")
-	AnimID = AnimID+table.GetValue(GemRB.GetVar("Class"),0)
-	table = GemRB.LoadTableObject("avprefg")
-	AnimID = AnimID+table.GetValue(GemRB.GetVar("Gender"),0)
-	ResRef = AppearanceAvatarTable.GetValue(hex(AnimID), "LEVEL1")
-	PDollButton.SetPLT(ResRef, 0, MinorColor, MajorColor, SkinColor, 0, 0, HairColor, 0)
-
-	return
 
 def OnLoad():
 	global ColorWindow, DoneButton, PDollButton, ColorTable
 	global HairButton, SkinButton, MajorButton, MinorButton
 	global HairColor, SkinColor, MinorColor, MajorColor
 	
-	GemRB.LoadWindowPack("GUICG")
-	ColorWindow=GemRB.LoadWindowObject(13)
-	CloseOtherWindow (ColorWindow.Unload)
+	GemRB.LoadWindowPack("GUICG", 640, 480)
+	ColorWindow=GemRB.LoadWindow(13)
+	GUICommon.CloseOtherWindow (ColorWindow.Unload)
 
-	ColorTable = GemRB.LoadTableObject("clowncol")
+	ColorTable = GemRB.LoadTable("clowncol")
 	#set these colors to some default
-	PortraitTable = GemRB.LoadTableObject("pictures")
+	PortraitTable = GemRB.LoadTable("pictures")
 	PortraitName = GemRB.GetToken("LargePortrait")
 	PortraitName = PortraitName[0:len(PortraitName)-1]
 	PortraitIndex = PortraitTable.GetRowIndex(PortraitName)
@@ -86,22 +72,22 @@ def OnLoad():
 
 	HairButton = ColorWindow.GetControl(2)
 	HairButton.SetFlags(IE_GUI_BUTTON_PICTURE,OP_OR)
-	HairButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"HairPress")
+	HairButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, HairPress)
 	HairButton.SetBAM("COLGRAD", 0, 0, HairColor)
 
 	SkinButton = ColorWindow.GetControl(3)
 	SkinButton.SetFlags(IE_GUI_BUTTON_PICTURE,OP_OR)
-	SkinButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"SkinPress")
+	SkinButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, SkinPress)
 	SkinButton.SetBAM("COLGRAD", 0, 0, SkinColor)
 
 	MajorButton = ColorWindow.GetControl(5)
 	MajorButton.SetFlags(IE_GUI_BUTTON_PICTURE,OP_OR)
-	MajorButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"MajorPress")
+	MajorButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, MajorPress)
 	MajorButton.SetBAM("COLGRAD", 0, 0, MinorColor)
 
 	MinorButton = ColorWindow.GetControl(4)
 	MinorButton.SetFlags(IE_GUI_BUTTON_PICTURE,OP_OR)
-	MinorButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"MinorPress")
+	MinorButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, MinorPress)
 	MinorButton.SetBAM("COLGRAD", 0, 0, MajorColor)
 
 	BackButton = ColorWindow.GetControl(13)
@@ -110,9 +96,9 @@ def OnLoad():
 	DoneButton.SetText(11973)
 	DoneButton.SetFlags(IE_GUI_BUTTON_DEFAULT,OP_OR)
 
-	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"NextPress")
-	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS,"BackPress")
-	RefreshPDoll()
+	DoneButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, NextPress)
+	BackButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, CharGenCommon.BackPress)
+	BGCommon.RefreshPDoll (PDollButton, MinorColor, MajorColor, SkinColor, HairColor)
 	ColorWindow.ShowModal(MODAL_SHADOW_NONE)
 	return
 
@@ -127,48 +113,49 @@ def DonePress():
 	if ColorIndex==0:
 		HairColor=PickedColor
 		HairButton.SetBAM("COLGRAD", 0, 0, HairColor)
-		RefreshPDoll()
+		BGCommon.RefreshPDoll (PDollButton, MinorColor, MajorColor, SkinColor, HairColor)
 		return
 	if ColorIndex==1:
 		SkinColor=PickedColor
 		SkinButton.SetBAM("COLGRAD", 0, 0, SkinColor)
-		RefreshPDoll()
+		BGCommon.RefreshPDoll (PDollButton, MinorColor, MajorColor, SkinColor, HairColor)
 		return
 	if ColorIndex==2:
 		MinorColor=PickedColor
 		MajorButton.SetBAM("COLGRAD", 0, 0, MinorColor)
-		RefreshPDoll()
+		BGCommon.RefreshPDoll (PDollButton, MinorColor, MajorColor, SkinColor, HairColor)
 		return
 
 	MajorColor=PickedColor
 	MinorButton.SetBAM("COLGRAD", 0, 0, MajorColor)
-	RefreshPDoll()
+	BGCommon.RefreshPDoll (PDollButton, MinorColor, MajorColor, SkinColor, HairColor)
 	return
 
 def GetColor():
 	global ColorPicker
 
-	ColorPicker=GemRB.LoadWindowObject(14)
+	ColorPicker=GemRB.LoadWindow(14)
 	GemRB.SetVar("Selected",-1)
 	for i in range(34):
 		Button = ColorPicker.GetControl(i)
 		Button.SetState(IE_GUI_BUTTON_LOCKED)
 		Button.SetFlags(IE_GUI_BUTTON_PICTURE,OP_OR)
-		#Button.SetFlags(IE_GUI_BUTTON_PICTURE|IE_GUI_BUTTON_RADIOBUTTON,OP_OR)
 
 	Selected = -1
 	for i in range(34):
 		MyColor = ColorTable.GetValue(ColorIndex, i)
 		if MyColor == "*":
-			break
+			Button = ColorPicker.GetControl(i)
+			Button.SetFlags(IE_GUI_BUTTON_PICTURE, OP_NAND)
+			continue
 		Button = ColorPicker.GetControl(i)
-		Button.SetBAM("COLGRAD", 0, 0, MyColor)
+		Button.SetBAM("COLGRAD", 2, 0, MyColor)
 		if PickedColor == MyColor:
 			GemRB.SetVar("Selected",i)
 			Selected = i
 		Button.SetState(IE_GUI_BUTTON_ENABLED)
 		Button.SetVarAssoc("Selected",i)
-		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, "DonePress")
+		Button.SetEvent(IE_GUI_BUTTON_ON_PRESS, DonePress)
 	
 	ColorPicker.ShowModal(MODAL_SHADOW_NONE)
 	return
@@ -212,9 +199,9 @@ def MinorPress():
 
 def NextPress():
 	MyChar = GemRB.GetVar ("Slot")
-	SetColorStat (MyChar, IE_HAIR_COLOR, HairColor )
-	SetColorStat (MyChar, IE_SKIN_COLOR, SkinColor )
-	SetColorStat (MyChar, IE_MAJOR_COLOR, MajorColor)
-	SetColorStat (MyChar, IE_MINOR_COLOR, MinorColor )
-	next()
+	GUICommon.SetColorStat (MyChar, IE_HAIR_COLOR, HairColor )
+	GUICommon.SetColorStat (MyChar, IE_SKIN_COLOR, SkinColor )
+	GUICommon.SetColorStat (MyChar, IE_MAJOR_COLOR, MajorColor)
+	GUICommon.SetColorStat (MyChar, IE_MINOR_COLOR, MinorColor )
+	CharGenCommon.next()
 	return

@@ -21,16 +21,17 @@
 #ifndef P2DAIMPORTER_H
 #define P2DAIMPORTER_H
 
-#include <cstring>
 #include "TableMgr.h"
+
 #include "globals.h"
+
+#include <cstring>
 
 typedef std::vector< char*> RowEntry;
 
 class p2DAImporter : public TableMgr {
 private:
 	DataStream* str;
-	bool autoFree;
 	std::vector< char*> colNames;
 	std::vector< char*> rowNames;
 	std::vector< char*> ptrs;
@@ -39,7 +40,7 @@ private:
 public:
 	p2DAImporter(void);
 	~p2DAImporter(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	/** Returns the actual number of Rows in the Table */
 	inline ieDword GetRowCount() const
 	{
@@ -95,6 +96,11 @@ public:
 		return QueryField((unsigned int) rowi, (unsigned int) coli);
 	}
 
+	virtual const char* QueryDefault() const
+	{
+		return defVal;
+	}
+
 	inline int GetRowIndex(const char* string) const
 	{
 		for (unsigned int index = 0; index < rowNames.size(); index++) {
@@ -145,10 +151,17 @@ public:
 		return -1;
 	}
 
-public:
-	void release(void)
+	inline int FindTableValue(unsigned int col, const char* val, int start) const
 	{
-		delete this;
+		ieDword row, max;
+
+		max = GetRowCount();
+		for (row = start; row < max; row++) {
+			const char* ret = QueryField( row, col );
+			if (stricmp(ret, val) == 0)
+				return (int) row;
+		}
+		return -1;
 	}
 };
 

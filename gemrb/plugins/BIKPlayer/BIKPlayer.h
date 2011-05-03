@@ -21,20 +21,50 @@
 #ifndef BIKPLAYER_H
 #define BIKPLAYER_H
 
-#include "win32def.h"
-#include "globals.h"
 #include "MoviePlayer.h"
+
+#include "globals.h"
+#include "win32def.h"
+
 #include "Interface.h"
-#include "common.h"
-#include "rational.h"
+
+// FIXME: This has to be included last, since it defines int*_t, which causes
+// mingw g++ 4.5.0 to choke.
 #include "GetBitContext.h"
+#include "common.h"
 #include "dsputil.h"
+#include "rational.h"
 
 #define BIK_SIGNATURE_LEN 4
 #define BIK_SIGNATURE_DATA "BIKi"
 
 #define MAX_CHANNELS 2
 #define BINK_BLOCK_MAX_SIZE (MAX_CHANNELS << 11)
+
+#if defined(__arm__)
+#define SET_INT_TYPE uint8_t
+#define SET_INT_VALUE(ptr, value)\
+	*(ptr) = (value) && 0xff; \
+	(ptr)++; \
+	*(ptr) = ((value) >> 8) && 0xff; \
+	(ptr)++;
+#else
+#define SET_INT_TYPE int16_t
+#define SET_INT_VALUE(ptr, value)\
+	*(ptr)++ = (value);
+#endif
+
+#if defined(__arm__)
+#define GET_INT_VALUE(value, ptr)\
+	(value) = *(ptr); \
+	(ptr)++; \
+	(value) |= (*(ptr)) << 8; \
+	(ptr)++;
+#else
+#define GET_INT_VALUE(value, ptr)\
+	(value) = *(int16_t*)(ptr); \
+	(ptr) += 2;
+#endif
 
 enum BinkAudFlags {
 	  BINK_AUD_16BITS = 0x4000, ///< prefer 16-bit output
@@ -122,8 +152,8 @@ typedef struct Bundle {
 } Bundle;
 
 class BIKPlayer : public MoviePlayer {
-
 private:
+	Video *video;
 	bool validVideo;
 	binkheader header;
 	std::vector<binkframe> frames;
@@ -164,13 +194,12 @@ private:
 	long timer_last_sec;
 	long timer_last_usec;
 	unsigned int frame_wait;
- 	bool video_rendered_frame;
+	bool video_rendered_frame;
 	unsigned int video_frameskip;
 	bool done;
 	int outputwidth, outputheight;
 	unsigned int video_skippedframes;
 	//bink specific
-	uint8_t c_idct_permutation[64];
 	ScanTable c_scantable;
 	Bundle c_bundle[BINK_NB_SRC];  ///< bundles for decoding all data types
 	Tree c_col_high[16];         ///< trees for decoding high nibble in "colours" data type
@@ -198,14 +227,14 @@ private:
 	void queueBuffer(int stream, unsigned short bits,
 		int channels, short* memory, int size, int samplerate);
 	int sound_init(bool need_init);
-	void ff_init_scantable(uint8_t *permutation, ScanTable *st, const uint8_t *src_scantable);
+	void ff_init_scantable(ScanTable *st, const uint8_t *src_scantable);
 	int video_init(int w, int h);
 	void av_set_pts_info(AVRational &time_base, unsigned int pts_num, unsigned int pts_den);
 	int ReadHeader();
 	void DecodeBlock(short *out);
 	int DecodeAudioFrame(void *data, int data_size);
 	inline int get_value(int bundle);
-	int read_dct_coeffs(DCTELEM block[64], const uint8_t *scan);
+	int read_dct_coeffs(DCTELEM block[64], const uint8_t *scan, bool is_intra);
 	int read_residue(DCTELEM block[64], int masks_count);
 	int read_runs(Bundle *b);
 	int read_motion_values(Bundle *b);
@@ -222,15 +251,9 @@ private:
 public:
 	BIKPlayer(void);
 	~BIKPlayer(void);
-	bool Open(DataStream* stream, bool autoFree = true);
+	bool Open(DataStream* stream);
 	void CallBackAtFrames(ieDword cnt, ieDword *arg, ieDword *arg2);
 	int Play();	
-
-public:
-	void release(void)
-	{
-		delete this;
-	}
 };
 
 #endif
