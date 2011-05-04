@@ -27,17 +27,13 @@
 #include "Interface.h"
 #include "Video.h"
 
-static ieDword red_mask = 0xff000000;
-static ieDword green_mask = 0x00ff0000;
-static ieDword blue_mask = 0x0000ff00;
-
 MOSImporter::MOSImporter(void)
 {
-	if (DataStream::IsEndianSwitch()) {
-		red_mask = 0x000000ff;
-		green_mask = 0x0000ff00;
-		blue_mask = 0x00ff0000;
-	}
+	HasColorKey = true;
+	ColorKey.r = 0;
+	ColorKey.g = 0xff;
+	ColorKey.b = 0;
+	ColorKey.a = 0xff;
 }
 
 MOSImporter::~MOSImporter(void)
@@ -61,19 +57,18 @@ bool MOSImporter::Open(DataStream* stream)
 	if (strncmp( Signature, "MOS V1  ", 8 ) != 0) {
 		return false;
 	}
-	str->ReadWord( &Width );
-	str->ReadWord( &Height );
+	ieWord w, h;
+	str->ReadWord( &w );
+	Width = w;
+	str->ReadWord( &h );
+	Height = h;
 	str->ReadWord( &Cols );
 	str->ReadWord( &Rows );
 	str->ReadDword( &BlockSize );
 	str->ReadDword( &PalOffset );
-	return true;
-}
 
-Sprite2D* MOSImporter::GetSprite2D()
-{
 	RevColor RevCol[256];
-	unsigned char * pixels = ( unsigned char * ) malloc( Width * Height * 4 );
+	pixels = new Color[Width * Height];
 	unsigned char * blockpixels = ( unsigned char * )
 		malloc( BlockSize * BlockSize );
 	ieDword blockoffset;
@@ -97,30 +92,23 @@ Sprite2D* MOSImporter::GetSprite2D()
 				GEM_STREAM_START );
 			str->Read( blockpixels, bw * bh );
 			unsigned char * bp = blockpixels;
-			unsigned char * startpixel = pixels +
-				( ( Width * 4 * y ) * 64 ) +
-				( 4 * x * 64 );
+			Color* startpixel = pixels +
+				( ( Width * y ) * 64 ) +
+				( x * 64 );
 			for (int h = 0; h < bh; h++) {
 				for (int w = 0; w < bw; w++) {
-					*startpixel = RevCol[*bp].a;
-					startpixel++;
-					*startpixel = RevCol[*bp].b;
-					startpixel++;
-					*startpixel = RevCol[*bp].g;
-					startpixel++;
-					*startpixel = RevCol[*bp].r;
-					startpixel++;
+					startpixel[w].a = 0xFF;
+					startpixel[w].b = RevCol[*bp].b;
+					startpixel[w].g = RevCol[*bp].g;
+					startpixel[w].r = RevCol[*bp].r;
 					bp++;
 				}
-				startpixel = startpixel + ( Width * 4 ) - ( 4 * bw );
+				startpixel = startpixel + ( Width );
 			}
 		}
 	}
 	free( blockpixels );
-	Sprite2D* ret = core->GetVideoDriver()->CreateSprite( Width, Height, 32,
-		red_mask, green_mask, blue_mask, 0,
-		pixels, true, green_mask );
-	return ret;
+	return true;
 }
 
 #include "plugindef.h"

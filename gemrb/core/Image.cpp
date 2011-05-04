@@ -26,6 +26,11 @@ Image::Image(unsigned int w, unsigned int h)
 {
 }
 
+Image::Image(unsigned int w, unsigned int h, Color *data)
+	: height(h), width(w), data(data)
+{
+}
+
 Image::~Image()
 {
 	delete[] data;
@@ -33,6 +38,7 @@ Image::~Image()
 
 Sprite2D* Image::GetSprite2D()
 {
+	// FIXME: copy paste
 	union {
 		Color color;
 		ieDword Mask;

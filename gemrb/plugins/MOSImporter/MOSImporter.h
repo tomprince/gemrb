@@ -25,15 +25,12 @@
 
 class MOSImporter : public ImageMgr {
 private:
-	ieWord Width, Height, Cols, Rows;
+	ieWord Cols, Rows;
 	ieDword BlockSize, PalOffset;
 public:
 	MOSImporter(void);
 	~MOSImporter(void);
 	bool Open(DataStream* stream);
-	Sprite2D* GetSprite2D();
-	int GetWidth() { return (int) Width; }
-	int GetHeight() { return (int) Height; }
 };
 
 #endif

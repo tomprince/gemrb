@@ -24,6 +24,12 @@
 class GEM_EXPORT Bitmap {
 public:
 	Bitmap(unsigned int height, unsigned int width);
+	/**
+	 * Create an bitmap with specified bitmap data
+	 *
+	 * @param[in] data bitmap data allocated with new.
+	 */
+	Bitmap(unsigned int height, unsigned int width, unsigned char *data);
 	~Bitmap();
 	unsigned char GetAt(unsigned int x, unsigned int y) const
 	{

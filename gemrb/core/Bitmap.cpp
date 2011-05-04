@@ -23,6 +23,11 @@ Bitmap::Bitmap(unsigned int w, unsigned int h)
 {
 }
 
+Bitmap::Bitmap(unsigned int w, unsigned int h, unsigned char *data)
+	: height(h), width(w), data(data)
+{
+}
+
 Bitmap::~Bitmap()
 {
 	delete[] data;

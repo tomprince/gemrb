@@ -26,15 +26,11 @@
 class BMPImporter : public ImageMgr {
 private:
 	//BITMAPINFOHEADER
-	ieDword Size, Width, Height, Compression, ImageSize, ColorsUsed, ColorsImportant;
+	ieDword Size, Compression, ImageSize, ColorsUsed, ColorsImportant;
 	ieWord Planes, BitCount;
 
 	//COLORTABLE
 	ieDword NumColors;
-	Color* Palette;
-
-	//RASTERDATA
-	void* pixels;
 
 	//OTHER
 	unsigned int PaddedRowLength;
@@ -42,15 +38,7 @@ public:
 	BMPImporter(void);
 	~BMPImporter(void);
 	bool Open(DataStream* stream);
-	Sprite2D* GetSprite2D();
-	virtual Bitmap* GetBitmap();
-	virtual Image* GetImage();
-	void GetPalette(int colors, Color* pal);
-
-	int GetWidth() { return (int) Width; }
-	int GetHeight() { return (int) Height; }
 private:
-	void Read8To8(void *rpixels);
 	void Read4To8(void *rpixels);
 };
 

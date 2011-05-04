@@ -27,6 +27,12 @@ class Sprite2D;
 class GEM_EXPORT Image {
 public:
 	Image(unsigned int height, unsigned int width);
+	/**
+	 * Create an image with specified image data
+	 *
+	 * @param[in] data image data allocated with new.
+	 */
+	Image(unsigned int height, unsigned int width, Color *data);
 	~Image();
 	Color GetPixel(unsigned int x, unsigned int y) const
 	{
