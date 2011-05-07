@@ -311,7 +311,10 @@ retry:
 		return fs;
 	}
 	if (create) {
-		fs->Create( "default", IE_TOH_CLASS_ID);
+		if (!fs->Create( "default", IE_TOH_CLASS_ID)) {
+			delete fs;
+			return NULL;
+		}
 		memset(Signature,0,sizeof(Signature));
 		memcpy(Signature,"TLK ",4);
 		fs->Write(Signature, sizeof(Signature));
@@ -332,7 +335,10 @@ retry:
 		return fs;
 	}
 	if (create) {
-		fs->Create( "default", IE_TOT_CLASS_ID);
+		if (!fs->Create( "default", IE_TOT_CLASS_ID)) {
+			delete fs;
+			return NULL;
+		}
 		create = false;
 		goto retry;
 	}

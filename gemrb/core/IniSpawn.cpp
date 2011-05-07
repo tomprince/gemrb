@@ -78,7 +78,9 @@ static Holder<DataFileMgr> GetIniFile(const ieResRef DefaultArea)
 	}
 
 	PluginHolder<DataFileMgr> ini(IE_INI_CLASS_ID);
-	ini->Open(inifile);
+	if (!ini->Open(inifile)) {
+		return NULL;
+	}
 	return ini;
 }
 

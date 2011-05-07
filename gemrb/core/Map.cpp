@@ -3648,7 +3648,9 @@ bool Map::ChangeMap(bool day_or_night)
 	//it loads the lightmap and the minimap too, besides swapping the tileset
 	if (!mM->ChangeMap(this, day_or_night) && !day_or_night) {
 		printMessage("Map", "Invalid night lightmap, falling back to day lightmap.\n", YELLOW);
-		mM->ChangeMap(this, 1);
+		if (!mM->ChangeMap(this, 1)) {
+			error("Map", "No day or night lightmap available.");
+		}
 		DayNight = day_or_night;
 	}
 	return true;

@@ -468,7 +468,9 @@ Actor* GAMImporter::GetActor(Holder<ActorMgr> aM, bool is_in_party )
 	if (pcInfo.OffsetToCRE) {
 		DataStream* ms = SliceStream( str, pcInfo.OffsetToCRE, pcInfo.CRESize );
 		if (ms) {
-			aM->Open(ms);
+			if (!aM->Open(ms)) {
+				error("GAMImporter", "Unable to load actor from save game.");
+			}
 			actor = aM->GetActor(tmpWord);
 		}
 
@@ -483,7 +485,9 @@ Actor* GAMImporter::GetActor(Holder<ActorMgr> aM, bool is_in_party )
 		//another plugin cannot free memory stream from this plugin
 		//so auto free is a no-no
 		if (ds) {
-			aM->Open(ds);
+			if (!aM->Open(ds)) {
+				error("GAMImporter", "Unable to load actor '%s'.", pcInfo.CREResRef);
+			}
 			actor = aM->GetActor(pcInfo.PartyOrder);
 		}
 	}

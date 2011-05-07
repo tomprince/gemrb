@@ -86,7 +86,9 @@ static void ReadAutonoteINI()
 	char tINInote[_MAX_PATH];
 	PathJoin( tINInote, core->GamePath, "autonote.ini", NULL );
 	FileStream* fs = FileStream::OpenFile( tINInote );
-	INInote->Open(fs);
+	if (!INInote->Open(fs)) {
+		error("AREImporter", "Unable to load autonot.ini, but GF_AUTOMAP_INI set.");
+	}
 }
 
 static int GetTrackString(const ieResRef areaName)
@@ -235,7 +237,11 @@ bool AREImporter::ChangeMap(Map *map, bool day_or_night)
 	}
 	PluginHolder<TileMapMgr> tmm(IE_WED_CLASS_ID);
 	DataStream* wedfile = gamedata->GetResource( TmpResRef, IE_WED_CLASS_ID );
-	tmm->Open( wedfile );
+
+	if (!tmm->Open(wedfile)) {
+		print( "[AREImporter]: No Tile Map Available.\n" );
+		return false;
+	}
 
 	//alter the tilemap object, not all parts of that object are coming from the wed/tis
 	//this is why we have to be careful
@@ -328,7 +334,10 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 
 	PluginHolder<TileMapMgr> tmm(IE_WED_CLASS_ID);
 	DataStream* wedfile = gamedata->GetResource( WEDResRef, IE_WED_CLASS_ID );
-	tmm->Open( wedfile );
+	if (!tmm->Open(wedfile)) {
+		print( "[AREImporter]: No Tile Map Available.\n" );
+		return NULL;
+	}
 
 	//there was no tilemap set yet, so lets just send a NULL
 	TileMap* tm = tmm->GetTileMap(NULL);

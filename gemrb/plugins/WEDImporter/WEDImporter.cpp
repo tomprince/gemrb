@@ -117,7 +117,10 @@ int WEDImporter::AddOverlay(TileMap *tm, Overlay *overlays, bool rain)
 		return -1;
 	}
 	PluginHolder<TileSetMgr> tis(IE_TIS_CLASS_ID);
-	tis->Open( tisfile );
+	if (!tis->Open(tisfile)) {
+		delete over;
+		return -1;
+	}
 	for (int y = 0; y < overlays->Height; y++) {
 		for (int x = 0; x < overlays->Width; x++) {
 			str->Seek( overlays->TilemapOffset +

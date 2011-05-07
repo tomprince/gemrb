@@ -1599,8 +1599,12 @@ int Interface::Init()
 		print( "Cannot find Dialog.tlk.\nTermination in Progress...\n" );
 		return GEM_ERROR;
 	}
+	if (!strings->Open(fs)) {
+		printStatus( "ERROR", LIGHT_RED );
+		print( "Cannot open Dialog.tlk.\nTermination in Progress...\n" );
+		return GEM_ERROR;
+	}
 	printStatus( "OK", LIGHT_GREEN );
-	strings->Open(fs);
 
 	{
 		printMessage( "Core", "Loading Palettes...\n", WHITE );
@@ -2509,7 +2513,10 @@ bool Interface::LoadGemRBINI()
 		return false;
 	}
 	PluginHolder<DataFileMgr> ini(IE_INI_CLASS_ID);
-	ini->Open(inifile);
+	if (!ini->Open(inifile)) {
+		printStatus( "ERROR", LIGHT_GREEN );
+		return false;
+	}
 
 	printStatus( "OK", LIGHT_GREEN );
 
@@ -4786,7 +4793,10 @@ int Interface::GetMouseScrollSpeed() {
 ieStrRef Interface::GetRumour(const ieResRef dlgref)
 {
 	PluginHolder<DialogMgr> dm(IE_DLG_CLASS_ID);
-	dm->Open(gamedata->GetResource(dlgref, IE_DLG_CLASS_ID));
+	if (!dm->Open(gamedata->GetResource(dlgref, IE_DLG_CLASS_ID))) {
+		printMessage("Interface", "Cannot load dialog: %s\n", LIGHT_RED, dlgref);
+		return (ieStrRef) -1;
+	}
 	Dialog *dlg = dm->GetDialog();
 
 	if (!dlg) {
@@ -4979,9 +4989,8 @@ int Interface::SwapoutArea(Map *map)
 		//this one will be destructed when we return from here
 		FileStream str;
 
-		str.Create( map->GetScriptName(), IE_ARE_CLASS_ID );
-		int ret = mm->PutArea (&str, map);
-		if (ret <0) {
+		if (!str.Create(map->GetScriptName(), IE_ARE_CLASS_ID)
+			|| (mm->PutArea(&str, map) < 0)) {
 			printMessage("Core", "Area removed: %s\n", YELLOW,
 				map->GetScriptName());
 			RemoveFromCache(map->GetScriptName(), IE_ARE_CLASS_ID);
@@ -5125,7 +5134,9 @@ bool Interface::CompressSave(const char *folder)
 				char dtmp[_MAX_PATH];
 				dir.GetFullPath(dtmp);
 				FileStream fs;
-				fs.Open(dtmp);
+				if (!fs.Open(dtmp)) {
+					error("Core", "Unable to open cache file '%s' when saving game.", name);
+				}
 				ai->AddToSaveGame(&str, &fs);
 			}
 		} while (++dir);

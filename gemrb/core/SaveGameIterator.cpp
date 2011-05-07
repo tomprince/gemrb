@@ -440,7 +440,10 @@ static bool DoSaveGame(const char *Path)
 			char FName[_MAX_PATH];
 			snprintf( FName, sizeof(FName), "PORTRT%d", i );
 			FileStream outfile;
-			outfile.Create( Path, FName, IE_BMP_CLASS_ID );
+			if (!outfile.Create(Path, FName, IE_BMP_CLASS_ID)) {
+				printMessage("SaveGameIterator", "Can't write portrait %d to '%s'.\n", LIGHT_RED, i, FName);
+				return false;
+			}
 			im->PutImage( &outfile, portrait );
 		}
 	}
@@ -448,7 +451,10 @@ static bool DoSaveGame(const char *Path)
 	// Create area preview
 	Sprite2D* preview = core->GetGameControl()->GetPreview();
 	FileStream outfile;
-	outfile.Create( Path, core->GameNameResRef, IE_BMP_CLASS_ID );
+	if (!outfile.Create(Path, core->GameNameResRef, IE_BMP_CLASS_ID)) {
+		printMessage("SaveGameIterator", "Can't write save game preview '%s'.\n", LIGHT_RED, Path);
+		return false;
+	}
 	im->PutImage( &outfile, preview );
 
 	return true;

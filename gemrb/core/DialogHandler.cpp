@@ -68,7 +68,10 @@ bool DialogHandler::InitDialog(Scriptable* spk, Scriptable* tgt, const char* dlg
 	}
 
 	PluginHolder<DialogMgr> dm(IE_DLG_CLASS_ID);
-	dm->Open(gamedata->GetResource(dlgref, IE_DLG_CLASS_ID));
+	if (!dm->Open(gamedata->GetResource(dlgref, IE_DLG_CLASS_ID))) {
+		printMessage("GameControl", "Cannot start dialog: %s\n", LIGHT_RED, dlgref);
+		return false;
+	}
 	dlg = dm->GetDialog();
 
 	if (!dlg) {
