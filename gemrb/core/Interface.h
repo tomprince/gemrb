@@ -640,11 +640,11 @@ public:
 	/** saves (exports a character to the characters folder */
 	int WriteCharacter(const char *name, Actor *actor);
 	/** saves the game object to the destination folder */
-	int WriteGame(const char *folder);
+	bool WriteGame(const char *folder);
 	/** saves the worldmap object to the destination folder */
-	int WriteWorldMap(const char *folder);
+	bool WriteWorldMap(const char *folder);
 	/** saves the .are and .sto files to the destination folder */
-	int CompressSave(const char *folder);
+	bool CompressSave(const char *folder);
 	/** receives an autopause reason, returns 1 if pause was triggered by this call, -1 if it was already triggered */
 	int Autopause(ieDword reason);
 	/** registers engine opcodes */

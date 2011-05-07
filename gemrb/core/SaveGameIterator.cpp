@@ -413,17 +413,17 @@ static bool DoSaveGame(const char *Path)
 
 	//compress files in cache named: .STO and .ARE
 	//no .CRE would be saved in cache
-	if (core->CompressSave(Path)) {
+	if (!core->CompressSave(Path)) {
 		return false;
 	}
 
 	//Create .gam file from Game() object
-	if (core->WriteGame(Path)) {
+	if (!core->WriteGame(Path)) {
 		return false;
 	}
 
 	//Create .wmp file from WorldMap() object
-	if (core->WriteWorldMap(Path)) {
+	if (!core->WriteWorldMap(Path)) {
 		return false;
 	}
 

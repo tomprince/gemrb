@@ -5035,11 +5035,11 @@ int Interface::WriteCharacter(const char *name, Actor *actor)
 	return 0;
 }
 
-int Interface::WriteGame(const char *folder)
+bool Interface::WriteGame(const char *folder)
 {
 	PluginHolder<SaveGameMgr> gm(IE_GAM_CLASS_ID);
 	if (gm == NULL) {
-		return -1;
+		return false;
 	}
 
 	int size = gm->GetStoredFileSize (game);
@@ -5048,24 +5048,26 @@ int Interface::WriteGame(const char *folder)
 		//this one will be destructed when we return from here
 		FileStream str;
 
-		str.Create( folder, GameNameResRef, IE_GAM_CLASS_ID );
-		int ret = gm->PutGame (&str, game);
-		if (ret <0) {
+		if (!str.Create(folder, GameNameResRef, IE_GAM_CLASS_ID)) {
 			printMessage("Core", "Game cannot be saved: %s\n", YELLOW, folder);
-			return -1;
+			return false;
+		}
+		if (gm->PutGame (&str, game) < 0) {
+			printMessage("Core", "Game cannot be saved: %s\n", YELLOW, folder);
+			return false;
 		}
 	} else {
 		printMessage("Core", "Internal error, game cannot be saved: %s\n", YELLOW, folder);
-		return -1;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
-int Interface::WriteWorldMap(const char *folder)
+bool Interface::WriteWorldMap(const char *folder)
 {
 	PluginHolder<WorldMapMgr> wmm(IE_WMP_CLASS_ID);
 	if (wmm == NULL) {
-		return -1;
+		return false;
 	}
 
 	if (WorldMapName[1][0]) {
@@ -5080,36 +5082,44 @@ int Interface::WriteWorldMap(const char *folder)
 		size2=wmm->GetStoredFileSize (worldmap, 1);
 	}
 
-	int ret = 0;
 	if ((size1 < 0) || (size2<0) ) {
-		ret=-1;
+		printMessage("Core", "Internal error, worldmap cannot be saved: %s\n", YELLOW, folder);
+		return false;
 	} else {
 		//created streams are always autofree (close file on destruct)
 		//this one will be destructed when we return from here
 		FileStream str1;
 		FileStream str2;
 
-		str1.Create( folder, WorldMapName[0], IE_WMP_CLASS_ID );
+		if (!str1.Create( folder, WorldMapName[0], IE_WMP_CLASS_ID )) {
+			printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
+			return false;
+		}
 		if (!worldmap->IsSingle()) {
-			str2.Create( folder, WorldMapName[1], IE_WMP_CLASS_ID );
+			if (!str2.Create( folder, WorldMapName[1], IE_WMP_CLASS_ID )) {
+				printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
+				return false;
+			}
+		}
+		if (wmm->PutWorldMap (&str1, &str2, worldmap) < 0) {
+			printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
+			return false;
 		}
 		ret = wmm->PutWorldMap (&str1, &str2, worldmap);
 	}
-	if (ret <0) {
-		printMessage("Core", "Internal error, worldmap cannot be saved: %s\n", YELLOW, folder);
-		return -1;
-	}
-	return 0;
+	return true;
 }
 
-int Interface::CompressSave(const char *folder)
+bool Interface::CompressSave(const char *folder)
 {
 	FileStream str;
 
-	str.Create( folder, GameNameResRef, IE_SAV_CLASS_ID );
+	if (!str.Create(folder, GameNameResRef, IE_SAV_CLASS_ID)) {
+		return false;
+	}
 	DirectoryIterator dir(CachePath);
 	if (!dir) {
-		return -1;
+		return false;
 	}
 	//BIF and SAV are the same
 	PluginHolder<ArchiveImporter> ai(IE_BIF_CLASS_ID);
@@ -5138,7 +5148,7 @@ int Interface::CompressSave(const char *folder)
 			dir.Rewind();
 		}
 	}
-	return 0;
+	return true;
 }
 
 int Interface::GetMaximumAbility() const { return MaximumAbility; }
