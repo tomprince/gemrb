@@ -5074,39 +5074,26 @@ bool Interface::WriteWorldMap(const char *folder)
 		worldmap->SetSingle(false);
 	}
 
-	int size1 = wmm->GetStoredFileSize (worldmap, 0);
-	int size2 = 1; //just a dummy value
+	//created streams are always autofree (close file on destruct)
+	//this one will be destructed when we return from here
+	FileStream str1;
+	FileStream str2;
 
-	//if size is 0 for the first worldmap, then there is a problem
-	if (!worldmap->IsSingle() && (size1>0) ) {
-		size2=wmm->GetStoredFileSize (worldmap, 1);
-	}
-
-	if ((size1 < 0) || (size2<0) ) {
-		printMessage("Core", "Internal error, worldmap cannot be saved: %s\n", YELLOW, folder);
+	if (!str1.Create( folder, WorldMapName[0], IE_WMP_CLASS_ID )) {
+		printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
 		return false;
-	} else {
-		//created streams are always autofree (close file on destruct)
-		//this one will be destructed when we return from here
-		FileStream str1;
-		FileStream str2;
-
-		if (!str1.Create( folder, WorldMapName[0], IE_WMP_CLASS_ID )) {
-			printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
-			return false;
-		}
-		if (!worldmap->IsSingle()) {
-			if (!str2.Create( folder, WorldMapName[1], IE_WMP_CLASS_ID )) {
-				printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
-				return false;
-			}
-		}
-		if (wmm->PutWorldMap (&str1, &str2, worldmap) < 0) {
-			printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
-			return false;
-		}
-		ret = wmm->PutWorldMap (&str1, &str2, worldmap);
 	}
+	if (!worldmap->IsSingle()) {
+		if (!str2.Create( folder, WorldMapName[1], IE_WMP_CLASS_ID )) {
+			printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
+			return false;
+		}
+	}
+	if (wmm->PutWorldMap (&str1, &str2, worldmap) < 0) {
+		printMessage("Core", "World Map cannot be saved: %s\n", YELLOW, folder);
+		return false;
+	}
+
 	return true;
 }
 

@@ -202,7 +202,7 @@ WMPAreaLink* WMPImporter::GetAreaLink(DataStream *str, WMPAreaLink* al)
 	return al;
 }
 
-int WMPImporter::GetStoredFileSize(WorldMapArray *wmap, unsigned int index)
+void WMPImporter::CalculateStoredFileSize(WorldMapArray *wmap, unsigned int index)
 {
 	assert(!index || !wmap->IsSingle());
 
@@ -210,7 +210,9 @@ int WMPImporter::GetStoredFileSize(WorldMapArray *wmap, unsigned int index)
 	int WorldMapsOffset;
 
 	WorldMapsCount = wmap->GetMapCount();
-	if (index>WorldMapsCount || index>1) return 0;
+	if (index>WorldMapsCount || index>1) {
+		error("WMPImporter", "Impossible World Map index '%d'.\n", index);
+	}
 
 	WorldMapsOffset = headersize;
 	if (index) {
@@ -249,13 +251,12 @@ int WMPImporter::GetStoredFileSize(WorldMapArray *wmap, unsigned int index)
 	else {
 		WorldMapsOffset1 = WorldMapsOffset;
 	}
-	return headersize;
 }
 
-int WMPImporter::PutWorldMap(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap)
+bool WMPImporter::PutWorldMap(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap)
 {
 	if (! (stream1 || stream2) || !wmap) {
-		return -1;
+		return false;
 	}
 
 	if (stream1) {
@@ -269,10 +270,11 @@ int WMPImporter::PutWorldMap(DataStream *stream1, DataStream *stream2, WorldMapA
 		stream2->WriteDword( &WorldMapsCount2);
 		stream2->WriteDword( &WorldMapsOffset2);
 	}
-	return PutMaps( stream1, stream2, wmap);
+	PutMaps(stream1, stream2, wmap);
+	return true;
 }
 
-int WMPImporter::PutLinks(DataStream *stream, WorldMap *wmap)
+void WMPImporter::PutLinks(DataStream *stream, WorldMap *wmap)
 {
 	char filling[128];
 
@@ -290,10 +292,9 @@ int WMPImporter::PutLinks(DataStream *stream, WorldMap *wmap)
 		stream->WriteDword( &al->EncounterChance );
 		stream->Write(filling,128);
 	}
-	return 0;
 }
 
-int WMPImporter::PutAreas(DataStream *stream, WorldMap *wmap)
+void WMPImporter::PutAreas(DataStream *stream, WorldMap *wmap)
 {
 	char filling[128];
 	ieDword tmpDword;
@@ -320,29 +321,25 @@ int WMPImporter::PutAreas(DataStream *stream, WorldMap *wmap)
 		}
 		stream->Write(filling,128);
 	}
-	return 0;
 }
 
-int WMPImporter::PutMaps(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap)
+void WMPImporter::PutMaps(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap)
 {
-	int ret = PutMap(stream1, wmap, 0);
-	if (ret) return ret;
-
+	PutMap(stream1, wmap, 0);
 	if (stream2 && !wmap->IsSingle() ) {
-		ret = PutMap(stream2, wmap, 1);
+		PutMap(stream2, wmap, 1);
 	}
-	return ret;
 }
 
-int WMPImporter::PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int index)
+void WMPImporter::PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int index)
 {
 	unsigned int i;
 	unsigned int WorldMapsOffset;
 	unsigned int count;
-	int ret;
 	char filling[128];
 
 	assert(!index || !wmap->IsSingle());
+	CalculateStoredFileSize(wmap, index);
 
 	if (index) {
 		WorldMapsOffset = WorldMapsOffset2;
@@ -400,10 +397,7 @@ int WMPImporter::PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int in
 	for (i=index;i<WorldMapsCount; i++) {
 		WorldMap *map = wmap->GetWorldMap(i);
 
-		ret = PutAreas( stream, map);
-		if (ret) {
-			return ret;
-		}
+		PutAreas(stream, map);
 		if (!wmap->IsSingle() && !index) {
 			break;
 		}
@@ -413,15 +407,11 @@ int WMPImporter::PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int in
 	for (i=index;i<WorldMapsCount; i++) {
 		WorldMap *map = wmap->GetWorldMap(i);
 
-		ret = PutLinks( stream, map);
-		if (ret) {
-			return ret;
-		}
+		PutLinks(stream, map);
 		if (!wmap->IsSingle() && !index) {
 			break;
 		}
 	}
-	return 0;
 }
 
 #include "plugindef.h"

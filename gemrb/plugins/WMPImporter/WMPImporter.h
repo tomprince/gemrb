@@ -43,17 +43,18 @@ public:
 	bool Open(DataStream* stream1, DataStream* stream2);
 	WorldMapArray *GetWorldMapArray();
 
-	int GetStoredFileSize(WorldMapArray *wmap, unsigned int index);
-	int PutWorldMap(DataStream* stream1, DataStream* stream2, WorldMapArray *wmap);
+	bool PutWorldMap(DataStream* stream1, DataStream* stream2, WorldMapArray *wmap);
 private:
 	void GetWorldMap(DataStream *str, WorldMap *m, unsigned int index);
 
 	WMPAreaEntry* GetAreaEntry(DataStream *str, WMPAreaEntry* ae);
 	WMPAreaLink* GetAreaLink(DataStream *str, WMPAreaLink* al);
-	int PutMaps(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap);
-	int PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int index);
-	int PutLinks(DataStream *stream, WorldMap *wmap);
-	int PutAreas(DataStream *stream, WorldMap *wmap);
+
+	void CalculateStoredFileSize(WorldMapArray *wmap, unsigned int index);
+	void PutMaps(DataStream *stream1, DataStream *stream2, WorldMapArray *wmap);
+	void PutMap(DataStream *stream, WorldMapArray *wmap, unsigned int index);
+	void PutLinks(DataStream *stream, WorldMap *wmap);
+	void PutAreas(DataStream *stream, WorldMap *wmap);
 };
 
 
