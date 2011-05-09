@@ -24,38 +24,38 @@
 #include "IndexedArchive.h"
 
 #include "globals.h"
-
+#include "HashMap.h"
 #include "System/DataStream.h"
-
-struct FileEntry {
-	ieDword resLocator;
-	ieDword dataOffset;
-	ieDword fileSize;
-	ieWord  type;
-	ieWord  u1; //Unknown Field
-};
-
-struct TileEntry {
-	ieDword resLocator;
-	ieDword dataOffset;
-	ieDword tilesCount;
-	ieDword tileSize; //named tilesize so it isn't confused
-	ieWord  type;
-	ieWord  u1; //Unknown Field
-};
 
 class BIFImporter : public IndexedArchive {
 private:
+	struct FileEntry {
+		ieDword offset;
+		ieDword size;
+
+		FileEntry();
+	};
+
+	struct TileEntry {
+		ieDword offset;
+		ieDword count;
+		ieDword size;
+
+		TileEntry();
+	};
+
+	HashMap<ieDword, FileEntry> files;
+	HashMap<ieDword, TileEntry> tiles;
+
 	char path[_MAX_PATH];
-	FileEntry* fentries;
-	TileEntry* tentries;
-	ieDword fentcount, tentcount;
 	DataStream* stream;
+
 public:
 	BIFImporter(void);
 	~BIFImporter(void);
 	int OpenArchive(const char* filename);
 	DataStream* GetStream(unsigned long Resource, unsigned long Type);
+
 private:
 	static bool DecompressBIF(DataStream* compressed, const char* path);
 	void ReadBIF(void);
