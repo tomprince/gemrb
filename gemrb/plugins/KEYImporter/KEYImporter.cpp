@@ -25,6 +25,7 @@
 
 #include "IndexedArchive.h"
 #include "Interface.h"
+#include "PluginMgr.h"
 #include "ResourceDesc.h"
 #include "System/FileStream.h"
 
@@ -254,17 +255,20 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 		}
 
 		// simple one-BIF cache to avoid opening the same BIF repeatedly
-		if (lastSeenCache.bifnum != bifnum) {
+		if (!entry.plugin) {
 			PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
 			if (ai->OpenArchive( entry.path ) == GEM_ERROR) {
 				print("Cannot open archive %s\n", entry.path );
 				return NULL;
 			}
-			lastSeenCache.bifnum = bifnum;
-			lastSeenCache.plugin = ai;
+			entry.plugin = ai;
 		}
 
-		DataStream* ret = lastSeenCache.plugin->GetStream( ResLocator, type );
+		DataStream* ret = entry.plugin->GetStream( ResLocator, type );
+
+		if (core->GameOnCD && (entry.cd != 0))
+			entry.plugin.release();
+
 		if (ret) {
 			strnlwrcpy( ret->filename, resname, 8 );
 			strcat( ret->filename, "." );
