@@ -243,20 +243,21 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 		return NULL;
 	if (resources.Lookup( resname, type, ResLocator )) {
 		unsigned int bifnum = ( ResLocator & 0xFFF00000 ) >> 20;
+		BIFEntry& entry = biffiles[bifnum];
 
-		if (core->GameOnCD && (biffiles[bifnum].cd != 0))
-			FindBIFOnCD(&biffiles[bifnum]);
-		if (!biffiles[bifnum].found) {
+		if (core->GameOnCD && (entry.cd != 0))
+			FindBIFOnCD(&entry);
+		if (!entry.found) {
 			print( "Cannot find %s... Resource unavailable.\n",
-					biffiles[bifnum].name );
+					entry.name );
 			return NULL;
 		}
 
 		// simple one-BIF cache to avoid opening the same BIF repeatedly
 		if (lastSeenCache.bifnum != bifnum) {
 			PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
-			if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
-				print("Cannot open archive %s\n", biffiles[bifnum].path );
+			if (ai->OpenArchive( entry.path ) == GEM_ERROR) {
+				print("Cannot open archive %s\n", entry.path );
 				return NULL;
 			}
 			lastSeenCache.bifnum = bifnum;
