@@ -71,17 +71,20 @@ struct HashKey<std::string> {
 	}
 };
 
-class StringMap : public HashMap<std::string, std::string> {
+template <class Value>
+class StringMap : public HashMap<std::string, Value> {
+private:
+	typedef HashMap<std::string, Value> super;
 public:
 	// lookup without std::string construction
-	const std::string *get(const char *key) const
+	Value* get(const char *key) const
 	{
-		if (!isInitialized())
+		if (!this->isInitialized())
 			return NULL;
 
-		incAccesses();
+		this->incAccesses();
 
-		for (Entry *e = getBucketByHash(HashKey<std::string>::hash(key)); e; e = e->next)
+		for (typename super::Entry *e = this->getBucketByHash(HashKey<std::string>::hash(key)); e; e = e->next)
 			if (HashKey<std::string>::equals(e->key, key))
 				return &e->value;
 

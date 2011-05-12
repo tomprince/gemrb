@@ -215,10 +215,10 @@ bool FileStream::Modify(const char* fname)
 }
 
 //Creating file in the cache
-bool FileStream::Create(const char* fname, SClass_ID ClassID)
+/*bool FileStream::Create(const char* fname, SClass_ID ClassID)
 {
 	return Create(core->CachePath, fname, ClassID);
-}
+}*/
 
 bool FileStream::Create(const char *folder, const char* fname, SClass_ID ClassID)
 {

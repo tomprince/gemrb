@@ -23,6 +23,7 @@
 #include "PluginMgr.h"
 #include "System/FileStream.h"
 #include "System/VFS.h"
+#include "ResourceCache.h"
 
 DataStream* CacheCompressedStream(DataStream *stream, const char* filename, int length, bool overwrite)
 {
@@ -33,23 +34,27 @@ DataStream* CacheCompressedStream(DataStream *stream, const char* filename, int 
 
 	char fname[_MAX_PATH];
 	ExtractFileFromPath(fname, filename);
-	char path[_MAX_PATH];
-	PathJoin(path, core->CachePath, fname, NULL);
 
-	if (overwrite || !file_exists(path)) {
-		FileStream out;
-		if (!out.Create(path)) {
-			printMessage("FileCache", "Cannot write %s.\n", RED, path);
-			return NULL;
+	if (!overwrite) {
+		DataStream* out = core->CacheDir->OpenFile(fname);
+		if (out) {
+			return out;
 		}
-
-		PluginHolder<Compressor> comp(PLUGIN_COMPRESSION_ZLIB);
-		if (comp->Decompress(&out, stream, length) != GEM_OK)
-			return NULL;
-	} else {
-		stream->Seek(length, GEM_CURRENT_POS);
 	}
-	return FileStream::OpenFile(path);
+
+	DataStream* out = core->CacheDir->CreateFile(fname, overwrite);
+	if (!out) {
+		printMessage("FileCache", "Cannot write %s.\n", RED, filename);
+		return NULL;
+	}
+
+	PluginHolder<Compressor> comp(PLUGIN_COMPRESSION_ZLIB);
+	if (comp->Decompress(out, stream, length) != GEM_OK)
+		return NULL;
+
+	delete out;
+
+	return core->CacheDir->OpenFile(fname);
 }
 
 DataStream* CacheStream(DataStream* src)
@@ -58,29 +63,33 @@ DataStream* CacheStream(DataStream* src)
 	if (!core->SlowBIFs)
 		return src;
 
-	char cachedfile[_MAX_PATH];
-	PathJoin(cachedfile, core->CachePath, src->filename, NULL);
-
-	if (!file_exists(cachedfile)) {    // File was not found in cache
-		FileStream dest;
-		if (!dest.Create(cachedfile)) {
-			error("Cache", "CachedFile failed to write to cached file '%s' (from '%s')\n", cachedfile, src->originalfile);
-		}
-
-		size_t blockSize = 1024 * 1000;
-		char buff[1024 * 1000];
-		do {
-			if (blockSize > src->Remains())
-				blockSize = src->Remains();
-			size_t len = src->Read(buff, blockSize);
-			size_t c = dest.Write(buff, len);
-			if (c != len) {
-				error("Cache", "CacheFile failed to write to cached file '%s' (from '%s')\n", cachedfile, src->originalfile);
-			}
-		} while (src->Remains());
+	DataStream* dest = core->CacheDir->OpenFile(src->filename);
+	if (dest) {
+		delete src;
+		return dest;
 	}
 
-	delete src;
+	dest = core->CacheDir->CreateFile(src->filename);
+	if (!dest) {
+		error("Cache", "CachedFile failed to write to cached file (from '%s')\n", src->originalfile);
+	}
 
-	return FileStream::OpenFile(cachedfile);
+	size_t blockSize = 1024 * 1000;
+	char buff[1024 * 1000];
+	do {
+		if (blockSize > src->Remains())
+			blockSize = src->Remains();
+		size_t len = src->Read(buff, blockSize);
+		size_t c = dest->Write(buff, len);
+		if (c != len) {
+			error("Cache", "CacheFile failed to write to cached file (from '%s')\n", src->originalfile);
+		}
+	} while (src->Remains());
+
+	delete dest;
+
+	dest = core->CacheDir->OpenFile(src->filename);
+
+	delete src;
+	return dest;
 }

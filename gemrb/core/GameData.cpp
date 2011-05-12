@@ -530,9 +530,9 @@ void GameData::SaveStore(Store* store)
 
 	FileStream str;
 
-	if (!str.Create(store->Name, IE_STO_CLASS_ID)) {
+	//if (!str.Create(store->Name, IE_STO_CLASS_ID)) {
 		error("GameData", "Can't create file while saving store.");
-	}
+	//}
 	if (!sm->PutStore(&str, store)) {
 		error("GameData", "Error saving store.");
 	}

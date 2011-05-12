@@ -55,6 +55,11 @@ bool ResourceManager::AddSource(const char *path, const char *description, Plugi
 	return true;
 }
 
+void ResourceManager::AddSource(ResourceSource* source)
+{
+	searchPath.push_back(source);
+}
+
 static void PrintPossibleFiles(const char* ResRef, const TypeID *type)
 {
 	const std::vector<ResourceDesc>& types = PluginMgr::Get()->GetResourceDesc(type);

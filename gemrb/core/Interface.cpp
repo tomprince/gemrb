@@ -54,6 +54,7 @@
 #include "PluginLoader.h"
 #include "PluginMgr.h"
 #include "ProjectileServer.h"
+#include "ResourceCache.h"
 #include "SaveGameIterator.h"
 #include "SaveGameMgr.h"
 #include "ScriptEngine.h"
@@ -470,7 +471,7 @@ Interface::~Interface(void)
 	gamedata = NULL;
 
 	// Removing all stuff from Cache, except bifs
-	if (!KeepCache) DelTree((const char *) CachePath, true);
+	CacheDir->EmptyCache();
 }
 
 void Interface::SetWindowFrame(int i, Sprite2D *Picture)
@@ -1482,32 +1483,34 @@ int Interface::Init()
 		char path[_MAX_PATH];
 
 		PathJoin( path, CachePath, NULL);
-		gamedata->AddSource(path, "Cache", PLUGIN_RESOURCE_DIRECTORY);
+		CacheDir = PluginHolder<ResourceCache>(PLUGIN_CACHE_DIRECTORY);
+		CacheDir->Open(path, "Cache");
+		gamedata->AddSource(CacheDir->GetSource());
 
 		PathJoin( path, GemRBOverridePath, "override", GameType, NULL);
-		gamedata->AddSource(path, "GemRB Override", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "GemRB Override", PLUGIN_RESOURCE_DIRECTORY);
 
 		size_t i;
 		for (i = 0; i < ModPath.size(); ++i)
-			gamedata->AddSource(ModPath[i].c_str(), "Mod paths", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+			gamedata->AddSource(ModPath[i].c_str(), "Mod paths", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GemRBOverridePath, "override", "shared", NULL);
-		gamedata->AddSource(path, "shared GemRB Override", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "shared GemRB Override", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GameOverridePath, NULL);
-		gamedata->AddSource(path, "Override", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "Override", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GameSoundsPath, NULL);
-		gamedata->AddSource(path, "Sounds", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "Sounds", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GameScriptsPath, NULL);
-		gamedata->AddSource(path, "Scripts", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "Scripts", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GamePortraitsPath, NULL);
-		gamedata->AddSource(path, "Portraits", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "Portraits", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GameDataPath, NULL);
-		gamedata->AddSource(path, "Data", PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		gamedata->AddSource(path, "Data", PLUGIN_RESOURCE_DIRECTORY);
 
 		//IWD2 movies are on the CD but not in the BIF
 		char *description = strdup("CD1/data");
@@ -1515,7 +1518,7 @@ int Interface::Init()
 			for (size_t j=0;j<CD[i].size();j++) {
 				description[2]='1'+i;				
 				PathJoin( path, CD[i][j].c_str(), GameDataPath, NULL);
-				gamedata->AddSource(path, description, PLUGIN_RESOURCE_CACHEDDIRECTORY);
+				gamedata->AddSource(path, description, PLUGIN_RESOURCE_DIRECTORY);
 			}
 		}
 		free(description);
@@ -1551,7 +1554,7 @@ int Interface::Init()
 		// re-set the gemrb override path, since we now have the correct GameType if 'auto' was used
 		char path[_MAX_PATH];
 		PathJoin( path, GemRBOverridePath, "override", GameType, NULL);
-		gamedata->AddSource(path, "GemRB Override", PLUGIN_RESOURCE_CACHEDDIRECTORY, RM_REPLACE_SAME_SOURCE);
+		gamedata->AddSource(path, "GemRB Override", PLUGIN_RESOURCE_DIRECTORY, RM_REPLACE_SAME_SOURCE);
 	}
 
 	printMessage( "Core", "Reading Game Options...\n", WHITE );
@@ -3913,7 +3916,7 @@ void Interface::LoadGame(SaveGame *sg, int ver_override)
 	WorldMapArray* new_worldmap = NULL;
 
 	LoadProgress(10);
-	if (!KeepCache) DelTree((const char *) CachePath, true);
+	if (!KeepCache) CacheDir->EmptyCache();
 	LoadProgress(15);
 
 	if (sg == NULL) {
@@ -4979,13 +4982,13 @@ int Interface::SwapoutArea(Map *map)
 		//this one will be destructed when we return from here
 		FileStream str;
 
-		str.Create( map->GetScriptName(), IE_ARE_CLASS_ID );
-		int ret = mm->PutArea (&str, map);
-		if (ret <0) {
+		//str.Create( map->GetScriptName(), IE_ARE_CLASS_ID );
+		//int ret = mm->PutArea (&str, map);
+		//if (ret <0) {
 			printMessage("Core", "Area removed: %s\n", YELLOW,
 				map->GetScriptName());
 			RemoveFromCache(map->GetScriptName(), IE_ARE_CLASS_ID);
-		}
+		//}
 	} else {
 		printMessage("Core", "Area removed: %s\n", YELLOW,
 			map->GetScriptName());
@@ -5104,6 +5107,7 @@ int Interface::WriteWorldMap(const char *folder)
 
 int Interface::CompressSave(const char *folder)
 {
+	error("BROKEN", "Saving is currently broken.\n");
 	FileStream str;
 
 	str.Create( folder, GameNameResRef, IE_SAV_CLASS_ID );

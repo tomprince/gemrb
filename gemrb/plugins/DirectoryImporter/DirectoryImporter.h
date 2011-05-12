@@ -19,19 +19,22 @@
 #ifndef KEYIMP_H
 #define KEYIMP_H
 
+#include "ResourceCache.h"
 #include "ResourceSource.h"
 #include "StringMap.h"
 
 class Resource;
 class ResourceDesc;
 
-class DirectoryImporter : public ResourceSource {
-protected:
+class CacheImporter : public ResourceSource {
+public: // For ResourceCache
 	char path[_MAX_PATH];
+	StringMap<std::string> cache;
 
 public:
-	DirectoryImporter(void);
-	~DirectoryImporter(void);
+	CacheImporter();
+	~CacheImporter();
+
 	bool Open(const char *dir, const char *desc);
 	/** predicts the availability of a resource */
 	bool HasResource(const char* resname, SClass_ID type);
@@ -41,22 +44,27 @@ public:
 	DataStream* GetResource(const char* resname, const ResourceDesc &type);
 };
 
-class CachedDirectoryImporter : public DirectoryImporter {
-protected:
-	StringMap cache;
-
+class CacheDirectory : public ResourceCache {
+private:
+	Holder<CacheImporter> source;
 public:
-	CachedDirectoryImporter();
-	~CachedDirectoryImporter();
+	CacheDirectory();
+	~CacheDirectory();
+
+	bool Open(const char *dir, const char *desc);
+	ResourceSource* GetSource();
+	DataStream* CreateFile(const char* resname, bool force);
+	DataStream* OpenFile(const char* resname);
+	void EmptyCache();
+};
+
+class DirectoryImporter : public CacheImporter {
+public:
+	DirectoryImporter();
+	~DirectoryImporter();
 
 	bool Open(const char *dir, const char *desc);
 	void Refresh();
-	/** predicts the availability of a resource */
-	bool HasResource(const char* resname, SClass_ID type);
-	bool HasResource(const char* resname, const ResourceDesc &type);
-	/** returns resource */
-	DataStream* GetResource(const char* resname, SClass_ID type);
-	DataStream* GetResource(const char* resname, const ResourceDesc &type);
 };
 
 

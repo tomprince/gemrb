@@ -306,12 +306,13 @@ DataStream* CTlkOverride::GetAuxHdr(bool create)
 
 	PathJoin( nPath, core->CachePath, "default.toh", NULL );
 	FileStream* fs = new FileStream();
+	// FIXME: BROKEN
 retry:
 	if (fs->Modify(nPath)) {
 		return fs;
 	}
 	if (create) {
-		fs->Create( "default", IE_TOH_CLASS_ID);
+		//fs->Create( "default", IE_TOH_CLASS_ID);
 		memset(Signature,0,sizeof(Signature));
 		memcpy(Signature,"TLK ",4);
 		fs->Write(Signature, sizeof(Signature));
@@ -327,12 +328,13 @@ DataStream* CTlkOverride::GetAuxTlk(bool create)
 	char nPath[_MAX_PATH];
 	PathJoin( nPath, core->CachePath, "default.tot", NULL );
 	FileStream* fs = new FileStream();
+	// FIXME: BROKEN
 retry:
 	if (fs->Modify(nPath)) {
 		return fs;
 	}
 	if (create) {
-		fs->Create( "default", IE_TOT_CLASS_ID);
+		//fs->Create( "default", IE_TOT_CLASS_ID);
 		create = false;
 		goto retry;
 	}

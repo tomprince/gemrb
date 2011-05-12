@@ -38,15 +38,18 @@
 #include <vector>
 
 #ifdef _MSC_VER // No SFINAE
-#include "Audio.h"
-#include "DataFileMgr.h"
-#include "MusicMgr.h"
-#include "SaveGame.h"
-#include "ScriptEngine.h"
-#include "StringMgr.h"
-#include "SymbolMgr.h"
-#include "Video.h"
-#include "WindowMgr.h"
+#define SFINAE(x) x
+#include SFINAE("Audio.h")
+#include SFINAE("DataFileMgr.h")
+#include SFINAE("MusicMgr.h")
+#include SFINAE("ResourceCache.h")
+#include SFINAE("SaveGame.h")
+#include SFINAE("ScriptEngine.h")
+#include SFINAE("StringMgr.h")
+#include SFINAE("SymbolMgr.h")
+#include SFINAE("Video.h")
+#include SFINAE("WindowMgr.h")
+#undef SINFAE
 #endif
 
 class Actor;
@@ -75,6 +78,7 @@ class MusicMgr;
 class Palette;
 class ProjectileServer;
 class Resource;
+class ResourceCache;
 class SPLExtHeader;
 class SaveGame;
 class SaveGameIterator;
@@ -350,6 +354,7 @@ private:
 	int SpecialSpellsCount;
 	SpellDescType *SpecialSpells;
 public:
+	Holder<ResourceCache> CacheDir; // FIXME
 	Holder<StringMgr> strings;
 	GlobalTimer * timer;
 	Palette *InfoTextPalette;

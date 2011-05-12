@@ -52,6 +52,7 @@ public:
 	 * @param[in] type Plugin type used for source.
 	 **/
 	bool AddSource(const char *path, const char *description, PluginID type, int flags=0);
+	void AddSource(ResourceSource* source);
 
 	/** returns true if resource exists */
 	bool Exists(const char *ResRef, SClass_ID type, bool silent=false) const;

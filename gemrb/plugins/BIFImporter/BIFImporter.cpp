@@ -25,6 +25,7 @@
 #include "Compressor.h"
 #include "FileCache.h"
 #include "Interface.h"
+#include "ResourceCache.h"
 #include "PluginMgr.h"
 #include "System/SlicedStream.h"
 #include "System/FileStream.h"
@@ -59,8 +60,8 @@ DataStream* BIFImporter::DecompressBIFC(DataStream* compressed, const char* path
 	compressed->ReadDword( &unCompBifSize );
 	print( "\nDecompressing file: [..........]" );
 	fflush(stdout);
-	FileStream out;
-	if (!out.Create(path)) {
+	DataStream* out = core->CacheDir->CreateFile(path);
+	if (!out) {
 		printMessage("BIFImporter", "Cannot write %s.\n", RED, path);
 		return NULL;
 	}
@@ -70,10 +71,10 @@ DataStream* BIFImporter::DecompressBIFC(DataStream* compressed, const char* path
 		ieDword complen, declen;
 		compressed->ReadDword( &declen );
 		compressed->ReadDword( &complen );
-		if (comp->Decompress( &out, compressed, complen ) != GEM_OK) {
+		if (comp->Decompress( out, compressed, complen ) != GEM_OK) {
 			return NULL;
 		}
-		finalsize = out.GetPos();
+		finalsize = out->GetPos();
 		if (( int ) ( finalsize * ( 10.0 / unCompBifSize ) ) != laststep) {
 			laststep++;
 			print( "\b\b\b\b\b\b\b\b\b\b\b" );
@@ -88,7 +89,7 @@ DataStream* BIFImporter::DecompressBIFC(DataStream* compressed, const char* path
 		}
 	}
 	print( "\n" );
-	return FileStream::OpenFile(path);
+	return core->CacheDir->OpenFile(path);
 }
 
 DataStream* BIFImporter::DecompressBIF(DataStream* compressed, const char* /*path*/)
@@ -112,9 +113,7 @@ int BIFImporter::OpenArchive(const char* path)
 	char filename[_MAX_PATH];
 	ExtractFileFromPath(filename, path);
 
-	char cachePath[_MAX_PATH];
-	PathJoin(cachePath, core->CachePath, filename, NULL);
-	stream = FileStream::OpenFile(cachePath);
+	stream = core->CacheDir->OpenFile(filename);
 
 	char Signature[8];
 	if (!stream) {
@@ -128,10 +127,10 @@ int BIFImporter::OpenArchive(const char* path)
 		}
 
 		if (strncmp(Signature, "BIF V1.0", 8) == 0) {
-			stream = DecompressBIF(file, cachePath);
+			stream = DecompressBIF(file, filename);
 			delete file;
 		} else if (strncmp(Signature, "BIFCV1.0", 8) == 0) {
-			stream = DecompressBIFC(file, cachePath);
+			stream = DecompressBIFC(file, filename);
 			delete file;
 		} else if (strncmp( Signature, "BIFFV1  ", 8 ) == 0) {
 			stream = CacheStream(file);

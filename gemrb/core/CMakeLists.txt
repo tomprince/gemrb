@@ -58,6 +58,7 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	ProjectileServer.cpp
 	Region.cpp
 	Resource.cpp
+	ResourceCache.cpp
 	ResourceDesc.cpp
 	ResourceManager.cpp
 	ResourceSource.cpp

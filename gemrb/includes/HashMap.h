@@ -84,6 +84,18 @@ public:
 	bool remove(const Key &key);
 	void clear();
 
+	template <class F>
+	void for_each(F f)
+	{
+		for (unsigned int p; p < _tableSize; ++p) {
+			Entry *e = _buckets[p];
+			while (e) {
+				f(e->value);
+				e = e->next;
+			}
+		}
+	}
+
 protected:
 	struct Entry {
 		Key key;
