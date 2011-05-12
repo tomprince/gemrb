@@ -252,12 +252,18 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 			return NULL;
 		}
 
-		PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
-		if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
-			print("Cannot open archive %s\n", biffiles[bifnum].path );
-			return NULL;
+		// simple one-BIF cache to avoid opening the same BIF repeatedly
+		if (lastSeenCache.bifnum != bifnum) {
+			PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
+			if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
+				print("Cannot open archive %s\n", biffiles[bifnum].path );
+				return NULL;
+			}
+			lastSeenCache.bifnum = bifnum;
+			lastSeenCache.plugin = ai;
 		}
-		DataStream* ret = ai->GetStream( ResLocator, type );
+
+		DataStream* ret = lastSeenCache.plugin->GetStream( ResLocator, type );
 		if (ret) {
 			strnlwrcpy( ret->filename, resname, 8 );
 			strcat( ret->filename, "." );
