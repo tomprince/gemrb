@@ -79,6 +79,7 @@ libgemrb_core_la_SOURCES = \
 	ProjectileServer.cpp \
 	Region.cpp \
 	Resource.cpp \
+	ResourceCache.cpp \
 	ResourceDesc.cpp \
 	ResourceManager.cpp \
 	ResourceSource.cpp \
