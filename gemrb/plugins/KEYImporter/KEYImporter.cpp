@@ -25,6 +25,7 @@
 
 #include "IndexedArchive.h"
 #include "Interface.h"
+#include "PluginMgr.h"
 #include "ResourceDesc.h"
 #include "System/FileStream.h"
 
@@ -217,20 +218,25 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 		return 0;
 
 	unsigned int bifnum = ( *ResLocator & 0xFFF00000 ) >> 20;
+	BIFEntry& entry = biffiles[bifnum];
 
-	if (!biffiles[bifnum].found) {
+	if (!entry.found) {
 		print( "Cannot find %s... Resource unavailable.\n",
 				biffiles[bifnum].name );
 		return NULL;
 	}
 
-	PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
-	if (ai->OpenArchive( biffiles[bifnum].path ) == GEM_ERROR) {
-		print("Cannot open archive %s\n", biffiles[bifnum].path );
-		return NULL;
+	if (!entry.plugin) {
+		PluginHolder<IndexedArchive> ai(IE_BIF_CLASS_ID);
+		if (ai->OpenArchive( entry.path ) == GEM_ERROR) {
+			print("Cannot open archive %s\n", entry.path );
+			return NULL;
+		}
+		entry.plugin = ai;
 	}
 
-	DataStream* ret = ai->GetStream( *ResLocator, type );
+	DataStream* ret = entry.plugin->GetStream(*ResLocator, type);
+
 	if (ret) {
 		strnlwrcpy( ret->filename, resname, 8 );
 		strcat( ret->filename, "." );

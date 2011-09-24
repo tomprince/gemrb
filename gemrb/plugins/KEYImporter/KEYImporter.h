@@ -24,7 +24,7 @@
 #include "ResourceSource.h"
 
 #include "IndexedArchive.h"
-#include "PluginMgr.h"
+#include "Holder.h"
 
 #include "StringMap.h"
 
@@ -40,13 +40,7 @@ struct BIFEntry {
 	char path[_MAX_PATH];
 	int cd;
 	bool found;
-};
-
-struct KEYCache {
-	KEYCache() { bifnum = 0xffffffff; }
-
-	unsigned int bifnum;
-	PluginHolder<IndexedArchive> plugin;
+	Holder<IndexedArchive> plugin;
 };
 
 // the key for this specific hashmap
