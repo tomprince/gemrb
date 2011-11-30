@@ -1346,7 +1346,14 @@ int Interface::LoadSprites()
 		unsigned short font_size = 0;
 		FontStyle font_style = NORMAL;
 
-		font_name = ResRef;
+		if (CustomFontPath[0]) {
+			font_name = tab->QueryField( i, 4 );// map a font alternative to the BAM ResRef since CHUs contain hardcoded refrences.
+			font_size = atoi( tab->QueryField( i, 5 ) );// not available in BAM fonts.
+			font_style = (FontStyle)atoi( tab->QueryField( i, 6 ) );// not available in BAM fonts.
+		}else{
+			font_name = ResRef;
+		}
+
 		// Do search for existing font here
 		Font* fnt = NULL;
 		for (size_t j = 0; j < fonts.size(); j++) {
