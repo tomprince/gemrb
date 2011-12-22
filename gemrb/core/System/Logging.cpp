@@ -36,6 +36,7 @@ void vprint(const char *message, va_list ap)
 	__android_log_vprint(ANDROID_LOG_INFO, "printf:", message, ap);
 #elif (!defined(WIN32)) || defined(WIN32_USE_STDIO)
 	vprintf(message, ap);
+	fflush(stdout);
 #else
 	// Don't try to be smart.
 	// Assume this is long enough. If not, message will be truncated.
