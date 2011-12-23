@@ -5052,6 +5052,7 @@ int Actor::GetDefense(int DamageType, Actor *attacker) const
 	return defense;
 }
 
+static EffectRef fx_puppetmarker_ref = { "PuppetMarker", -1 };
 
 void Actor::PerformAttack(ieDword gameTime)
 {
@@ -5184,6 +5185,12 @@ void Actor::PerformAttack(ieDword gameTime)
 	if (attacksperround) {
 		print("Left: %d | ", attackcount);
 		print("Next: %d ", nextattack);
+	}
+	if (fxqueue.HasEffectWithParam(fx_puppetmarker_ref, 1) || fxqueue.HasEffectWithParam(fx_puppetmarker_ref, 2)) { // illusions can't hit
+		ResetState();
+		printBracket("Missed", LIGHT_RED);
+		print("\n");
+		return;
 	}
 
 	// iwd2 rerolls to check for criticals (cf. manual page 45) - the second roll just needs to hit; on miss, it degrades to a normal hit
