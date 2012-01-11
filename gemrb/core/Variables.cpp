@@ -490,12 +490,12 @@ void Variables::LoadInitialValues(const char* name)
 	
 	// first value is useless
 	if (!fs.Read(buffer, 40)) return;
-	if (fs.ReadDword(&value) != 4) return;
+	fs.ReadDword(&value);
 	
 	while (fs.Remains()) {
 		// read data
 		if (!fs.Read(buffer, 40)) return;
-		if (fs.ReadDword(&value) != 4) return;
+		fs.ReadDword(&value);
 		// is it the type we want? if not, skip
 		if (strnicmp(buffer, name, 6)) continue;
 		// copy variable (types got 2 extra spaces, and the name is padded too)

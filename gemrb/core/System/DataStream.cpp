@@ -22,6 +22,7 @@
 
 #include "win32def.h"
 
+#include <cassert>
 #include <ctype.h>
 
 static const char* GEM_ENCRYPTION_KEY = "\x88\xa8\x8f\xba\x8a\xd3\xb9\xf5\xed\xb1\xcf\xea\xaa\xe4\xb5\xfb\xeb\x82\xf9\x90\xca\xc9\xb5\xe7\xdc\x8e\xb7\xac\xee\xf7\xe0\xca\x8e\xea\xca\x80\xce\xc5\xad\xb7\xc4\xd0\x84\x93\xd5\xf0\xeb\xc8\xb4\x9d\xcc\xaf\xa5\x95\xba\x99\x87\xd2\x9d\xe3\x91\xba\x90\xca";
@@ -92,7 +93,7 @@ unsigned long DataStream::Remains() const
 	return size-Pos;
 }
 
-int DataStream::ReadWord(ieWord *dest)
+void DataStream::ReadWord(ieWord *dest)
 {
 	int len = Read(dest, 2);
 	if (EndianSwitch) {
@@ -101,10 +102,10 @@ int DataStream::ReadWord(ieWord *dest)
 		((unsigned char *) dest)[0]=((unsigned char *) dest)[1];
 		((unsigned char *) dest)[1]=tmp;
 	}
-	return len;
+	assert(len == 2);
 }
 
-int DataStream::ReadWordSigned(ieWordSigned *dest)
+void DataStream::ReadWordSigned(ieWordSigned *dest)
 {
 	int len = Read(dest, 2);
 	if (EndianSwitch) {
@@ -113,10 +114,10 @@ int DataStream::ReadWordSigned(ieWordSigned *dest)
 		((unsigned char *) dest)[0]=((unsigned char *) dest)[1];
 		((unsigned char *) dest)[1]=tmp;
 	}
-	return len;
+	assert(len == 2);
 }
 
-int DataStream::WriteWord(const ieWord *src)
+void DataStream::WriteWord(const ieWord *src)
 {
 	int len;
 	if (EndianSwitch) {
@@ -128,10 +129,10 @@ int DataStream::WriteWord(const ieWord *src)
 	else {
 		len = Write( src, 2 );
 	}
-	return len;
+	assert(len == 2);
 }
 
-int DataStream::ReadDword(ieDword *dest)
+void DataStream::ReadDword(ieDword *dest)
 {
 	int len = Read(dest, 4);
 	if (EndianSwitch) {
@@ -143,10 +144,10 @@ int DataStream::ReadDword(ieDword *dest)
 		((unsigned char *) dest)[1]=((unsigned char *) dest)[2];
 		((unsigned char *) dest)[2]=tmp;
 	}
-	return len;
+	assert(len == 4);
 }
 
-int DataStream::WriteDword(const ieDword *src)
+void DataStream::WriteDword(const ieDword *src)
 {
 	int len;
 	if (EndianSwitch) {
@@ -160,10 +161,10 @@ int DataStream::WriteDword(const ieDword *src)
 	else {
 		len = Write( src, 4 );
 	}
-	return len;
+	assert(len == 4);
 }
 
-int DataStream::ReadResRef(ieResRef dest)
+void DataStream::ReadResRef(ieResRef dest)
 {
 	int len = Read(dest, 8);
 	int i;
@@ -178,12 +179,13 @@ int DataStream::ReadResRef(ieResRef dest)
 	}
 	// null-terminate
 	dest[8] = 0;
-	return len;
+	assert(len == 8);
 }
 
-int DataStream::WriteResRef(const ieResRef src)
+void DataStream::WriteResRef(const ieResRef src)
 {
-	return Write( src, 8);
+	int len = Write(src, 8);
+	assert(len == 8);
 }
 
 int DataStream::ReadLine(void* buf, unsigned int maxlen)
