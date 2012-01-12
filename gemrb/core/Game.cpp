@@ -180,6 +180,8 @@ Game::~Game(void)
 		free (planepositions[i]);
 	}
 
+	// Hack to see if MSVC6 compiles without delete[]
+#ifndef _MSC_VER
 	i = npclevels.size();
 	while (i--) {
 		size_t j = npclevels[i].size();
@@ -187,6 +189,7 @@ Game::~Game(void)
 			delete [] npclevels[i][j];
 		}
 	}
+#endif
 }
 
 static bool IsAlive(Actor *pc)
