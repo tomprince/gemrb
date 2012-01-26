@@ -1582,13 +1582,6 @@ int Interface::Init()
 		PathJoin( path, GamePath, GameDataPath, NULL);
 		gamedata->AddSource(path, "Data", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		//IWD2 movies are on the CD but not in the BIF
-		char *description = strdup("CD1/data");
-		for (i = 0; i < MAX_CD; i++) {
-			for (size_t j=0;j<CD[i].size();j++) {
-				description[2]='1'+i;				
-				PathJoin( path, CD[i][j].c_str(), GameDataPath, NULL);
-				gamedata->AddSource(path, description, PLUGIN_RESOURCE_CACHEDDIRECTORY);
 		printStatus( "OK", LIGHT_GREEN );
 	}
 
@@ -1655,8 +1648,10 @@ int Interface::Init()
 				ResolveFilePath( CD[i][cnt] );
 			}
 		}
-		free(description);
-
+		if (stricmp( core->GameType, "iwd2" ) == 0) {
+			//IWD2 movies are on the CD but not in the BIF
+			gamedata->AddSource(strcat(name, "data"), cd, PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		}
 	}
 
 	{
