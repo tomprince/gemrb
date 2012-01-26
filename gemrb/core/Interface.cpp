@@ -3911,7 +3911,7 @@ bool Interface::LoadINI(const char* filename)
 		//the * element is not counted
 		if (sscanf( line, "%[^=]=%[^\r\n]", name, value )!=2)
 			continue;
-		if (( value[0] >= '0' ) && ( value[0] <= '9' )) {
+		if ((( value[0] >= '0' ) && ( value[0] <= '9' )) || value[0] == '-') {
 			vars->SetAt( name, atoi( value ) );
 		}
 	}
