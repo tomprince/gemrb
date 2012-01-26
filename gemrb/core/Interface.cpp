@@ -1292,6 +1292,7 @@ int Interface::LoadSprites()
 	}
 
 	i = 0;
+	vars->SetType(GEM_VARIABLES_INT);
 	vars->Lookup("3D Acceleration", i);
 	if (i) {
 		for(i=0;i<sizeof(FogSprites)/sizeof(Sprite2D *);i++ ) {
@@ -3912,7 +3913,11 @@ bool Interface::LoadINI(const char* filename)
 		if (sscanf( line, "%[^=]=%[^\r\n]", name, value )!=2)
 			continue;
 		if ((( value[0] >= '0' ) && ( value[0] <= '9' )) || value[0] == '-') {
+			vars->SetType(GEM_VARIABLES_INT);
 			vars->SetAt( name, atoi( value ) );
+		} else {
+			vars->SetType(GEM_VARIABLES_STRING);
+			vars->SetAtCopy( name, value );
 		}
 	}
 	delete config;
