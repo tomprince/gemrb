@@ -1292,6 +1292,7 @@ int Interface::LoadSprites()
 	}
 
 	i = 0;
+	vars->SetType(GEM_VARIABLES_INT);
 	vars->Lookup("3D Acceleration", i);
 	if (i) {
 		for(i=0;i<sizeof(FogSprites)/sizeof(Sprite2D *);i++ ) {
@@ -1581,18 +1582,76 @@ int Interface::Init()
 		PathJoin( path, GamePath, GameDataPath, NULL);
 		gamedata->AddSource(path, "Data", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		//IWD2 movies are on the CD but not in the BIF
-		char *description = strdup("CD1/data");
-		for (i = 0; i < MAX_CD; i++) {
-			for (size_t j=0;j<CD[i].size();j++) {
-				description[2]='1'+i;				
-				PathJoin( path, CD[i][j].c_str(), GameDataPath, NULL);
-				gamedata->AddSource(path, description, PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		printStatus( "OK", LIGHT_GREEN );
+	}
+
+	printMessage( "Core", "Reading Game Options...\n", WHITE );
+	if (!LoadGemRBINI()) {
+		print( "Cannot Load INI\nTermination in Progress...\n" );
+		return GEM_ERROR;
+	}
+
+	//loading gametype.ini
+	if (!IgnoreOriginalINI) {
+		char ini_path[_MAX_PATH];
+		PathJoin( ini_path, GamePath, INIConfig, NULL );
+		LoadINI( ini_path );
+	}
+
+	size_t i;
+	for (i = 0; i < MAX_CD; ++i) {
+		char name[_MAX_PATH];
+		name[0] = 0;
+		char cd[] = { 'C', 'D', '1'+i, '\0' };
+		if (!CD[i].size()) {
+			if (!IgnoreOriginalINI) {
+				// first check baldur.ini for the path
+				core->GetDictionary()->SetType( GEM_VARIABLES_STRING );
+				char key[5] = { 'C', 'D', '1'+i, ':', '\0' };
+				if (core->GetDictionary()->Lookup(key, name, _MAX_PATH)) {
+					print("Using CD%i path from %s\n", i+1, INIConfig);
+					if (GamePath) {
+						/* make the ini CD path relative to our GamePath by
+						 searching the ini path for the last component of your game path
+						 then appending the remainder as the CD path
+						*/
+						GamePath[strlen(GamePath) - 1] = '\0';//trim the trailing / for now
+						char* GameDirectory = strrchr(GamePath, PathDelimiter);
+						GamePath[strlen(GamePath)] = PathDelimiter;// re-append the path delimiter
+						if (GameDirectory) GameDirectory++; //we dont want the path delimiter
+						else GameDirectory = GamePath;
+
+						// convert the path either to or from windows format
+						char badDelim = '\\';
+						if (PathDelimiter == badDelim) badDelim = '/'; //windows
+
+						std::string str = std::string(name);
+						std::replace(str.begin(), str.end(), badDelim, PathDelimiter);
+
+						char* cdPath = strstr(str.c_str(), GameDirectory);
+						if (cdPath) {
+							PathJoin(name, GamePath, cdPath+strlen(GameDirectory), NULL);
+							print("modifying CD%i path to:%s\n", i+1, name);
+						}
+					}
+				}
+			}
+			// now just add GamePath + cd[i] if it wasnt given by the ini
+			if (!name[0]) {
+				PathJoin(name, GamePath, cd, NULL);
+			}
+			print("Adding CD%i path:%s\n", i+1, name);
+			CD[i].push_back(name);
+		} else {
+			size_t cnt = CD[i].size();
+			while(cnt--) {
+				ResolveFilePath( CD[i][cnt] );
 			}
 		}
-		free(description);
-
-		printStatus( "OK", LIGHT_GREEN );
+		if (stricmp( core->GameType, "iwd2" ) == 0) {
+			//IWD2 movies are on the CD but not in the BIF
+			gamedata->AddSource(strcat(name, "data"), cd, PLUGIN_RESOURCE_CACHEDDIRECTORY);
+		}
 	}
 
 	{
@@ -1629,20 +1688,6 @@ int Interface::Init()
 	// Purposely add the font directory last since we will only ever need it at engine load time.
 	if (CustomFontPath[0]) gamedata->AddSource(CustomFontPath, "CustomFonts", PLUGIN_RESOURCE_DIRECTORY);
 
-	printMessage( "Core", "Reading Game Options...\n", WHITE );
-	if (!LoadGemRBINI()) {
-		print( "Cannot Load INI\nTermination in Progress...\n" );
-		return GEM_ERROR;
-	}
-
-	//loading baldur.ini
-	if (!IgnoreOriginalINI) {
-		char ini_path[_MAX_PATH];
-		PathJoin( ini_path, GamePath, INIConfig, NULL );
-		LoadINI( ini_path );
-	}
-
-	int i;
 	for (i = 0; i < 8; i++) {
 		if (INIConfig[i] == '.')
 			break;
@@ -2472,21 +2517,6 @@ bool Interface::LoadConfig(const char* filename)
 		PathJoin( CachePath, UserDir, "Cache", NULL );
 	} else {
 		ResolveFilePath(CachePath);
-	}
-
-	for (i = 0; i < MAX_CD; ++i) {
-		if (!CD[i].size()) {
-			char cd[] = { 'C', 'D', '1'+i, '\0' };
-			char name[_MAX_PATH];
-
-			PathJoin(name, GamePath, cd, NULL);
-			CD[i].push_back(name);
-		} else {
-			size_t cnt = CD[i].size();
-			while(cnt--) {
-				ResolveFilePath( CD[i][cnt] );
-			}
-		}
 	}
 
 	for (i = 0; i < ModPath.size(); ++i) {
@@ -3911,8 +3941,12 @@ bool Interface::LoadINI(const char* filename)
 		//the * element is not counted
 		if (sscanf( line, "%[^=]=%[^\r\n]", name, value )!=2)
 			continue;
-		if (( value[0] >= '0' ) && ( value[0] <= '9' )) {
+		if ((( value[0] >= '0' ) && ( value[0] <= '9' )) || value[0] == '-') {
+			vars->SetType(GEM_VARIABLES_INT);
 			vars->SetAt( name, atoi( value ) );
+		} else {
+			vars->SetType(GEM_VARIABLES_STRING);
+			vars->SetAtCopy( name, value );
 		}
 	}
 	delete config;
