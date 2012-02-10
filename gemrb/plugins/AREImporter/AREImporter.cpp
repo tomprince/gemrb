@@ -1101,9 +1101,6 @@ Map* AREImporter::GetMap(const char *ResRef, bool day_or_night)
 	//Don't bother with autonote.ini if the area has autonotes (ie. it is a saved area)
 	int pst = core->HasFeature( GF_AUTOMAP_INI );
 	if (pst && !NoteCount) {
-		if( !INInote ) {
-			ReadAutonoteINI();
-		}
 		//add autonote.ini entries
 		if( INInote ) {
 			color = 1; //read only note
@@ -2323,5 +2320,6 @@ int AREImporter::PutArea(DataStream *stream, Map *map)
 
 GEMRB_PLUGIN(0x145B60F0, "ARE File Importer")
 PLUGIN_CLASS(IE_ARE_CLASS_ID, AREImporter)
+PLUGIN_INITIALIZER(ReadAutonoteINI)
 PLUGIN_CLEANUP(ReleaseMemory)
 END_PLUGIN()
