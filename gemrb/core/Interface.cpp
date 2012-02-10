@@ -1522,9 +1522,7 @@ int Interface::Init()
 	time_t t;
 	t = time( NULL );
 	srand( ( unsigned int ) t );
-#ifdef _DEBUG
-	FileStreamPtrCount = 0;
-#endif
+
 	printMessage( "Core", "GemRB Core Initialization...", WHITE );
 	printStatus( "OK", LIGHT_GREEN );
 	printMessage( "Core", "Initializing Video Driver...", WHITE );

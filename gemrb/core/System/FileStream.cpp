@@ -158,9 +158,6 @@ FileStream::~FileStream(void)
 void FileStream::Close()
 {
 	if (opened) {
-#ifdef _DEBUG
-		core->FileStreamPtrCount--;
-#endif
 		str->Close();
 	}
 	opened = false;
@@ -184,9 +181,6 @@ bool FileStream::Open(const char* fname)
 	if (!str->OpenRO(fname)) {
 		return false;
 	}
-#ifdef _DEBUG
-	core->FileStreamPtrCount++;
-#endif
 	opened = true;
 	created = false;
 	FindLength();
@@ -202,9 +196,6 @@ bool FileStream::Modify(const char* fname)
 	if (!str->OpenRW(fname)) {
 		return false;
 	}
-#ifdef _DEBUG
-	core->FileStreamPtrCount++;
-#endif
 	opened = true;
 	created = true;
 	FindLength();
