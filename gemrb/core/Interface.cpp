@@ -1524,7 +1524,6 @@ int Interface::Init()
 		printStatus( "ERROR", LIGHT_RED );
 		return GEM_ERROR;
 	}
-	plugin->RunInitializers();
 
 	InitializeRandomNumbers();
 
@@ -1646,6 +1645,9 @@ int Interface::Init()
 	if (!InitializeVarsWithINI(ini_path)) {
 		printMessage("Core", "Unable to set dictionary default values!", YELLOW);
 	}
+
+	// Initialize this here, so that game flags have been set.
+	plugin->RunInitializers();
 
 	int i;
 	for (i = 0; i < 8; i++) {
