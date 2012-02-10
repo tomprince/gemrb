@@ -84,7 +84,6 @@ static bool PathExists(BIFEntry *entry, const std::vector<std::string> &pathlist
 
 static void FindBIF(BIFEntry *entry)
 {
-	entry->cd = 0;
 	entry->found = PathExists(entry, core->GamePath);
 	if (entry->found) {
 		return;
@@ -93,7 +92,6 @@ static void FindBIF(BIFEntry *entry)
 	for (int i = 0; i < MAX_CD; i++) {
 		if (PathExists(entry, core->CD[i]) ) {
 			entry->found = true;
-			entry->cd = i;
 			return;
 		}
 	}
