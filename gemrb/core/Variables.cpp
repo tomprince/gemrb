@@ -473,7 +473,7 @@ void Variables::Remove(const char* key)
 	FreeAssoc(pAssoc);
 }
 
-void Variables::LoadInitialValues(const char* name)
+void LoadInitialValues(Variables *vars, const char* name)
 {
 	char nPath[_MAX_PATH];
 	// we only support PST's var.var for now
@@ -501,6 +501,6 @@ void Variables::LoadInitialValues(const char* name)
 		// copy variable (types got 2 extra spaces, and the name is padded too)
 		// (true = uppercase, needed for original engine save compat, see 315b8f2e)
 		strnspccpy(varname,buffer+8,32, true);
-		SetAt(varname, value);
+		vars->SetAt(varname, value);
 	}  
 }
