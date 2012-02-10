@@ -59,45 +59,29 @@ static bool PathExists(BIFEntry *entry, const char *path)
 {
 	PathJoin(entry->path, path, entry->name, NULL);
 	if (file_exists(entry->path)) {
+		entry->found = true;
 		return true;
 	}
 	PathJoin(entry->path, path, AddCBF(entry->name), NULL);
 	if (file_exists(entry->path)) {
+		entry->found = true;
 		return true;
 	}
 
 	return false;
 }
 
-static bool PathExists(BIFEntry *entry, const std::vector<std::string> &pathlist)
+static bool FindBIF(BIFEntry *entry, const std::vector<char const*> &pathlist)
 {
 	size_t i;
 	
 	for(i=0;i<pathlist.size();i++) {
-		if (PathExists(entry, pathlist[i].c_str() )) {
+		if (PathExists(entry, pathlist[i])) {
 			return true;
 		}
 	}
 
 	return false;
-}
-
-static void FindBIF(BIFEntry *entry)
-{
-	entry->found = PathExists(entry, core->GamePath);
-	if (entry->found) {
-		return;
-	}
-
-	for (int i = 0; i < MAX_CD; i++) {
-		if (PathExists(entry, core->CD[i]) ) {
-			entry->found = true;
-			return;
-		}
-	}
-
-	printMessage("KEYImporter", "Cannot find %s...", WHITE, entry->name);
-	printStatus( "ERROR", LIGHT_RED );
 }
 
 bool KEYImporter::Open(const char *resfile, const char *desc)
@@ -150,6 +134,14 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 		ResCount, ResOffset);
 	f->Seek( BifOffset, GEM_STREAM_START );
 
+	std::vector<char const*> bif_paths;
+	bif_paths.push_back(core->GamePath);
+	for (int i = 0; i < MAX_CD; i++) {
+		for (size_t j=0; j < core->CD[i].size(); j++) {
+			bif_paths.push_back(core->CD[i][j].c_str());
+		}
+	}
+
 	ieDword BifLen, ASCIIZOffset;
 	ieWord ASCIIZLen;
 	for (i = 0; i < BifCount; i++) {
@@ -167,7 +159,10 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 			if (be.name[p] == '\\' || be.name[p] == ':')
 				be.name[p] = PathDelimiter;
 		}
-		FindBIF(&be);
+		if (!FindBIF(&be, bif_paths)) {
+			printMessage("KEYImporter", "Cannot find %s...", WHITE, be.name);
+			printStatus( "ERROR", LIGHT_RED );
+		}
 		biffiles.push_back( be );
 	}
 	f->Seek( ResOffset, GEM_STREAM_START );
