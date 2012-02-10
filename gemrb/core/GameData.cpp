@@ -117,7 +117,7 @@ int GameData::LoadCreature(const char* ResRef, unsigned int PartySlot, bool char
 	if (character) {
 		char nPath[_MAX_PATH], fName[16];
 		snprintf( fName, sizeof(fName), "%s.chr", ResRef);
-		PathJoin( nPath, core->GamePath, "characters", fName, NULL );
+		PathJoin(nPath, core->CharactersPath, fName, NULL);
 		stream = FileStream::OpenFile(nPath);
 		PluginHolder<ActorMgr> actormgr(IE_CRE_CLASS_ID);
 		if (!actormgr->Open(stream)) {

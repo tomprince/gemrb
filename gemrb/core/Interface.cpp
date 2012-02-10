@@ -211,12 +211,12 @@ Interface::Interface(int iargc, char* iargv[])
 	GemRBOverridePath[0] = 0;
 	GameName[0] = 0;
 	CustomFontPath[0] = 0;
+	CharactersPath[0] = '\0';
 
 	strncpy( GameOverridePath, "override", sizeof(GameOverridePath) );
 	strncpy( GameSoundsPath, "sounds", sizeof(GameSoundsPath) );
 	strncpy( GameScriptsPath, "scripts", sizeof(GameScriptsPath) );
 	strncpy( GamePortraitsPath, "portraits", sizeof(GamePortraitsPath) );
-	strncpy( GameCharactersPath, "characters", sizeof(GameCharactersPath) );
 	strncpy( GameDataPath, "data", sizeof(GameDataPath) );
 	strncpy( INIConfig, "baldur.ini", sizeof(INIConfig) );
 	strncpy( ButtonFont, "STONESML", sizeof(ButtonFont) );
@@ -2280,6 +2280,8 @@ bool Interface::LoadConfig(const char* filename)
 {
 	size_t i;
 
+	char GameCharactersPath[_MAX_PATH] = "characters";
+
 	printMessage("Config","Trying to open ", WHITE);
 	textcolor(LIGHT_WHITE);
 	print("%s ", filename);
@@ -2482,6 +2484,8 @@ bool Interface::LoadConfig(const char* filename)
 	} else {
 		ResolveFilePath( SavePath );
 	}
+
+	PathJoin(CharactersPath, GamePath, GameCharactersPath, NULL);
 
 	if (! CachePath[0]) {
 		PathJoin( CachePath, UserDir, "Cache", NULL );
@@ -3879,8 +3883,7 @@ int Interface::GetCharacters(TextArea* ta)
 	int count = 0;
 	char Path[_MAX_PATH];
 
-	PathJoin( Path, GamePath, GameCharactersPath, NULL );
-	DirectoryIterator dir(Path);
+	DirectoryIterator dir(CharactersPath);
 	if (!dir) {
 		return -1;
 	}
@@ -5213,7 +5216,6 @@ int Interface::WriteCharacter(const char *name, Actor *actor)
 {
 	char Path[_MAX_PATH];
 
-	PathJoin( Path, GamePath, GameCharactersPath, NULL );
 	if (!actor) {
 		return -1;
 	}
@@ -5226,7 +5228,7 @@ int Interface::WriteCharacter(const char *name, Actor *actor)
 	{
 		FileStream str;
 
-		if (!str.Create( Path, name, IE_CHR_CLASS_ID ))
+		if (!str.Create(CharactersPath, name, IE_CHR_CLASS_ID))
 			return -1;
 
 		int ret = gm->PutActor(&str, actor, true);
