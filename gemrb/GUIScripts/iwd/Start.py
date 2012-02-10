@@ -104,7 +104,7 @@ def OnLoad ():
 	LoadGameButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, LoadPress)
 	CreateGameButton.SetEvent (IE_GUI_BUTTON_ON_PRESS, CreatePress)
 	StartWindow.SetVisible (WINDOW_VISIBLE)
-	GemRB.LoadMusicPL("Theme.mus",1)
+	GemRB.LoadMusicPL("Theme",1)
 	return
 
 def ProtocolPress ():

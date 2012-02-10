@@ -24,7 +24,6 @@
 #include "MusicMgr.h"
 
 #include "ResourceManager.h"
-#include "System/FileStream.h"
 
 #include <cstdio>
 
@@ -47,7 +46,6 @@ private:
 	char PLName[32];
 	char PLNameNew[32];
 	int PLpos, PLnext;
-	FileStream* str;
 	std::vector< PLString> playlist;
 	unsigned int lastSound;
 	ResourceManager manager;

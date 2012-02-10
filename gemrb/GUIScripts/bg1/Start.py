@@ -63,7 +63,7 @@ def OnLoad():
 
 	BackToMain()
 	
-	GemRB.LoadMusicPL("Theme.mus")
+	GemRB.LoadMusicPL("Theme")
 	return
 	
 def SinglePlayerPress():

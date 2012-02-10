@@ -26,14 +26,14 @@
 #include "GameData.h" // For ResourceHolder
 #include "Interface.h"
 #include "SoundMgr.h"
+#include "System/DataStream.h"
 
-static char musicsubfolder[6] = "music";
+static const char musicsubfolder[6] = "music";
 
 MUSImporter::MUSImporter()
 {
 	Initialized = false;
 	Playing = false;
-	str = new FileStream();
 	PLpos = 0;
 	PLName[0] = '\0';
 	PLNameNew[0] = '\0';
@@ -45,9 +45,6 @@ MUSImporter::MUSImporter()
 
 MUSImporter::~MUSImporter()
 {
-	if (str) {
-		delete( str );
-	}
 }
 /** Initializes the PlayList Manager */
 bool MUSImporter::Init()
@@ -72,10 +69,9 @@ bool MUSImporter::OpenPlaylist(const char* name)
 	if (name[0] == '*') {
 		return false;
 	}
-	char path[_MAX_PATH];
-	PathJoin(path, core->GamePath, musicsubfolder, name, NULL);
-	printMessage("MUSImporter", "Loading %s...", WHITE, path);
-	if (!str->Open(path)) {
+	printMessage("MUSImporter", "Loading %s...", WHITE, name);
+	DataStream *str = manager.GetResource(name, IE_MUS_CLASS_ID);
+	if (!str) {
 		printStatus("NOT FOUND", LIGHT_RED );
 		return false;
 	}
@@ -173,6 +169,7 @@ bool MUSImporter::OpenPlaylist(const char* name)
 		playlist.push_back( pls );
 		count--;
 	}
+	delete str;
 	return true;
 }
 /** Start the PlayList Music Execution */

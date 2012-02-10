@@ -71,7 +71,7 @@ def OnLoad():
 	QuitWindow.SetVisible(WINDOW_INVISIBLE)
 	StartWindow.SetVisible(WINDOW_VISIBLE)
 
-	GemRB.LoadMusicPL("Main.mus")
+	GemRB.LoadMusicPL("Main")
 	return
 	
 def NewLifePress():

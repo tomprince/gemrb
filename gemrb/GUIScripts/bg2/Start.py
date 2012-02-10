@@ -91,7 +91,7 @@ def OnLoad():
 	ToBButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ToBPress)
 	ExitButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, ExitPress)
 	StartWindow.SetVisible(WINDOW_VISIBLE)
-	GemRB.LoadMusicPL("Cred.mus")
+	GemRB.LoadMusicPL("Cred")
 	return
 	
 def SoAPress():

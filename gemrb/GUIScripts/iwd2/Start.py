@@ -90,7 +90,7 @@ def OnLoad():
 	LoadGameButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, LoadPress)
 	QuickLoadButton.SetEvent(IE_GUI_BUTTON_ON_PRESS, QuickLoadPress)
 	StartWindow.SetVisible(WINDOW_VISIBLE)
-	GemRB.LoadMusicPL("Theme.mus")
+	GemRB.LoadMusicPL("Theme")
 
 	return
 

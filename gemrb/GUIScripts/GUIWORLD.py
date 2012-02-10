@@ -295,7 +295,7 @@ def OpenReformPartyWindow ():
 def DeathWindow ():
 	if GUICommon.GameIsIWD1():
 		#no death movie, but music is changed
-		GemRB.LoadMusicPL ("Theme.mus",1)
+		GemRB.LoadMusicPL ("Theme",1)
 	GemRB.HideGUI ()
 	GemRB.SetTimedEvent (DeathWindowEnd, 10)
 	return

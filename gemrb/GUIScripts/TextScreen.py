@@ -68,15 +68,15 @@ def StartTextScreen ():
 	#iwd2/bg2 has no separate music
 	if GUICommon.GameIsIWD1():
 		if LoadPic == "":
-			GemRB.LoadMusicPL ("chap0.mus")
+			GemRB.LoadMusicPL ("chap0")
 		else:
-			GemRB.LoadMusicPL ("chap1.mus")
+			GemRB.LoadMusicPL ("chap1")
 		TableName = "chapters"
 	elif GUICommon.GameIsIWD2():
 		GemRB.HardEndPL ()
 		TableName = "chapters"
 	elif GUICommon.GameIsBG1() and TableName[:6] == "chptxt":
-		GemRB.LoadMusicPL ("chapter.mus")
+		GemRB.LoadMusicPL ("chapter")
 	else:
 		GemRB.HardEndPL ()
 

@@ -130,7 +130,7 @@ def OpenReformPartyWindow ():
 
 def DeathWindowPlot():
 	#no death movie, but music is changed
-	GemRB.LoadMusicPL ("Theme.mus",1)
+	GemRB.LoadMusicPL ("Theme",1)
 	GemRB.HideGUI ()
 	GemRB.SetVar("QuitGame1", 32848)
 	GemRB.SetTimedEvent (DeathWindowEnd, 10)
@@ -138,7 +138,7 @@ def DeathWindowPlot():
 
 def DeathWindow():
 	#no death movie, but music is changed
-	GemRB.LoadMusicPL ("Theme.mus",1)
+	GemRB.LoadMusicPL ("Theme",1)
 	GemRB.HideGUI ()
 	GemRB.SetVar("QuitGame1", 16498)
 	GemRB.SetTimedEvent (DeathWindowEnd, 10)
