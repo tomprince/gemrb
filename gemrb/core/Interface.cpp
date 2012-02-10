@@ -212,9 +212,9 @@ Interface::Interface(int iargc, char* iargv[])
 	GameName[0] = 0;
 	CustomFontPath[0] = 0;
 	CharactersPath[0] = '\0';
+	SoundsPath[0] = '\0';
 
 	strncpy( GameOverridePath, "override", sizeof(GameOverridePath) );
-	strncpy( GameSoundsPath, "sounds", sizeof(GameSoundsPath) );
 	strncpy( GameScriptsPath, "scripts", sizeof(GameScriptsPath) );
 	strncpy( GamePortraitsPath, "portraits", sizeof(GamePortraitsPath) );
 	strncpy( GameDataPath, "data", sizeof(GameDataPath) );
@@ -1575,8 +1575,7 @@ int Interface::Init()
 
 		//GAME sounds are intentionally not cached, in IWD there are directory structures,
 		//that are not cacheable, also it is totally pointless (this fixed charsounds in IWD)
-		PathJoin( path, GamePath, GameSoundsPath, NULL);
-		gamedata->AddSource(path, "Sounds", PLUGIN_RESOURCE_DIRECTORY);
+		gamedata->AddSource(SoundsPath, "Sounds", PLUGIN_RESOURCE_DIRECTORY);
 
 		PathJoin( path, GamePath, GameScriptsPath, NULL);
 		gamedata->AddSource(path, "Scripts", PLUGIN_RESOURCE_CACHEDDIRECTORY);
@@ -2281,6 +2280,7 @@ bool Interface::LoadConfig(const char* filename)
 	size_t i;
 
 	char GameCharactersPath[_MAX_PATH] = "characters";
+	char GameSoundsPath[_MAX_PATH] = "sounds";
 
 	printMessage("Config","Trying to open ", WHITE);
 	textcolor(LIGHT_WHITE);
@@ -2486,6 +2486,7 @@ bool Interface::LoadConfig(const char* filename)
 	}
 
 	PathJoin(CharactersPath, GamePath, GameCharactersPath, NULL);
+	PathJoin(SoundsPath, GamePath, GameSoundsPath, NULL);
 
 	if (! CachePath[0]) {
 		PathJoin( CachePath, UserDir, "Cache", NULL );
@@ -3853,9 +3854,8 @@ int Interface::GetCharSounds(TextArea* ta)
 	int count = 0;
 	char Path[_MAX_PATH];
 
-	PathJoin( Path, GamePath, GameSoundsPath, NULL );
 	hasfolders = ( HasFeature( GF_SOUNDFOLDERS ) != 0 );
-	DirectoryIterator dir(Path);
+	DirectoryIterator dir(SoundsPath);
 	if (!dir) {
 		return -1;
 	}

@@ -744,11 +744,11 @@ private:
 public:
 	char GameDataPath[_MAX_PATH];
 	char GameOverridePath[_MAX_PATH];
-	char GameSoundsPath[_MAX_PATH];
 	char GameScriptsPath[_MAX_PATH];
 	char GamePortraitsPath[_MAX_PATH];
 	char GemRBOverridePath[_MAX_PATH];
 	char CharactersPath[_MAX_PATH];
+	char SoundsPath[_MAX_PATH];
 	ieResRef GameNameResRef;
 	ieResRef GoldResRef; //MISC07.itm
 	Variables *RtRows;

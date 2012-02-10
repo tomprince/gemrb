@@ -6613,7 +6613,7 @@ void Actor::SetSoundFolder(const char *soundset)
 		char filepath[_MAX_PATH];
 
 		strnlwrcpy(PCStats->SoundFolder, soundset, 32);
-		PathJoin(filepath, core->GamePath, "sounds", PCStats->SoundFolder, NULL);
+		PathJoin(filepath, core->SoundsPath, PCStats->SoundFolder, NULL);
 		char file[_MAX_PATH];
 
 		//TODO: this could be simpler with *
