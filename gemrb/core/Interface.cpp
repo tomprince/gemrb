@@ -113,6 +113,13 @@ static int **reputationmod = NULL;
 static ieVariable IWD2DeathVarFormat = "_DEAD%s";
 static ieVariable DeathVarFormat = "SPRITE_IS_DEAD%s";
 
+static void InitializeRandomNumbers()
+{
+	time_t t;
+	t = time( NULL );
+	srand( ( unsigned int ) t );
+}
+
 Interface::Interface(int iargc, char* iargv[])
 {
 	argc = iargc;
@@ -1519,9 +1526,7 @@ int Interface::Init()
 	}
 	plugin->RunInitializers();
 
-	time_t t;
-	t = time( NULL );
-	srand( ( unsigned int ) t );
+	InitializeRandomNumbers();
 
 	printMessage( "Core", "GemRB Core Initialization...", WHITE );
 	printStatus( "OK", LIGHT_GREEN );
