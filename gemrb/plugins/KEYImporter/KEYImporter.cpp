@@ -55,14 +55,14 @@ static char* AddCBF(char *file)
 	return cbf;
 }
 
-static bool PathExists(BIFEntry *entry, const char *path)
+static bool PathExists(BIFEntry *entry, std::string const& path)
 {
-	PathJoin(entry->path, path, entry->name, NULL);
+	PathJoin(entry->path, path.c_str(), entry->name, NULL);
 	if (file_exists(entry->path)) {
 		entry->found = true;
 		return true;
 	}
-	PathJoin(entry->path, path, AddCBF(entry->name), NULL);
+	PathJoin(entry->path, path.c_str(), AddCBF(entry->name), NULL);
 	if (file_exists(entry->path)) {
 		entry->found = true;
 		return true;
@@ -71,7 +71,7 @@ static bool PathExists(BIFEntry *entry, const char *path)
 	return false;
 }
 
-static bool FindBIF(BIFEntry *entry, const std::vector<char const*> &pathlist)
+static bool FindBIF(BIFEntry *entry, const std::vector<std::string>& pathlist)
 {
 	size_t i;
 	
@@ -84,7 +84,7 @@ static bool FindBIF(BIFEntry *entry, const std::vector<char const*> &pathlist)
 	return false;
 }
 
-bool KEYImporter::Open(const char *resfile, const char *desc)
+bool KEYImporter::Open(const char *resfile, std::vector<std::string> const& bif_paths, const char *desc)
 {
 	free(description);
 	description = strdup(desc);
@@ -133,14 +133,6 @@ bool KEYImporter::Open(const char *resfile, const char *desc)
 	printMessage("KEYImporter", "RES Count: %d (Starting at %d Bytes)\n", WHITE,
 		ResCount, ResOffset);
 	f->Seek( BifOffset, GEM_STREAM_START );
-
-	std::vector<char const*> bif_paths;
-	bif_paths.push_back(core->GamePath);
-	for (int i = 0; i < MAX_CD; i++) {
-		for (size_t j=0; j < core->CD[i].size(); j++) {
-			bif_paths.push_back(core->CD[i][j].c_str());
-		}
-	}
 
 	ieDword BifLen, ASCIIZOffset;
 	ieWord ASCIIZLen;

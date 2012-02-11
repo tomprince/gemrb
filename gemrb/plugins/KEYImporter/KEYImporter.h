@@ -124,7 +124,7 @@ public:
 	}
 };
 
-class KEYImporter : public ResourceSource {
+class KEYImporter : public IndexResourceSource {
 private:
 	std::vector< BIFEntry> biffiles;
 	KEYMap resources;
@@ -134,7 +134,7 @@ private:
 public:
 	KEYImporter(void);
 	~KEYImporter(void);
-	bool Open(const char *file, const char *desc);
+	bool Open(const char *file, std::vector<std::string> const&, const char *desc);
 	/* predicts the availability of a resource */
 	bool HasResource(const char* resname, SClass_ID type);
 	bool HasResource(const char* resname, const ResourceDesc &type);

@@ -1601,8 +1601,17 @@ int Interface::Init()
 	{
 		printMessage( "Core", "Initializing KEY Importer...", WHITE );
 		char ChitinPath[_MAX_PATH];
-		PathJoin( ChitinPath, GamePath, "chitin.key", NULL );
-		if (!gamedata->AddSource(ChitinPath, "chitin.key", PLUGIN_RESOURCE_KEY)) {
+		PathJoin(ChitinPath, GamePath, "chitin.key", NULL );
+
+		std::vector<std::string> bif_paths;
+		bif_paths.push_back(GamePath);
+		for (int i = 0; i < MAX_CD; i++) {
+			for (size_t j=0; j < CD[i].size(); j++) {
+				bif_paths.push_back(CD[i][j]);
+			}
+		}
+
+		if (!gamedata->AddIndexSource(ChitinPath, bif_paths, "chitin.key", PLUGIN_RESOURCE_KEY)) {
 			printStatus( "ERROR", LIGHT_RED );
 			return GEM_ERROR;
 		}

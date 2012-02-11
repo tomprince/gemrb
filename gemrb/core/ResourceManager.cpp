@@ -37,7 +37,7 @@ ResourceManager::~ResourceManager()
 
 bool ResourceManager::AddSource(const char *path, const char *description, PluginID type, int flags)
 {
-	PluginHolder<ResourceSource> source(type);
+	PluginHolder<SimpleResourceSource> source(type);
 	if (!source->Open(path, description)) {
 		printMessage("ResourceManager","Invalid path given: %s (%s)\n", YELLOW, path, description);
 		return false;
@@ -46,12 +46,33 @@ bool ResourceManager::AddSource(const char *path, const char *description, Plugi
 	if (flags & RM_REPLACE_SAME_SOURCE) {
 		for (size_t i = 0; i < searchPath.size(); i++) {
 			if (!stricmp(description, searchPath[i]->GetDescription())) {
-				searchPath[i] = source;
+				searchPath[i] = source.get();
 				break;
 			}
 		}
 	} else {
-		searchPath.push_back(source);
+		searchPath.push_back(source.get());
+	}
+	return true;
+}
+
+bool ResourceManager::AddIndexSource(const char *index, std::vector<std::string> const& path, const char* description, PluginID type, int flags)
+{
+	PluginHolder<IndexResourceSource> source(type);
+	if (!source->Open(index, path, description)) {
+		printMessage("ResourceManager","Invalid path given: %s (%s)\n", YELLOW, index, description);
+		return false;
+	}
+
+	if (flags & RM_REPLACE_SAME_SOURCE) {
+		for (size_t i = 0; i < searchPath.size(); i++) {
+			if (!stricmp(description, searchPath[i]->GetDescription())) {
+				searchPath[i] = source.get();
+				break;
+			}
+		}
+	} else {
+		searchPath.push_back(source.get());
 	}
 	return true;
 }

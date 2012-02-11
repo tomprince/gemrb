@@ -27,14 +27,17 @@
 
 #include "Plugin.h"
 
+#include <string>
+#include <vector>
+
 class DataStream;
 class ResourceDesc;
+class ResourceManager;
 
 class GEM_EXPORT ResourceSource : public Plugin {
 public:
 	ResourceSource(void);
 	virtual ~ResourceSource(void);
-	virtual bool Open(const char *filename, const char *description) = 0;
 	virtual bool HasResource(const char* resname, SClass_ID type) = 0;
 	virtual bool HasResource(const char* resname, const ResourceDesc &type) = 0;
 	virtual DataStream* GetResource(const char* resname, SClass_ID type) = 0;
@@ -42,6 +45,20 @@ public:
 	const char *GetDescription() const { return description; }
 protected:
 	char *description;
+};
+
+class GEM_EXPORT IndexResourceSource : public ResourceSource {
+public:
+	IndexResourceSource(void);
+	virtual ~IndexResourceSource(void);
+	virtual bool Open(const char *filename, std::vector<std::string> const& path, const char *description) = 0;
+};
+
+class GEM_EXPORT SimpleResourceSource : public ResourceSource {
+public:
+	SimpleResourceSource(void);
+	virtual ~SimpleResourceSource(void);
+	virtual bool Open(const char *filename, const char *description) = 0;
 };
 
 #endif
