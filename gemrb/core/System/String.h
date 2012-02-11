@@ -34,8 +34,9 @@
 
 /* this function will work with pl/cz special characters */
 
-extern unsigned char pl_uppercase[256];
-extern unsigned char pl_lowercase[256];
+// FIXME
+GEM_EXPORT extern unsigned char pl_uppercase[256];
+GEM_EXPORT extern unsigned char pl_lowercase[256];
 
 GEM_EXPORT void strnlwrcpy(char* d, const char *s, int l, bool pad = true);
 GEM_EXPORT void strnuprcpy(char* d, const char *s, int l);

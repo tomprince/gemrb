@@ -216,7 +216,7 @@ bool FileStream::Create(const char *folder, const char* fname, SClass_ID ClassID
 	char path[_MAX_PATH];
 	char filename[_MAX_PATH];
 	ExtractFileFromPath( filename, fname );
-	PathJoinExt(path, folder, filename, core->TypeExt(ClassID));
+	PathJoinExt(path, folder, filename, TypeExt(ClassID));
 	return Create(path);
 }
 

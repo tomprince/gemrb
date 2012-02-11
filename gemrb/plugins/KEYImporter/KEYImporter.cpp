@@ -24,7 +24,7 @@
 #include "globals.h"
 
 #include "IndexedArchive.h"
-#include "Interface.h"
+#include "PluginMgr.h"
 #include "ResourceDesc.h"
 #include "System/FileStream.h"
 
@@ -88,7 +88,7 @@ bool KEYImporter::Open(const char *resfile, std::vector<std::string> const& bif_
 {
 	free(description);
 	description = strdup(desc);
-	if (!core->IsAvailable( IE_BIF_CLASS_ID )) {
+	if (!PluginMgr::Get()->IsAvailable( IE_BIF_CLASS_ID )) {
 		print( "[ERROR]\nAn Archive Plug-in is not Available\n" );
 		return false;
 	}
@@ -219,7 +219,7 @@ DataStream* KEYImporter::GetStream(const char *resname, ieWord type)
 	if (ret) {
 		strnlwrcpy( ret->filename, resname, 8 );
 		strcat( ret->filename, "." );
-		strcat( ret->filename, core->TypeExt( type ) );
+		strcat(ret->filename, TypeExt(type));
 		return ret;
 	}
 

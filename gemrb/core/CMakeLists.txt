@@ -1,6 +1,23 @@
 ADD_DEFINITIONS(-DGEM_BUILD_DLL)
 
-FILE(GLOB gemrb_core_LIB_SRCS
+SET(gemrb_sys_LIB_SRCS
+	DataFileMgr.cpp
+	Plugin.cpp
+	PluginMgr.cpp
+	Resource.cpp
+	ResourceDesc.cpp
+	ResourceManager.cpp
+	ResourceSource.cpp
+	System/DataStream.cpp
+	System/FileStream.cpp
+	System/MemoryStream.cpp
+	System/Logging.cpp
+	System/SlicedStream.cpp
+	System/String.cpp
+	System/VFS.cpp
+	)
+
+SET(gemrb_core_LIB_SRCS
 	ActorMgr.cpp
 	Ambient.cpp
 	AmbientMgr.cpp
@@ -18,7 +35,6 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	Config.cpp
 	ControlAnimation.cpp
 	Core.cpp
-	DataFileMgr.cpp
 	Dialog.cpp
 	DialogHandler.cpp
 	DialogMgr.cpp
@@ -53,18 +69,12 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	Palette.cpp
 	PalettedImageMgr.cpp
 	Particles.cpp
-	Plugin.cpp
 	PluginLoader.cpp
-	PluginMgr.cpp
 	Polygon.cpp
 	Projectile.cpp
 	ProjectileMgr.cpp
 	ProjectileServer.cpp
 	Region.cpp
-	Resource.cpp
-	ResourceDesc.cpp
-	ResourceManager.cpp
-	ResourceSource.cpp
 	SaveGameIterator.cpp
 	SaveGameMgr.cpp
 	ScriptEngine.cpp
@@ -116,25 +126,21 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	Scriptable/InfoPoint.cpp
 	Scriptable/Scriptable.cpp
 	Scriptable/PCStatStruct.cpp
-	System/DataStream.cpp
-	System/FileStream.cpp
-	System/MemoryStream.cpp
-	System/Logging.cpp
-	System/SlicedStream.cpp
-	System/String.cpp
-	System/VFS.cpp
 	)
 
 if (STATIC_LINK)
 	ADD_LIBRARY(gemrb_core STATIC ${gemrb_core_LIB_SRCS})
+	ADD_LIBRARY(gemrb_sys STATIC ${gemrb_core_LIB_SRCS})
 else (STATIC_LINK)
+	ADD_LIBRARY(gemrb_sys SHARED ${gemrb_sys_LIB_SRCS})
 	ADD_LIBRARY(gemrb_core SHARED ${gemrb_core_LIB_SRCS})
 	IF(WIN32)
-	  INSTALL(TARGETS gemrb_core RUNTIME DESTINATION ${LIB_DIR})
+	  INSTALL(TARGETS gemrb_sys gemrb_core RUNTIME DESTINATION ${LIB_DIR})
 	ELSE(WIN32)
-	  INSTALL(TARGETS gemrb_core LIBRARY DESTINATION ${LIB_DIR})
+	  INSTALL(TARGETS gemrb_sys gemrb_core LIBRARY DESTINATION ${LIB_DIR})
 	ENDIF(WIN32)
 endif (STATIC_LINK)
+TARGET_LINK_LIBRARIES(gemrb_core gemrb_sys)
 
 SET_TARGET_PROPERTIES(gemrb_core PROPERTIES
 	COMPILE_DEFINITIONS
@@ -142,6 +148,6 @@ SET_TARGET_PROPERTIES(gemrb_core PROPERTIES
 	)
 
 IF (APPLE)
-	SET_TARGET_PROPERTIES(gemrb_core PROPERTIES
-	INSTALL_NAME_DIR ${LIB_DIR})
+	SET_TARGET_PROPERTIES(gemrb_core PROPERTIES INSTALL_NAME_DIR ${LIB_DIR})
+	SET_TARGET_PROPERTIES(gemrb_sys PROPERTIES INSTALL_NAME_DIR ${LIB_DIR})
 ENDIF (APPLE)

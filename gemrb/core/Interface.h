@@ -402,7 +402,6 @@ public:
 	/* don't rely on the exact return value of this function */
 	ieDword HasFeature(int position) const;
 	bool IsAvailable(SClass_ID filetype) const;
-	const char * TypeExt(SClass_ID type) const;
 	ProjectileServer* GetProjectileServer() const;
 	Video * GetVideoDriver() const;
 	/* create or change a custom string */

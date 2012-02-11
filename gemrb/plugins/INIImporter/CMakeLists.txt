@@ -1,1 +1,1 @@
-ADD_GEMRB_PLUGIN (INIImporter INIImporter.cpp)
+ADD_GEMRB_PLUGIN (INIImporter SYSTEM INIImporter.cpp)

@@ -1,1 +1,1 @@
-ADD_GEMRB_PLUGIN (DirectoryImporter DirectoryImporter.cpp)
+ADD_GEMRB_PLUGIN (DirectoryImporter SYSTEM DirectoryImporter.cpp)
