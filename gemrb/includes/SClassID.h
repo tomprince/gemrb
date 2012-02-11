@@ -87,4 +87,7 @@ enum {
 	PLUGIN_COMPRESSION_ZLIB 
 };
 
+#include "exports.h"
+GEM_EXPORT const char* TypeExt(SClass_ID type);
+
 #endif

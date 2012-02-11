@@ -97,7 +97,7 @@ bool ResourceManager::Exists(const char *ResRef, SClass_ID type, bool silent) co
 	}
 	if (!silent) {
 		printMessage("ResourceManager", "Searching for %s.%s...", WHITE,
-			ResRef, core->TypeExt(type));
+			ResRef, TypeExt(type));
 		printStatus( "NOT FOUND", YELLOW );
 	}
 	return false;
@@ -131,7 +131,7 @@ DataStream* ResourceManager::GetResource(const char* ResRef, SClass_ID type, boo
 		return NULL;
 	if (!silent) {
 		printMessage("ResourceManager", "Searching for %s.%s...", WHITE,
-			ResRef, core->TypeExt(type));
+			ResRef, TypeExt(type));
 	}
 	for (size_t i = 0; i < searchPath.size(); i++) {
 		DataStream *ds = searchPath[i]->GetResource(ResRef, type);

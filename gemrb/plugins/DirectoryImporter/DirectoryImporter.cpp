@@ -69,7 +69,7 @@ static FileStream *SearchIn(const char * Path,const char * ResRef, const char *T
 
 bool DirectoryImporter::HasResource(const char* resname, SClass_ID type)
 {
-	return FindIn( path, resname, core->TypeExt(type) );
+	return FindIn( path, resname, TypeExt(type) );
 }
 
 bool DirectoryImporter::HasResource(const char* resname, const ResourceDesc &type)
@@ -79,7 +79,7 @@ bool DirectoryImporter::HasResource(const char* resname, const ResourceDesc &typ
 
 DataStream* DirectoryImporter::GetResource(const char* resname, SClass_ID type)
 {
-	return SearchIn( path, resname, core->TypeExt(type) );
+	return SearchIn( path, resname, TypeExt(type) );
 }
 
 DataStream* DirectoryImporter::GetResource(const char* resname, const ResourceDesc &type)
@@ -149,7 +149,7 @@ static const char *ConstructFilename(const char* resname, const char* ext)
 
 bool CachedDirectoryImporter::HasResource(const char* resname, SClass_ID type)
 {
-	const char* filename = ConstructFilename(resname, core->TypeExt(type));
+	const char* filename = ConstructFilename(resname, TypeExt(type));
 	return cache.has(filename);
 }
 
@@ -161,7 +161,7 @@ bool CachedDirectoryImporter::HasResource(const char* resname, const ResourceDes
 
 DataStream* CachedDirectoryImporter::GetResource(const char* resname, SClass_ID type)
 {
-	const char* filename = ConstructFilename(resname, core->TypeExt(type));
+	const char* filename = ConstructFilename(resname, TypeExt(type));
 	const std::string *s = cache.get(filename);
 	if (!s)
 		return NULL;
