@@ -80,11 +80,11 @@ static void ReleaseMemory()
 	tracks = NULL;
 }
 
-static void ReadAutonoteINI()
+static void ReadAutonoteINI(Config const& config)
 {
 	INInote = PluginHolder<DataFileMgr>(IE_INI_CLASS_ID);
 	char tINInote[_MAX_PATH];
-	PathJoin( tINInote, core->GamePath, "autonote.ini", NULL );
+	PathJoin(tINInote, config.GamePath, "autonote.ini", NULL);
 	FileStream* fs = FileStream::OpenFile( tINInote );
 	INInote->Open(fs);
 }

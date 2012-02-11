@@ -23,12 +23,14 @@
 
 #include "Plugin.h"
 
+class Config;
+
 class GEM_EXPORT ScriptEngine : public Plugin {
 public:
 	ScriptEngine(void);
 	virtual ~ScriptEngine(void);
 	/** Initialization Routine */
-	virtual bool Init(void) = 0;
+	virtual bool Init(Config const&) = 0;
 	/** Load Script */
 	virtual bool LoadScript(const char* filename) = 0;
 	/** Run Function */

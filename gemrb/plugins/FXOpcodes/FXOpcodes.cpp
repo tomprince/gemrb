@@ -830,7 +830,7 @@ static void Cleanup()
 	polymorph_stats=NULL;
 }
 
-void RegisterCoreOpcodes()
+void RegisterCoreOpcodes(Config const&)
 {
 	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
 	enhanced_effects=core->HasFeature(GF_ENHANCED_EFFECTS);

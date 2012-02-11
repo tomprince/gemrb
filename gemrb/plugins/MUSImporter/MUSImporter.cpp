@@ -38,18 +38,20 @@ MUSImporter::MUSImporter()
 	PLName[0] = '\0';
 	PLNameNew[0] = '\0';
 	lastSound = 0xffffffff;
-	char path[_MAX_PATH];
-	PathJoin(path, core->GamePath, musicsubfolder, NULL);
-	manager.AddSource(path, "Music", PLUGIN_RESOURCE_DIRECTORY);
 }
 
 MUSImporter::~MUSImporter()
 {
 }
 /** Initializes the PlayList Manager */
-bool MUSImporter::Init()
+bool MUSImporter::Init(Config const& config)
 {
 	Initialized = true;
+
+	char path[_MAX_PATH];
+	PathJoin(path, config.GamePath, musicsubfolder, NULL);
+	manager.AddSource(path, "Music", PLUGIN_RESOURCE_DIRECTORY);
+
 	return true;
 }
 /** Loads a PlayList for playing */

@@ -29,6 +29,8 @@
 
 #include <cassert>
 
+class Config;
+
 #ifndef ReleaseFun
 typedef void (*ReleaseFun)(void *);
 #endif

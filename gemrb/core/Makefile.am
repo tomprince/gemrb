@@ -17,6 +17,7 @@ libgemrb_core_la_SOURCES = \
 	CharAnimations.cpp \
 	Compressor.cpp \
 	ControlAnimation.cpp \
+	Config.cpp \
 	Core.cpp \
 	DataFileMgr.cpp \
 	Dialog.cpp \

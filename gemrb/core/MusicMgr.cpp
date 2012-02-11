@@ -26,8 +26,3 @@ MusicMgr::MusicMgr()
 MusicMgr::~MusicMgr()
 {
 }
-/** Initializes the PlayList Manager */
-bool MusicMgr::Init()
-{
-	return true;
-}

@@ -41,6 +41,7 @@
 #include <map>
 #include <vector>
 
+class Config;
 class Plugin;
 class Resource;
 class TypeID;
@@ -67,7 +68,7 @@ private:
 	std::map< SClass_ID, PluginFunc> plugins;
 	std::map< const TypeID*, std::vector<ResourceDesc> > resources;
 	/** Array of initializer functions */
-	std::vector<void (*)(void)> intializerFunctions;
+	std::vector<void (*)(Config const&)> intializerFunctions;
 	/** Array of cleanup functions */
 	std::vector<void (*)(void)> cleanupFunctions;
 	typedef std::map<const char*, PluginFunc, iless> driver_map;
@@ -102,7 +103,7 @@ public:
 	 *
 	 * @param[in] init Function to call on startup.
 	 */
-	void RegisterInitializer(void (*init)(void));
+	void RegisterInitializer(void (*init)(Config const&));
 	/**
 	 * Registers a static cleanup.
 	 *
@@ -111,7 +112,7 @@ public:
 	void RegisterCleanup(void (*cleanup)(void));
 
 	/** Run intializer functions. */
-	void RunInitializers() const;
+	void RunInitializers(Config const&) const;
 	/** Run cleanup functions */
 	void RunCleanup() const;
 

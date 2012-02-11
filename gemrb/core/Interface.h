@@ -31,6 +31,7 @@
 
 #include "Cache.h"
 #include "Callback.h"
+#include "Config.h"
 #include "Holder.h"
 
 #include <map>
@@ -289,6 +290,7 @@ enum PauseSetting {
 class GEM_EXPORT Interface
 {
 private:
+	Config config;
 	Holder<Video> video;
 	Holder<Audio> AudioDriver;
 	std::string VideoDriverName;
@@ -764,7 +766,6 @@ public:
 	char GUIScriptsPath[_MAX_PATH];
 	char SavePath[_MAX_PATH];
 	char INIConfig[_MAX_PATH];
-	char GamePath[_MAX_PATH];
 	std::vector<std::string> CD[MAX_CD];
 	std::vector<std::string> ModPath;
 	int Width, Height, Bpp, ForceStereo;

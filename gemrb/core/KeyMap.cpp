@@ -52,7 +52,7 @@ KeyMap::~KeyMap()
 	keymap.RemoveAll(ReleaseFunction);
 }
 
-bool KeyMap::InitializeKeyMap(const char *inifile, const char *tablefile)
+bool KeyMap::InitializeKeyMap(Config const& config, const char *inifile, const char *tablefile)
 {
 	AutoTable kmtable(tablefile);
 
@@ -61,18 +61,18 @@ bool KeyMap::InitializeKeyMap(const char *inifile, const char *tablefile)
 	}
 
         char tINIkeymap[_MAX_PATH];
-        PathJoin( tINIkeymap, core->GamePath, inifile, NULL );
-        FileStream* config = FileStream::OpenFile( tINIkeymap );
+        PathJoin(tINIkeymap, config.GamePath, inifile, NULL);
+        FileStream* conf = FileStream::OpenFile( tINIkeymap );
 
-	if (config == NULL) {
+	if (conf == NULL) {
 		printMessage("KeyMap","There is no '%s' file...\n", YELLOW, inifile);
 		return false;
 	}
 	char name[KEYLENGTH+1], value[_MAX_PATH + 3];
-	while (config->Remains()) {
+	while (conf->Remains()) {
 		char line[_MAX_PATH];
 
-		if (config->ReadLine(line, _MAX_PATH) == -1)
+		if (conf->ReadLine(line, _MAX_PATH) == -1)
 			break;
 
 		if ((line[0] == '#') ||
@@ -127,7 +127,7 @@ bool KeyMap::InitializeKeyMap(const char *inifile, const char *tablefile)
 		fun = new Function(module, function, atoi(group));
 		keymap.SetAt(value, fun);
 	}
-	delete config;
+	delete conf;
 	return true;
 }
 

@@ -18,7 +18,7 @@
 
 #include "Variables.h"
 
-#include "Interface.h"
+#include "Config.h"
 #include "System/FileStream.h"
 #include "System/String.h"
 
@@ -44,11 +44,11 @@ void LoadInitialValues(Variables *vars, const char* name)
 	}
 }
 
-void LoadInitialValues()
+void LoadInitialValues(Config const& config)
 {
 	char nPath[_MAX_PATH];
 	// we only support PST's var.var for now
-	PathJoin(nPath, core->GamePath, "var.var", NULL);
+	PathJoin(nPath, config.GamePath, "var.var", NULL);
 	FileStream fs;
 	if (!fs.Open(nPath)) {
 		return;

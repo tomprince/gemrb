@@ -58,7 +58,7 @@ public:
 	/** Loads a PlayList for playing */
 	bool OpenPlaylist(const char* name);
 	/** Initializes the PlayList Manager */
-	bool Init();
+	bool Init(Config const&);
 	/** Switches the current PlayList while playing the current one */
 	int SwitchPlayList(const char* name, bool Hard);
 	/** Ends the Current PlayList Execution */

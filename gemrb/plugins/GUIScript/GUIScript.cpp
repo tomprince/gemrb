@@ -10425,7 +10425,7 @@ PyDoc_STRVAR( GemRB_internal__doc,
 
 /** Initialization Routine */
 
-bool GUIScript::Init(void)
+bool GUIScript::Init(Config const& config)
 {
 	Py_Initialize();
 	if (!Py_IsInitialized()) {
@@ -10473,7 +10473,7 @@ bool GUIScript::Init(void)
 	}
 
 	// FIXME: better would be to add GemRB.GetGamePath() or some such
-	sprintf( string, "GemRB.GamePath = \"%s\"", QuotePath( quoted, core->GamePath ));
+	sprintf(string, "GemRB.GamePath = \"%s\"", QuotePath(quoted, config.GamePath));
 	if (PyRun_SimpleString( string ) == -1) {
 		printMessage( "GUIScript", "%s", RED, string );
 		return false;

@@ -15,6 +15,7 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	Callback.cpp
 	CharAnimations.cpp
 	Compressor.cpp
+	Config.cpp
 	ControlAnimation.cpp
 	Core.cpp
 	DataFileMgr.cpp

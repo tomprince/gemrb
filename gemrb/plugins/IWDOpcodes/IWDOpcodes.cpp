@@ -420,7 +420,7 @@ static void Cleanup()
 	}
 }
 
-void RegisterIWDOpcodes()
+void RegisterIWDOpcodes(Config const&)
 {
 	core->RegisterOpcodes( sizeof( effectnames ) / sizeof( EffectDesc ) - 1, effectnames );
 	enhanced_effects=!!core->HasFeature(GF_ENHANCED_EFFECTS);

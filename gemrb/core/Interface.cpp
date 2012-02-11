@@ -210,7 +210,6 @@ Interface::Interface(int iargc, char* iargv[])
 	Bpp = 32;
 	FullScreen = 0;
 	GUIScriptsPath[0] = 0;
-	GamePath[0] = 0;
 	SavePath[0] = 0;
 	GemRBPath[0] = 0;
 	PluginsPath[0] = 0;
@@ -1556,16 +1555,16 @@ int Interface::Init()
 		PathJoin( path, GemRBOverridePath, "override", "shared", NULL);
 		gamedata->AddSource(path, "shared GemRB Override", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		PathJoin( path, GamePath, GameOverridePath, NULL);
+		PathJoin(path, config.GamePath, GameOverridePath, NULL);
 		gamedata->AddSource(path, "Override", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		PathJoin( path, GamePath, GameScriptsPath, NULL);
+		PathJoin(path, config.GamePath, GameScriptsPath, NULL);
 		gamedata->AddSource(path, "Scripts", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		PathJoin( path, GamePath, GamePortraitsPath, NULL);
+		PathJoin(path, config.GamePath, GamePortraitsPath, NULL);
 		gamedata->AddSource(path, "Portraits", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
-		PathJoin( path, GamePath, GameDataPath, NULL);
+		PathJoin(path, config.GamePath, GameDataPath, NULL);
 		gamedata->AddSource(path, "Data", PLUGIN_RESOURCE_CACHEDDIRECTORY);
 
 		//IWD2 movies are on the CD but not in the BIF
@@ -1585,10 +1584,10 @@ int Interface::Init()
 	{
 		printMessage( "Core", "Initializing KEY Importer...", WHITE );
 		char ChitinPath[_MAX_PATH];
-		PathJoin(ChitinPath, GamePath, "chitin.key", NULL );
+		PathJoin(ChitinPath, config.GamePath, "chitin.key", NULL );
 
 		std::vector<std::string> bif_paths;
-		bif_paths.push_back(GamePath);
+		bif_paths.push_back(config.GamePath);
 		for (int i = 0; i < MAX_CD; i++) {
 			for (size_t j=0; j < CD[i].size(); j++) {
 				bif_paths.push_back(CD[i][j]);
@@ -1608,7 +1607,7 @@ int Interface::Init()
 		printStatus( "ERROR", LIGHT_RED );
 		return GEM_ERROR;
 	}
-	if (!guiscript->Init()) {
+	if (!guiscript->Init(config)) {
 		printStatus( "ERROR", LIGHT_RED );
 		return GEM_ERROR;
 	}
@@ -1633,14 +1632,14 @@ int Interface::Init()
 
 	char ini_path[_MAX_PATH] = { '\0' };
 	if (!IgnoreOriginalINI) {
-		PathJoin( ini_path, GamePath, INIConfig, NULL );
+		PathJoin(ini_path, config.GamePath, INIConfig, NULL);
 	}
 	if (!InitializeVarsWithINI(ini_path)) {
 		printMessage("Core", "Unable to set dictionary default values!", YELLOW);
 	}
 
 	// Initialize this here, so that game flags have been set.
-	plugin->RunInitializers();
+	plugin->RunInitializers(config);
 
 	printStatus( "OK", LIGHT_GREEN );
 	printMessage( "Core", "Initializing Video Driver...", WHITE );
@@ -1684,7 +1683,7 @@ int Interface::Init()
 	strings = PluginHolder<StringMgr>(IE_TLK_CLASS_ID);
 	printMessage( "Core", "Loading Dialog.tlk file...", WHITE );
 	char strpath[_MAX_PATH];
-	PathJoin( strpath, GamePath, dialogtlk, NULL );
+	PathJoin(strpath, config.GamePath, dialogtlk, NULL);
 	FileStream* fs = FileStream::OpenFile(strpath);
 	if (!fs) {
 		printStatus( "ERROR", LIGHT_RED );
@@ -1796,7 +1795,7 @@ int Interface::Init()
 
 	printMessage( "Core", "Initializing Music Manager...", WHITE );
 	music = PluginHolder<MusicMgr>(IE_MUS_CLASS_ID);
-	if (!music) {
+	if (!music || !music->Init(config)) {
 		printStatus( "ERROR", LIGHT_RED );
 		return GEM_ERROR;
 	}
@@ -1833,7 +1832,7 @@ int Interface::Init()
 		printMessage( "Core", "Loading precreated teams setup...\n", WHITE );
 		INIparty = PluginHolder<DataFileMgr>(IE_INI_CLASS_ID);
 		char tINIparty[_MAX_PATH];
-		PathJoin( tINIparty, GamePath, "Party.ini", NULL );
+		PathJoin(tINIparty, config.GamePath, "Party.ini", NULL);
 		FileStream* fs = FileStream::OpenFile( tINIparty );
 		if (!INIparty->Open(fs)) {
 			printStatus( "ERROR", LIGHT_RED );
@@ -1850,7 +1849,7 @@ int Interface::Init()
 		printMessage( "Core", "Loading beasts definition File...\n", WHITE );
 		INIbeasts = PluginHolder<DataFileMgr>(IE_INI_CLASS_ID);
 		char tINIbeasts[_MAX_PATH];
-		PathJoin( tINIbeasts, GamePath, "beast.ini", NULL );
+		PathJoin(tINIbeasts, config.GamePath, "beast.ini", NULL);
 		// FIXME: crashes if file does not open
 		FileStream* fs = FileStream::OpenFile( tINIbeasts );
 		if (!INIbeasts->Open(fs)) {
@@ -1862,7 +1861,7 @@ int Interface::Init()
 		printMessage( "Core", "Loading quests definition File...\n", WHITE );
 		INIquests = PluginHolder<DataFileMgr>(IE_INI_CLASS_ID);
 		char tINIquests[_MAX_PATH];
-		PathJoin( tINIquests, GamePath, "quests.ini", NULL );
+		PathJoin(tINIquests, config.GamePath, "quests.ini", NULL);
 		// FIXME: crashes if file does not open
 		FileStream* fs2 = FileStream::OpenFile( tINIquests );
 		if (!INIquests->Open(fs2)) {
@@ -1990,7 +1989,7 @@ int Interface::Init()
 
 	printMessage( "Core", "Initializing keymap tables...", WHITE);
 	keymap = new KeyMap();
-	ret = keymap->InitializeKeyMap("keymap.ini", "keymap");
+	ret = keymap->InitializeKeyMap(config, "keymap.ini", "keymap");
 	if (!ret) {
 		printStatus( "ERROR", LIGHT_RED );
 	} else {
@@ -2296,8 +2295,8 @@ bool Interface::LoadConfig(const char* filename)
 	printMessage("Config","Trying to open ", WHITE);
 	textcolor(LIGHT_WHITE);
 	print("%s ", filename);
-	FileStream* config = FileStream::OpenFile(filename);
-	if (config == NULL) {
+	FileStream* file = FileStream::OpenFile(filename);
+	if (file == NULL) {
 		printStatus("NOT FOUND", YELLOW);
 		return false;
 	}
@@ -2306,11 +2305,11 @@ bool Interface::LoadConfig(const char* filename)
 	SaveAsOriginal = 1;
 
 	int lineno = 0;
-	while (config->Remains()) {
+	while (file->Remains()) {
 		char line[1024];
 		char *name, *nameend, *value, *valueend;
 
-		if (config->ReadLine(line, _MAX_PATH) == -1) {
+		if (file->ReadLine(line, _MAX_PATH) == -1) {
 			break;
 		}
 		lineno++;
@@ -2402,7 +2401,7 @@ bool Interface::LoadConfig(const char* filename)
 			strncpy(var, value, sizeof(var));
 		CONFIG_PATH("CachePath", CachePath);
 		CONFIG_PATH("GUIScriptsPath", GUIScriptsPath);
-		CONFIG_PATH("GamePath", GamePath);
+		CONFIG_PATH("GamePath", config.GamePath);
 		CONFIG_PATH("GemRBOverridePath", GemRBOverridePath);
 		CONFIG_PATH("GemRBPath", GemRBPath);
 		CONFIG_PATH("PluginsPath", PluginsPath);
@@ -2431,7 +2430,7 @@ bool Interface::LoadConfig(const char* filename)
 			}
 		}
 	}
-	delete config;
+	delete file;
 
 	// WARNING: Don't move ResolveFilePath into the loop
 	// Otherwise, it won't obey CaseSensitive set at the end
@@ -2487,17 +2486,17 @@ bool Interface::LoadConfig(const char* filename)
 		strcpy( GameName, GEMRB_STRING );
 	}
 
-	ResolveFilePath( GamePath );
+	ResolveFilePath(config.GamePath);
 
 	if (!SavePath[0]) {
 		// FIXME: maybe should use UserDir instead of GamePath
-		strcpy( SavePath, GamePath );
+		strcpy(SavePath, config.GamePath);
 	} else {
 		ResolveFilePath( SavePath );
 	}
 
-	PathJoin(CharactersPath, GamePath, GameCharactersPath, NULL);
-	PathJoin(SoundsPath, GamePath, GameSoundsPath, NULL);
+	PathJoin(CharactersPath, config.GamePath, GameCharactersPath, NULL);
+	PathJoin(SoundsPath, config.GamePath, GameSoundsPath, NULL);
 
 	if (! CachePath[0]) {
 		PathJoin( CachePath, UserDir, "Cache", NULL );
@@ -2510,7 +2509,7 @@ bool Interface::LoadConfig(const char* filename)
 			char cd[] = { 'C', 'D', '1'+i, '\0' };
 			char name[_MAX_PATH];
 
-			PathJoin(name, GamePath, cd, NULL);
+			PathJoin(name, config.GamePath, cd, NULL);
 			CD[i].push_back(name);
 		} else {
 			size_t cnt = CD[i].size();
@@ -2529,8 +2528,8 @@ bool Interface::LoadConfig(const char* filename)
 	FixPath( GemRBPath, true );
 	FixPath( GemRBOverridePath, true );
 
-	if (GamePath[0]) {
-		FixPath( GamePath, true );
+	if (config.GamePath[0]) {
+		FixPath(config.GamePath, true);
 	}
 
 	//FixPath( SavePath, false );
@@ -3834,7 +3833,7 @@ int Interface::GetPortraits(TextArea* ta, bool smallorlarge)
 		bmp_suffix[0]='M';
 		png_suffix[0]='M';
 	}
-	PathJoin( Path, GamePath, GamePortraitsPath, NULL );
+	PathJoin(Path, config.GamePath, GamePortraitsPath, NULL);
 	DirectoryIterator dir(Path);
 	if (!dir) {
 		return -1;
@@ -5239,7 +5238,7 @@ int Interface::WriteCharacter(const char *name, Actor *actor)
 	{
 		FileStream str;
 
-		if (!str.Create(CharactersPath, name, IE_CHR_CLASS_ID))
+		if (!str.Create( CharactersPath, name, IE_CHR_CLASS_ID ))
 			return -1;
 
 		int ret = gm->PutActor(&str, actor, true);

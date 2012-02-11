@@ -40,7 +40,7 @@ static int RandRows=-1;
 static ColorSet* randcolors=NULL;
 static int MagicBit;
 
-static void Initializer()
+static void Initializer(Config const&)
 {
 	MagicBit = core->HasFeature(GF_MAGICBIT);
 }
