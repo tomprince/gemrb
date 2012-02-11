@@ -38,6 +38,7 @@ FILE(GLOB gemrb_core_LIB_SRCS
 	ImageWriter.cpp
 	IndexedArchive.cpp
 	IniSpawn.cpp
+	InitialValues.cpp
 	Interface.cpp
 	Inventory.cpp
 	Item.cpp

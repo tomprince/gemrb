@@ -125,6 +125,6 @@ public:
 	~Variables();
 };
 
-void LoadInitialValues(Variables* vars, const char* name);
+GEM_EXPORT void LoadInitialValues(Variables* vars, const char* name);
 
 #endif

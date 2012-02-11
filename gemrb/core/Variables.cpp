@@ -14,14 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- *
  */
 
 #include "Variables.h"
-
-#include "Interface.h" // for LoadInitialValues
-#include "System/FileStream.h" // for LoadInitialValues
 
 /////////////////////////////////////////////////////////////////////////////
 // private inlines 
@@ -473,34 +468,3 @@ void Variables::Remove(const char* key)
 	FreeAssoc(pAssoc);
 }
 
-void LoadInitialValues(Variables *vars, const char* name)
-{
-	char nPath[_MAX_PATH];
-	// we only support PST's var.var for now
-	PathJoin( nPath, core->GamePath, "var.var", NULL );
-	FileStream fs;
-	if (!fs.Open(nPath)) {
-		return;
-	}
-
-	char buffer[41];
-	ieDword value;
-	buffer[40] = 0;
-	ieVariable varname;
-	
-	// first value is useless
-	if (!fs.Read(buffer, 40)) return;
-	if (fs.ReadDword(&value) != 4) return;
-	
-	while (fs.Remains()) {
-		// read data
-		if (!fs.Read(buffer, 40)) return;
-		if (fs.ReadDword(&value) != 4) return;
-		// is it the type we want? if not, skip
-		if (strnicmp(buffer, name, 6)) continue;
-		// copy variable (types got 2 extra spaces, and the name is padded too)
-		// (true = uppercase, needed for original engine save compat, see 315b8f2e)
-		strnspccpy(varname,buffer+8,32, true);
-		vars->SetAt(varname, value);
-	}  
-}
