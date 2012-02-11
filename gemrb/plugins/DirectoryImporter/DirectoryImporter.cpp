@@ -185,6 +185,7 @@ DataStream* CachedDirectoryImporter::GetResource(const char* resname, const Reso
 
 #include "plugindef.h"
 
+// Don't add any PLUGIN_INITIALIZERS here, since this is used before they are run.
 GEMRB_PLUGIN(0xAB4534, "Directory Importer")
 PLUGIN_CLASS(PLUGIN_RESOURCE_DIRECTORY, DirectoryImporter)
 PLUGIN_CLASS(PLUGIN_RESOURCE_CACHEDDIRECTORY, CachedDirectoryImporter)

@@ -151,6 +151,7 @@ bool INIImporter::GetKeyAsBool(const char* Tag, const char* Key,
 
 #include "plugindef.h"
 
+// Don't add any PLUGIN_INITIALIZERS here, since this is used before they are run.
 GEMRB_PLUGIN(0xB62F6D7, "INI File Importer")
 PLUGIN_CLASS(IE_INI_CLASS_ID, INIImporter)
 END_PLUGIN()

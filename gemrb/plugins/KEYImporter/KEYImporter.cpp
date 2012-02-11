@@ -239,6 +239,7 @@ DataStream* KEYImporter::GetResource(const char* resname, const ResourceDesc &ty
 
 #include "plugindef.h"
 
+// Don't add any PLUGIN_INITIALIZERS here, since this is used before they are run.
 GEMRB_PLUGIN(0x1DFDEF80, "KEY File Importer")
 PLUGIN_CLASS(PLUGIN_RESOURCE_KEY, KEYImporter)
 END_PLUGIN()

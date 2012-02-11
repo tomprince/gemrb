@@ -10766,6 +10766,7 @@ PyObject* GUIScript::ConstructObject(const char* type, PyObject* pArgs)
 
 #include "plugindef.h"
 
+// Don't add any PLUGIN_INITIALIZERS here, since this is used before they are run.
 GEMRB_PLUGIN(0x1B01BE6B, "GUI Script Engine (Python)")
 PLUGIN_CLASS(IE_GUI_SCRIPT_CLASS_ID, GUIScript)
 END_PLUGIN()
