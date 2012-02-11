@@ -130,13 +130,6 @@ Interface::Interface(int iargc, char* iargv[])
 	textcolor( LIGHT_WHITE );
 	print( "GemRB Core Version v%s Loading...\n", VERSION_GEMRB );
 
-	// default to the correct endianswitch
-	ieWord endiantest = 1;
-	if (((char *)&endiantest)[1] == 1) {
-		// big-endian
-		DataStream::SetEndianSwitch(true);
-	}
-
 	unsigned int i;
 	for(i=0;i<256;i++) {
 		pl_uppercase[i]=(ieByte) toupper(i);
