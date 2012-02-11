@@ -1528,22 +1528,6 @@ int Interface::Init()
 	InitializeRandomNumbers();
 
 	printMessage( "Core", "GemRB Core Initialization...", WHITE );
-	printStatus( "OK", LIGHT_GREEN );
-	printMessage( "Core", "Initializing Video Driver...", WHITE );
-	video = ( Video * ) PluginMgr::Get()->GetDriver(&Video::ID, VideoDriverName.c_str());
-	if (!video) {
-		printStatus( "ERROR", LIGHT_RED );
-		print( "No Video Driver Available.\nTermination in Progress...\n" );
-		return GEM_ERROR;
-	}
-	if (video->Init() == GEM_ERROR) {
-		printStatus( "ERROR", LIGHT_RED );
-		print( "Cannot Initialize Video Driver.\nTermination in Progress...\n" );
-		return GEM_ERROR;
-	}
-	Color defcolor={255,255,255,200};
-	SetInfoTextColor(defcolor);
-	printStatus( "OK", LIGHT_GREEN );
 
 	{
 		printMessage( "Core", "Initializing Search Path...", WHITE );
@@ -1657,6 +1641,23 @@ int Interface::Init()
 
 	// Initialize this here, so that game flags have been set.
 	plugin->RunInitializers();
+
+	printStatus( "OK", LIGHT_GREEN );
+	printMessage( "Core", "Initializing Video Driver...", WHITE );
+	video = ( Video * ) PluginMgr::Get()->GetDriver(&Video::ID, VideoDriverName.c_str());
+	if (!video) {
+		printStatus( "ERROR", LIGHT_RED );
+		print( "No Video Driver Available.\nTermination in Progress...\n" );
+		return GEM_ERROR;
+	}
+	if (video->Init() == GEM_ERROR) {
+		printStatus( "ERROR", LIGHT_RED );
+		print( "Cannot Initialize Video Driver.\nTermination in Progress...\n" );
+		return GEM_ERROR;
+	}
+	Color defcolor={255,255,255,200};
+	SetInfoTextColor(defcolor);
+	printStatus( "OK", LIGHT_GREEN );
 
 	int i;
 	for (i = 0; i < 8; i++) {
