@@ -46,3 +46,20 @@ Logger* createFileLogger(DataStream* log_file)
 {
 	return new FileLogger(log_file);
 }
+
+#include "System/FileStream.h"
+#ifndef STATIC_LINK
+# define STATIC_LINK
+#endif
+#include "plugindef.h"
+
+static void addLogger()
+{
+	FileStream* log_file = new FileStream();
+	if (log_file->Create("/tmp/gemrb.log"))
+		AddLogger(createFileLogger(log_file));
+}
+
+GEMRB_PLUGIN(unused, "tmp/file logger")
+PLUGIN_INITIALIZER(addLogger)
+END_PLUGIN()
