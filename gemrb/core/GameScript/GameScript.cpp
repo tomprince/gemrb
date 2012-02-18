@@ -30,6 +30,7 @@
 #include "Interface.h"
 #include "PluginMgr.h"
 #include "TableMgr.h"
+#include "System/StringBuffer.h"
 
 //debug flags
 // 1 - cache
@@ -2382,6 +2383,34 @@ Action* GenerateActionDirect(char *String, Scriptable *object)
 	return action;
 }
 
+void Object::Dump() const
+{
+	StringBuffer buffer;
+	Dump(buffer);
+	Log(DEBUG, "GameScript", buffer);
+}
+
+void Object::Dump(StringBuffer& buffer) const
+{
+	int i;
+
+	GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
+	if(objectName[0]) {
+		buffer.format("Object: %s\n",objectName);
+		return;
+	}
+	buffer.format("IDS Targeting: ");
+	for(i=0;i<MAX_OBJECT_FIELDS;i++) {
+		buffer.format("%d ",objectFields[i]);
+	}
+	buffer.append("\n");
+	buffer.append("Filters: ");
+	for(i=0;i<MAX_NESTING;i++) {
+		buffer.format("%d ",objectFilters[i]);
+	}
+	buffer.append("\n");
+}
+
 /** Return true if object is null */
 bool Object::isNull()
 {
@@ -2399,3 +2428,51 @@ bool Object::isNull()
 	return true;
 }
 
+void Trigger::Dump() const
+{
+	StringBuffer buffer;
+	Dump(buffer);
+	Log(DEBUG, "GameScript", buffer);
+}
+
+void Trigger::Dump(StringBuffer& buffer) const
+{
+	GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
+	buffer.format("Trigger: %d\n", triggerID);
+	buffer.format("Int parameters: %d %d %d\n", int0Parameter, int1Parameter, int2Parameter);
+	buffer.format("Point: [%d.%d]\n", pointParameter.x, pointParameter.y);
+	buffer.format("String0: %s\n", string0Parameter);
+	buffer.format("String1: %s\n", string1Parameter);
+	if (objectParameter) {
+		objectParameter->Dump(buffer);
+	} else {
+		buffer.format("No object\n");
+	}
+	buffer.format("\n");
+}
+
+void Action::Dump() const
+{
+	StringBuffer buffer;
+	Dump(buffer);
+	Log(DEBUG, "GameScript", buffer);
+}
+
+void Action::Dump(StringBuffer& buffer) const
+{
+	int i;
+
+	GSASSERT( canary == (unsigned long) 0xdeadbeef, canary );
+	buffer.format("Int0: %d, Int1: %d, Int2: %d\n",int0Parameter, int1Parameter, int2Parameter);
+	buffer.format("String0: %s, String1: %s\n", string0Parameter?string0Parameter:"<NULL>", string1Parameter?string1Parameter:"<NULL>");
+	for (i=0;i<3;i++) {
+		if (objects[i]) {
+			buffer.format( "%d. ",i+1);
+			objects[i]->Dump(buffer);
+		} else {
+			buffer.format( "%d. Object - NULL\n",i+1);
+		}
+	}
+
+	buffer.format("RefCount: %d\n", RefCount);
+}

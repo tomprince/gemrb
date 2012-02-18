@@ -37,6 +37,7 @@
 #include "GameScript/GSUtils.h"
 #include "GUI/GameControl.h"
 #include "Scriptable/InfoPoint.h"
+#include "System/StringBuffer.h"
 
 #include <cassert>
 #include <cmath>
@@ -402,23 +403,26 @@ void Door::TryBashLock(Actor *actor)
 	ImmediateEvent();
 }
 
-void Door::DebugDump() const
+void Door::Dump() const
 {
-	print( "Debugdump of Door %s:\n", GetScriptName() );
-	print( "Door Global ID: %d\n", GetGlobalID());
-	print( "Position: %d.%d\n", Pos.x, Pos.y);
-	print( "Door Open: %s\n", YESNO(IsOpen()));
-	print( "Door Locked: %s\n", YESNO(Flags&DOOR_LOCKED));
-	print( "Door Trapped: %s	Difficulty: %d\n", YESNO(Trapped), TrapRemovalDiff);
+	StringBuffer buffer;
+	buffer.format( "Debugdump of Door %s:\n", GetScriptName() );
+	buffer.format( "Door Global ID: %d\n", GetGlobalID());
+	buffer.format( "Position: %d.%d\n", Pos.x, Pos.y);
+	buffer.format( "Door Open: %s\n", YESNO(IsOpen()));
+	buffer.format( "Door Locked: %s\n", YESNO(Flags&DOOR_LOCKED));
+	buffer.format( "Door Trapped: %s	Difficulty: %d\n", YESNO(Trapped), TrapRemovalDiff);
 	if (Trapped) {
-		print( "Trap Permanent: %s Detectable: %s\n", YESNO(Flags&DOOR_RESET), YESNO(Flags&DOOR_DETECTABLE) );
+		buffer.format( "Trap Permanent: %s Detectable: %s\n", YESNO(Flags&DOOR_RESET), YESNO(Flags&DOOR_DETECTABLE) );
 	}
-	print( "Secret door: %s (Found: %s)\n", YESNO(Flags&DOOR_SECRET),YESNO(Flags&DOOR_FOUND));
+	buffer.format( "Secret door: %s (Found: %s)\n", YESNO(Flags&DOOR_SECRET),YESNO(Flags&DOOR_FOUND));
 	const char *Key = GetKey();
 	const char *name = "NONE";
 	if (Scripts[0]) {
 		name = Scripts[0]->GetName();
 	}
-	print( "Script: %s, Key (%s) removed: %s, Dialog: %s\n", name, Key?Key:"NONE", YESNO(Flags&DOOR_KEY), Dialog );
+	buffer.format( "Script: %s, Key (%s) removed: %s, Dialog: %s\n", name, Key?Key:"NONE", YESNO(Flags&DOOR_KEY), Dialog );
+
+	Log(DEBUG, "Door", buffer);
 }
 

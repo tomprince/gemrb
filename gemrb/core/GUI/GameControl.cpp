@@ -902,27 +902,27 @@ void GameControl::OnKeyRelease(unsigned char Key, unsigned short Mod)
 					while (count--) {
 						Actor *actor = area->GetActor(count, true);
 						if (actor->IsOver(p)) {
-							actor->DebugDump();
+							actor->Dump();
 						}
 					}
 				}
 				if (lastActor) {
-					lastActor->DebugDump();
+					lastActor->Dump();
 					break;
 				}
 				if (overDoor) {
-					overDoor->DebugDump();
+					overDoor->Dump();
 					break;
 				}
 				if (overContainer) {
-					overContainer->DebugDump();
+					overContainer->Dump();
 					break;
 				}
 				if (overInfoPoint) {
-					overInfoPoint->DebugDump();
+					overInfoPoint->Dump();
 					break;
 				}
-				core->GetGame()->GetCurrentArea()->DebugDump(Mod & GEM_MOD_SHIFT);
+				core->GetGame()->GetCurrentArea()->Dump(Mod & GEM_MOD_SHIFT);
 				break;
 			case 'v': //marks some of the map visited (random vision distance)
 				area->ExploreMapChunk( p, rand()%30, 1 );
@@ -934,7 +934,7 @@ void GameControl::OnKeyRelease(unsigned char Key, unsigned short Mod)
 				printMessage("GameControl", "Position: %s [%d.%d]\n", LIGHT_WHITE, area->GetScriptName(), p.x, p.y );
 				break;
 			case 'g'://shows loaded areas and other game information
-				game->DebugDump();
+				game->Dump();
 				break;
 			case 'i'://interact trigger (from the original game)
 				if (!lastActor) {

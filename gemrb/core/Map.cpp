@@ -53,6 +53,7 @@
 #include "Scriptable/Container.h"
 #include "Scriptable/Door.h"
 #include "Scriptable/InfoPoint.h"
+#include "System/StringBuffer.h"
 
 #include <cmath>
 #include <cassert>
@@ -2139,37 +2140,40 @@ bool Map::CanFree()
 	return true;
 }
 
-void Map::DebugDump(bool show_actors) const
+void Map::Dump(bool show_actors) const
 {
+	StringBuffer buffer;
 	size_t i;
 
-	print( "DebugDump of Area %s:\n", scriptName );
-	print ("Scripts:");
+	buffer.format( "DebugDump of Area %s:\n", scriptName );
+	buffer.append("Scripts:");
 
 	for (i = 0; i < MAX_SCRIPTS; i++) {
 		const char* poi = "<none>";
 		if (Scripts[i]) {
 			poi = Scripts[i]->GetName();
 		}
-		print( " %.8s", poi );
+		buffer.format( " %.8s", poi );
 	}
-	print( "\nArea Global ID:  %d\n", GetGlobalID());
-	print( "OutDoor: %s\n", YESNO(AreaType & AT_OUTDOOR ) );
-	print( "Day/Night: %s\n", YESNO(AreaType & AT_DAYNIGHT ) );
-	print( "Extended night: %s\n", YESNO(AreaType & AT_EXTENDED_NIGHT ) );
-	print( "Weather: %s\n", YESNO(AreaType & AT_WEATHER ) );
-	print( "Area Type: %d\n", AreaType & (AT_CITY|AT_FOREST|AT_DUNGEON) );
-	print( "Can rest: %s\n", YESNO(AreaType & AT_CAN_REST) );
+	buffer.append("\n");
+	buffer.format( "Area Global ID:  %d\n", GetGlobalID());
+	buffer.format( "OutDoor: %s\n", YESNO(AreaType & AT_OUTDOOR ) );
+	buffer.format( "Day/Night: %s\n", YESNO(AreaType & AT_DAYNIGHT ) );
+	buffer.format( "Extended night: %s\n", YESNO(AreaType & AT_EXTENDED_NIGHT ) );
+	buffer.format( "Weather: %s\n", YESNO(AreaType & AT_WEATHER ) );
+	buffer.format( "Area Type: %d\n", AreaType & (AT_CITY|AT_FOREST|AT_DUNGEON) );
+	buffer.format( "Can rest: %s\n", YESNO(AreaType & AT_CAN_REST) );
 
 	if (show_actors) {
-		print("\n");
+		buffer.append("\n");
 		i = actors.size();
 		while (i--) {
 			if (!(actors[i]->GetInternalFlag()&(IF_JUSTDIED|IF_REALLYDIED))) {
-				print("Actor: %s at %d.%d\n", actors[i]->GetName(1), actors[i]->Pos.x, actors[i]->Pos.y);
+				buffer.format("Actor: %s at %d.%d\n", actors[i]->GetName(1), actors[i]->Pos.x, actors[i]->Pos.y);
 			}
 		}
 	}
+	Log(DEBUG, "Map", buffer);
 }
 
 /******************************************************************************/

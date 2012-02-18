@@ -37,6 +37,7 @@
 #include "Video.h"
 #include "GameScript/GSUtils.h"
 #include "GUI/GameControl.h"
+#include "System/StringBuffer.h"
 
 #include <cassert>
 #include <cmath>
@@ -269,22 +270,24 @@ void Container::TryBashLock(Actor *actor)
 	ImmediateEvent();
 }
 
-void Container::DebugDump() const
+void Container::Dump() const
 {
-	print( "Debugdump of Container %s\n", GetScriptName() );
-	print( "Container Global ID: %d\n", GetGlobalID());
-	print( "Position: %d.%d\n", Pos.x, Pos.y);
-	print( "Type: %d, Locked: %s, LockDifficulty: %d\n", Type, YESNO(Flags&CONT_LOCKED), LockDifficulty );
-	print( "Flags: %d, Trapped: %s, Detected: %d\n", Flags, YESNO(Trapped), TrapDetected );
-	print( "Trap detection: %d%%, Trap removal: %d%%\n", TrapDetectionDiff,
+	StringBuffer buffer;
+	buffer.format( "Debugdump of Container %s\n", GetScriptName() );
+	buffer.format( "Container Global ID: %d\n", GetGlobalID());
+	buffer.format( "Position: %d.%d\n", Pos.x, Pos.y);
+	buffer.format( "Type: %d, Locked: %s, LockDifficulty: %d\n", Type, YESNO(Flags&CONT_LOCKED), LockDifficulty );
+	buffer.format( "Flags: %d, Trapped: %s, Detected: %d\n", Flags, YESNO(Trapped), TrapDetected );
+	buffer.format( "Trap detection: %d%%, Trap removal: %d%%\n", TrapDetectionDiff,
 		TrapRemovalDiff );
 	const char *name = "NONE";
 	if (Scripts[0]) {
 		name = Scripts[0]->GetName();
 	}
-	print( "Script: %s, Key: %s\n", name, KeyResRef );
+	buffer.format( "Script: %s, Key: %s\n", name, KeyResRef );
 	// FIXME: const_cast
-	const_cast<Inventory&>(inventory).dump();
+	inventory.Dump(buffer);
+	Log(DEBUG, "Container", buffer);
 }
 
 bool Container::TryUnlock(Actor *actor) {

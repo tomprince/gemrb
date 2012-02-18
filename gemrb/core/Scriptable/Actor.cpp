@@ -53,6 +53,7 @@
 #include "GameScript/GSUtils.h" //needed for DisplayStringCore
 #include "GameScript/GameScript.h"
 #include "GUI/GameControl.h"
+#include "System/StringBuffer.h"
 
 #include <cassert>
 
@@ -3628,57 +3629,62 @@ void Actor::DumpMaxValues()
 }
 #endif
 
-void Actor::DebugDump()
+void Actor::Dump() const
+{
+	StringBuffer buffer;
+	Dump(buffer);
+	Log(DEBUG, "Actor", buffer);
+}
+
+void Actor::Dump(StringBuffer& buffer) const
 {
 	unsigned int i;
 
-	print( "Debugdump of Actor %s (%s, %s):\n", LongName, ShortName, GetName(-1) );
-	print ("Scripts:");
+	buffer.format( "Debugdump of Actor %s (%s, %s):\n", LongName, ShortName, GetName(-1) );
+	buffer.append("Scripts:");
 	for (i = 0; i < MAX_SCRIPTS; i++) {
 		const char* poi = "<none>";
 		if (Scripts[i]) {
 			poi = Scripts[i]->GetName();
 		}
-		print( " %.8s", poi );
+		buffer.format( " %.8s", poi );
 	}
-	print( "\nArea:       %.8s   ", Area );
-	print( "Dialog:     %.8s\n", Dialog );
-	print( "Global ID:  %d   PartySlot: %d\n", GetGlobalID(), InParty);
-	print( "Script name:%.32s    Current action: %d\n", scriptName, CurrentAction ? CurrentAction->actionID : -1);
-	print( "Int. Flags: 0x%x ", InternalFlags);
-	print( "TalkCount:  %d   ", TalkCount );
-	print( "Allegiance: %d   current allegiance:%d\n", BaseStats[IE_EA], Modified[IE_EA] );
-	print( "Class:      %d   current class:%d\n", BaseStats[IE_CLASS], Modified[IE_CLASS] );
-	print( "Race:       %d   current race:%d\n", BaseStats[IE_RACE], Modified[IE_RACE] );
-	print( "Gender:     %d   current gender:%d\n", BaseStats[IE_SEX], Modified[IE_SEX] );
-	print( "Specifics:  %d   current specifics:%d\n", BaseStats[IE_SPECIFIC], Modified[IE_SPECIFIC] );
-	print( "Alignment:  %x   current alignment:%x\n", BaseStats[IE_ALIGNMENT], Modified[IE_ALIGNMENT] );
-	print( "Morale:     %d   current morale:%d\n", BaseStats[IE_MORALE], Modified[IE_MORALE] );
-	print( "Moralebreak:%d   Morale recovery:%d\n", Modified[IE_MORALEBREAK], Modified[IE_MORALERECOVERYTIME] );
-	print( "Visualrange:%d (Explorer: %d)\n", Modified[IE_VISUALRANGE], Modified[IE_EXPLORE] );
-	print( "Levels: %d/%d/%d (average %d)\n", Modified[IE_LEVEL], Modified[IE_LEVEL2], Modified[IE_LEVEL3], GetXPLevel(true) );
-	print( "current HP:%d\n", BaseStats[IE_HITPOINTS] );
-	print( "Mod[IE_ANIMATION_ID]: 0x%04X ResRef:%.8s\n", Modified[IE_ANIMATION_ID], anims->ResRef );
-	print( "Colors:    ");
+	buffer.append("\n");
+	buffer.format("Area:       %.8s   ", Area );
+	buffer.format("Dialog:     %.8s\n", Dialog );
+	buffer.format("Global ID:  %d   PartySlot: %d\n", GetGlobalID(), InParty);
+	buffer.format("Script name:%.32s    Current action: %d\n", scriptName, CurrentAction ? CurrentAction->actionID : -1);
+	buffer.format("Int. Flags: 0x%x ", InternalFlags);
+	buffer.format("TalkCount:  %d   ", TalkCount );
+	buffer.format("Allegiance: %d   current allegiance:%d\n", BaseStats[IE_EA], Modified[IE_EA] );
+	buffer.format("Class:      %d   current class:%d\n", BaseStats[IE_CLASS], Modified[IE_CLASS] );
+	buffer.format("Race:       %d   current race:%d\n", BaseStats[IE_RACE], Modified[IE_RACE] );
+	buffer.format("Gender:     %d   current gender:%d\n", BaseStats[IE_SEX], Modified[IE_SEX] );
+	buffer.format("Specifics:  %d   current specifics:%d\n", BaseStats[IE_SPECIFIC], Modified[IE_SPECIFIC] );
+	buffer.format("Alignment:  %x   current alignment:%x\n", BaseStats[IE_ALIGNMENT], Modified[IE_ALIGNMENT] );
+	buffer.format("Morale:     %d   current morale:%d\n", BaseStats[IE_MORALE], Modified[IE_MORALE] );
+	buffer.format("Moralebreak:%d   Morale recovery:%d\n", Modified[IE_MORALEBREAK], Modified[IE_MORALERECOVERYTIME] );
+	buffer.format("Visualrange:%d (Explorer: %d)\n", Modified[IE_VISUALRANGE], Modified[IE_EXPLORE] );
+	buffer.format("Levels: %d/%d/%d (average %d)\n", Modified[IE_LEVEL], Modified[IE_LEVEL2], Modified[IE_LEVEL3], GetXPLevel(true) );
+	buffer.format("current HP:%d\n", BaseStats[IE_HITPOINTS] );
+	buffer.format("Mod[IE_ANIMATION_ID]: 0x%04X ResRef:%.8s\n", Modified[IE_ANIMATION_ID], anims->ResRef );
+	buffer.format("Colors:    ");
 	if (core->HasFeature(GF_ONE_BYTE_ANIMID) ) {
 		for(i=0;i<Modified[IE_COLORCOUNT];i++) {
-			print("   %d", Modified[IE_COLORS+i]);
+			buffer.format("   %d", Modified[IE_COLORS+i]);
 		}
-	}
-	else {
+	} else {
 		for(i=0;i<7;i++) {
-			print("   %d", Modified[IE_COLORS+i]);
+			buffer.format("   %d", Modified[IE_COLORS+i]);
 		}
 	}
-	print( "\nWaitCounter: %d\n", (int) GetWait());
-	print( "LastTarget: %d %s\n", LastTarget, GetActorNameByID(LastTarget));
-	print( "LastTalked: %d %s\n", LastTalker, GetActorNameByID(LastTalker));
-	inventory.dump();
-	spellbook.dump();
-	fxqueue.dump();
-#if 0
-	DumpMaxValues();
-#endif
+	buffer.append("\n");
+	buffer.format("WaitCounter: %d\n", (int) GetWait());
+	buffer.format("LastTarget: %d %s\n", LastTarget, GetActorNameByID(LastTarget));
+	buffer.format("LastTalked: %d %s\n", LastTalker, GetActorNameByID(LastTalker));
+	inventory.Dump(buffer);
+	spellbook.Dump(buffer);
+	fxqueue.Dump(buffer);
 }
 
 const char* Actor::GetActorNameByID(ieDword ID) const
