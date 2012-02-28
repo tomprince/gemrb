@@ -286,6 +286,8 @@ struct SRBlender_Alpha<Uint32> {
 	}
 };
 
+template <bool b>
+class MSVCHack {};
 
 // RLE, palette
 template<typename PTYPE, bool COVER, bool XFLIP, typename Shadow, typename Tinter, typename Blender>
@@ -298,7 +300,7 @@ static void BlitSpriteRLE_internal(SDL_Surface* target,
             Uint8 transindex,
             const SpriteCover* cover,
             const Sprite2D* spr, unsigned int flags,
-            const Shadow& shadow, const Tinter& tint, const Blender& blend, PTYPE /*dummy*/ = 0)
+            const Shadow& shadow, const Tinter& tint, const Blender& blend, PTYPE /*dummy*/ = 0, MSVCHack<COVER>* /*dummy*/ = 0)
 {
 	if (COVER)
 		assert(cover);
